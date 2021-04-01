@@ -15,26 +15,15 @@ int main(int argc, char *argv[]){
     bool master = (pid == 0);
 
     //Define program paramenters
-    const char *mesh_file = "data/star.mesh";
-    const char *device_config = "cpu";
     int order = 1;
-    bool static_cond = false;
-    bool pa = false;
+    int refinements = 6;
 
     //Make program parameters readeable in execution
     OptionsParser args(argc, argv);
-    args.AddOption(&mesh_file, "-m", "--mesh",
-                   "Mesh file to use.");
     args.AddOption(&order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
-    args.AddOption(&static_cond, "-sc", "--static-condensation", 
-                   "-no-sc", "--no-static-condensation", 
-                   "Enable static condensation.");
-    args.AddOption(&pa, "-pa", "--partial-assembly", 
-                   "-no-pa", "--no-partial-assembly", 
-                   "Enable partial assembly.");
-    args.AddOption(&device_config, "-d", "--device",
-                   "Device configuration.");
+    args.AddOption(&refinements, "-r", "--refinements",
+                  "Number of total uniform refinements");
 
     //Check if parameters were read correctly
     args.Parse();
@@ -45,17 +34,13 @@ int main(int argc, char *argv[]){
     }
     if (master) args.PrintOptions(cout);
 
-    //Set device (cpu, gpu...)
-    Device device(device_config);
-    if (master) device.Print();
-
     //Read mesh (serial)
-    Mesh *mesh = new Mesh(mesh_file, 1, 1);
+    Mesh *mesh = new Mesh("data/star.mesh", 1, 1);
     int dim = mesh->Dimension();
 
     //Refine mesh (serial)
-    int ref_levels = (int)floor(log(10000./mesh->GetNE())/log(2.)/dim);
-    for (int ii = 0; ii < ref_levels; ii++)
+    int serial_refinements = (int)floor(log(10000./mesh->GetNE())/log(2.)/dim);
+    for (int ii = 0; ii < min(refinements, serial_refinements); ii++)
         mesh->UniformRefinement();
 
     //Make mesh (parallel), delete the serial
@@ -63,8 +48,7 @@ int main(int argc, char *argv[]){
     delete mesh;
 
     //Refine mesh (parallel)
-    ref_levels = 2;
-    for (int ii = 0; ii < ref_levels; ii++)
+    for (int ii = 0; ii < refinements - serial_refinements; ii++)
         pmesh->UniformRefinement();
 
     //Create the FEM space associated with the mesh
@@ -76,15 +60,12 @@ int main(int argc, char *argv[]){
     } else if (pmesh->GetNodes()){
         fec = pmesh->GetNodes()->OwnFEC();
         delete_fec = false;
-        if (master) 
-            cout << "Using isoparamentric FEs: " << fec->Name() << "\n";
     } else {
         fec = new H1_FECollection(order = 1, dim);
         delete_fec = true;
     }
     ParFiniteElementSpace *fespace = new ParFiniteElementSpace(pmesh, fec);
     HYPRE_Int size = fespace->GlobalTrueVSize();
-    if (master) cout << "Number of finite element unknowns: " << size << "\n";
 
     //Set the boundary values to Dirichlet
     Array<int> ess_tdof_list;
@@ -94,59 +75,67 @@ int main(int argc, char *argv[]){
         fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
     }
 
-    //Create RHS
-    ParLinearForm b(fespace);
+    //Define biliniar form
+    ParBilinearForm *a = new ParBilinearForm(fespace);
     ConstantCoefficient one(1.);
-    b.AddDomainIntegrator(new DomainLFIntegrator(one));
-    b.Assemble(); //Calculates values
+    a->AddDomainIntegrator(new DiffusionIntegrator(one));
+    a->Assemble();
+
+    //Create RHS
+    ParLinearForm *b = new ParLinearForm(fespace);
+    b->AddDomainIntegrator(new DomainLFIntegrator(one));
+    b->Assemble();
 
     //Define solution x
-    ParGridFunction x(fespace);
-    x = 0.;
+    ParGridFunction *x = new ParGridFunction(fespace);
+    *x = 0.;
 
-    //Define biliniar form
-    ParBilinearForm a(fespace);
-    if (pa) a.SetAssemblyLevel(AssemblyLevel::PARTIAL);  //Partial Assembly
-    a.AddDomainIntegrator(new DiffusionIntegrator(one));
-    if (static_cond) a.EnableStaticCondensation();       //Static Condensation
-    a.Assemble();
-
-    //Create the linear system
-    OperatorPtr A;
+    //Create the linear system Ax=B
+    HypreParMatrix A;
     Vector B, X;
-    a.FormLinearSystem(ess_tdof_list, x, b, A, X, B);
+    a->FormLinearSystem(ess_tdof_list, *x, *b, A, X, B);
 
-    //Solve the linear system AX=B
-    Solver *prec = NULL;
-    if (pa && UsesTensorBasis(*fespace))
-        prec = new OperatorJacobiSmoother(a, ess_tdof_list);
-    else 
-        prec = new HypreBoomerAMG;
-    CGSolver cg(MPI_COMM_WORLD);
-    cg.SetRelTol(1e-12);
-    cg.SetMaxIter(2000);
-    cg.SetPrintLevel(1);
-    if (prec) cg.SetPreconditioner(*prec);
-    cg.SetOperator(*A);
-    cg.Mult(B, X);
+    //Set the preconditioner
+    HypreBoomerAMG *amg = new HypreBoomerAMG(A);
+    amg->SetPrintLevel(0);
+
+    //Solve the linear system Ax=B
+    HyprePCG *pcg = new HyprePCG(A);
+    pcg->SetPreconditioner(*amg);
+    pcg->SetPrintLevel(0);
+    pcg->SetTol(1e-12);
+    pcg->SetMaxIter(200);
+    pcg->Mult(B, X);
 
     //Recover the solution on each proccesor
-    a.RecoverFEMSolution(X, b, x);
+    a->RecoverFEMSolution(X, *b, *x);
+
+    //Print general information of the program
+    if (master){ 
+        cout << "Size: " << size << "\n"
+             << "Serial refinements: " << serial_refinements << "\n"
+             << "Parallel refinements: " << max(refinements-serial_refinements,0) << "\n"
+             << "Total refinements: " << refinements << "\n";
+    }
 
     //Output to Paraview
     ParaViewDataCollection paraview_out("graph", pmesh);
     paraview_out.SetDataFormat(VTKFormat::BINARY);
     paraview_out.SetCycle(0);
-    paraview_out.SetTime(0.0);
+    paraview_out.SetTime(0.);
     paraview_out.SetLevelsOfDetail(order);
-    paraview_out.RegisterField("Temperature", &x);
+    paraview_out.RegisterField("Temperature", x);
     paraview_out.Save();
 
     //Delete used memory if needed
-    delete prec;
     delete pmesh;
-    delete fespace;
     if (delete_fec) delete fec;
+    delete fespace;
+    delete a;
+    delete b;
+    delete x;
+    delete amg;
+    delete pcg;
 
     MPI_Finalize();
    

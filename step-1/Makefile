@@ -12,7 +12,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 .PHONY: all graph clean oclean
 
 all: main.x
-	@echo -e 'Running Program ... \n'
+	@echo -e 'Running program ... \n'
 	@$(RUN)$< 
 	@echo -e '\nDone\n'
 
