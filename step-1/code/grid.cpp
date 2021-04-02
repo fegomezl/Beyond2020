@@ -6,8 +6,8 @@ void Artic_sea::make_grid(const char *mesh_file){
     dim = mesh->Dimension();
 
     //Refine mesh (serial)
-    serial_refinements = (int)floor(log(10000./mesh->GetNE())/log(2.)/dim);
-    for (int ii = 0; ii < min(refinements, serial_refinements); ii++)
+    serial_refinements = min(refinements, (int)floor(log(10000./mesh->GetNE())/log(2.)/dim));
+    for (int ii = 0; ii < serial_refinements; ii++)
         mesh->UniformRefinement();
 
     //Make mesh (parallel), delete the serial
@@ -17,6 +17,10 @@ void Artic_sea::make_grid(const char *mesh_file){
     //Refine mesh (parallel)
     for (int ii = 0; ii < refinements - serial_refinements; ii++)
         pmesh->UniformRefinement();
+
+    //Calculate minimum size of elements
+    double null;
+    pmesh->GetCharacteristics(h_min, null, null, null);
 
     //Create the FEM space associated with the mesh
     if (order > 0) {

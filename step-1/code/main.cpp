@@ -35,14 +35,17 @@ int main(int argc, char *argv[]){
     //Check if parameters were read correctly
     args.Parse();
     if (!args.Good()){
-      if (master) args.PrintUsage(cout);
-      MPI_Finalize();
-      return 1;
+        if (master) args.PrintUsage(cout);
+        MPI_Finalize();
+        return 1;
     }
     if (master) args.PrintOptions(cout);
 
-    Artic_sea artic_sea(master, order, refinements);
-    artic_sea.run(mesh_file);
+    //Run the program for different refinements
+    for (int ii = 0; ii <= refinements; ii++){
+        Artic_sea artic_sea(master, order, ii);
+        artic_sea.run(mesh_file);
+    }
 
     MPI_Finalize();
 

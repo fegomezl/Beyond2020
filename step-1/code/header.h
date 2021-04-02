@@ -25,6 +25,8 @@ class Artic_sea{
         int refinements;
         int serial_refinements;
         HYPRE_Int size;
+        double h_min;
+        double l2_error;
 
         //Mesh objects
         ParMesh *pmesh;
@@ -35,6 +37,7 @@ class Artic_sea{
         ParBilinearForm *a;
         ParLinearForm *b;
         ParGridFunction *x;
+        FunctionCoefficient *u;
 
         //Solver objects
         HypreParMatrix A;
@@ -47,6 +50,7 @@ class Artic_sea{
 
 //Compute functions
 double rhs(const Vector &x);
+double exact(const Vector &x);
 
 extern double height;
 extern double int_rad;

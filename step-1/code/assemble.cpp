@@ -8,6 +8,13 @@ double rhs(const Vector &x){
     return f;
 }
 
+double exact(const Vector &x){
+    double r = sqrt(pow(x(0),2)+pow(x(1),2));
+    double z = x(2);
+    double f = 0.5*(2*out_rad - r)*r*(3*height - 2*z)*pow(z,2);
+    return f;
+}
+
 void Artic_sea::assemble_system(){
     //Set the boundary values to Dirichlet
     Array<int> ess_tdof_list;
@@ -31,7 +38,8 @@ void Artic_sea::assemble_system(){
 
     //Define solution x
     x = new ParGridFunction(fespace);
-    *x = 0.;
+    u = new FunctionCoefficient(exact);
+    x->ProjectCoefficient(*u);
 
     //Create the linear system Ax=B
     a->FormLinearSystem(ess_tdof_list, *x, *b, A, X, B);
