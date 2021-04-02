@@ -2,7 +2,7 @@
 
 void Artic_sea::make_grid(){
     //Read mesh (serial)
-    Mesh *mesh = new Mesh("data/try2.msh", 1, 1);
+    Mesh *mesh = new Mesh("data/cylinder_hollow.msh", 1, 1);
     dim = mesh->Dimension();
 
     //Refine mesh (serial)

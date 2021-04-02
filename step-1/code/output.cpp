@@ -3,7 +3,7 @@
 void Artic_sea::output_results(){
     //Print general information of the program
     if (master){
-        cout << "Size: " << size << "\n"
+        cout << "\nSize: " << size << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << max(refinements-serial_refinements,0) << "\n"
              << "Total refinements: " << refinements << "\n";
