@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cmath>
 #include "mfem.hpp"
 
 using namespace std;
@@ -43,3 +44,10 @@ class Artic_sea{
         //Extra
         bool delete_fec;
 };
+
+//Compute functions
+double rhs(const Vector &x);
+
+extern double height;
+extern double int_rad;
+extern double out_rad;

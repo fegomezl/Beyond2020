@@ -13,7 +13,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< 
+	@$(RUN)$< -o 1 -r 3 
 	@echo -e '\nDone\n'
 
 graph:

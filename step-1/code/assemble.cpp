@@ -1,5 +1,13 @@
 #include "header.h"
 
+double rhs(const Vector &x){
+    double r = sqrt(pow(x(0),2)+pow(x(1),2));
+    double z = x(2);
+    double f = (2 - out_rad/r)*(3*height - 2*z)*pow(z,2) +
+               3*(r - 2*out_rad)*(height - 2*z)*r;
+    return f;
+}
+
 void Artic_sea::assemble_system(){
     //Set the boundary values to Dirichlet
     Array<int> ess_tdof_list;
@@ -17,7 +25,8 @@ void Artic_sea::assemble_system(){
 
     //Create RHS
     b = new ParLinearForm(fespace);
-    b->AddDomainIntegrator(new DomainLFIntegrator(one));
+    FunctionCoefficient f(rhs);
+    b->AddDomainIntegrator(new DomainLFIntegrator(f));
     b->Assemble();
 
     //Define solution x
