@@ -6,9 +6,9 @@ Artic_sea::Artic_sea(bool master, int order, int refinements):
     refinements(refinements)
 {}
 
-void Artic_sea::run(){
+void Artic_sea::run(const char *mesh_file){
     //Run the program
-    make_grid();
+    make_grid(mesh_file);
     assemble_system();
     solve_system();
     output_results();

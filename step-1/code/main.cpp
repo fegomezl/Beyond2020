@@ -9,11 +9,14 @@ int main(int argc, char *argv[]){
     bool master = (pid == 0);
 
     //Define program paramenters
+    const char *mesh_file = "data/star.mesh";
     int order = 1;
     int refinements = 0;
 
     //Make program parameters readeable in execution
     OptionsParser args(argc, argv);
+    args.AddOption(&mesh_file, "-m", "--mesh",
+                  "Mesh file to use.");
     args.AddOption(&order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
     args.AddOption(&refinements, "-r", "--refinements",
@@ -29,7 +32,7 @@ int main(int argc, char *argv[]){
     if (master) args.PrintOptions(cout);
 
     Artic_sea artic_sea(master, order, refinements);
-    artic_sea.run();
+    artic_sea.run(mesh_file);
 
     MPI_Finalize();
 

@@ -1,8 +1,8 @@
 #include "header.h"
 
-void Artic_sea::make_grid(){
+void Artic_sea::make_grid(const char *mesh_file){
     //Read mesh (serial)
-    Mesh *mesh = new Mesh("data/cylinder_hollow.msh", 1, 1);
+    Mesh *mesh = new Mesh(mesh_file, 1, 1);
     dim = mesh->Dimension();
 
     //Refine mesh (serial)

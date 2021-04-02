@@ -10,9 +10,9 @@ using namespace mfem;
 class Artic_sea{
     public:
         Artic_sea(bool master, int order, int refinements);
-        void run();
+        void run(const char *mesh_file);
     private:
-        void make_grid();
+        void make_grid(const char *mesh_file);
         void assemble_system();
         void solve_system();
         void output_results();
