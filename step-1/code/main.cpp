@@ -10,7 +10,7 @@ int main(int argc, char *argv[]){
 
     //Define program paramenters
     int order = 1;
-    int refinements = 6;
+    int refinements = 0;
 
     //Make program parameters readeable in execution
     OptionsParser args(argc, argv);
