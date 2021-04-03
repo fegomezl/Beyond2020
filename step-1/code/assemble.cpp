@@ -3,7 +3,7 @@
 double rhs(const Vector &x){
     double r_2 = pow(x(0),2)+pow(x(1),2);
     double z_2 = pow(x(2),2);
-    return 2*(pow(height,2) - z_2) + pow(out_rad,2) - z_2;
+    return 2*(pow(height,2) - z_2) + pow(out_rad,2) - r_2;
 }
 
 double g(const Vector &x){
@@ -49,7 +49,7 @@ void Artic_sea::assemble_system(){
     //Define solution x
     x = new ParGridFunction(fespace);
     u = new FunctionCoefficient(exact);
-    //x->ProjectCoefficient(*u);
+    x->ProjectCoefficient(*u);
 
     //Create the linear system Ax=B
     a->FormLinearSystem(ess_tdof_list, *x, *b, A, X, B);
