@@ -51,6 +51,7 @@ class Artic_sea{
 //Compute functions
 double rhs(const Vector &x);
 double exact(const Vector &x);
+double g(const Vector &x);   //for Nuemann condition
 
 extern double height;
 extern double int_rad;

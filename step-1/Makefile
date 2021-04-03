@@ -1,5 +1,6 @@
-MFEM_INSTALL_DIR = ~/repos/spack/opt/spack/linux-arch-sandybridge/gcc-10.2.0/mfem-4.2.0-cnxxrnnnbzf2o6blvzgu3g4546jmf2ku
+MFEM_INSTALL_DIR = ~/spackgcc/gcc-10.2.0/mfem-4.2.0-vxsy2qfd4okzgqnuybubclbv2fnntoga/
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
+MESH = data/cylinder_hollow.msh
 
 include $(CONFIG_MK)
 
@@ -13,12 +14,12 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< -o 1 -r 3
+	@$(RUN)$< -o 1 -r 3 -m $(MESH)
 	@echo -e '\nDone\n'
 
 graph:
 	@echo -e 'Moving graphs ... \c'
-	@cp -r graph/ /media/sf_Arch_data/
+	@cp -r graph/ /media/sf_Shared_Folder_Arch2/
 	@echo -e 'Done\n'
 
 main.x: $(DEPENDENCIES)
