@@ -25,19 +25,18 @@ double g(const Vector &x){
 
 void Artic_sea::assemble_system(){
     //Set the boundary values
-    Array<int> ess_tdof_list;
+    Array<int> ess_tdof_list(0);
     Array<int> nbc_marker;
     if (pmesh->bdr_attributes.Size()){
         //dirchlet(essential) boundary conditions
         Array<int> ess_bdr(pmesh->bdr_attributes.Max());
-        ess_bdr = 1;
-        ess_bdr[12] = 0;
+        ess_bdr = 0;
         fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
         //Neumann boundary conditions
         nbc_marker.SetSize(pmesh->bdr_attributes.Max());
         nbc_marker = 0;
-        nbc_marker[12] = 1;
+        nbc_marker[12] = nbc_marker[11] = 1;
     }
 
     //Define biliniar form
@@ -57,7 +56,7 @@ void Artic_sea::assemble_system(){
     //Define solution x
     x = new ParGridFunction(fespace);
     u = new FunctionCoefficient(exact);
-    x->ProjectCoefficient(*u);
+    //x->ProjectCoefficient(*u);
 
     //Create the linear system Ax=B
     a->FormLinearSystem(ess_tdof_list, *x, *b, A, X, B);
