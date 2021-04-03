@@ -1,24 +1,20 @@
 #include "header.h"
 
 double rhs(const Vector &x){
-    double r = sqrt(pow(x(0),2)+pow(x(1),2));
-    double z = x(2);
-    double f = (2 - out_rad/r)*(3*height - 2*z)*pow(z,2) +
-               3*(r - 2*out_rad)*(height - 2*z)*r;
-    return f;
-}
-
-double exact(const Vector &x){
-    double r = sqrt(pow(x(0),2)+pow(x(1),2));
-    double z = x(2);
-    double f = 0.5*(2*out_rad - r)*r*(3*height - 2*z)*pow(z,2);
-    return f;
+    double r_2 = pow(x(0),2)+pow(x(1),2);
+    double z_2 = pow(x(2),2);
+    return 2*(z_2 - pow(height,2)) + r_2 - pow(out_rad,2);
 }
 
 double g(const Vector &x){
-    double z(x(2));
+    double z_2 = pow(x(2),2);
+    return int_rad*(pow(height,2) - z_2);
+}
 
-    return (out_rad - int_rad)*pow(z,2)*(height - z);
+double exact(const Vector &x){
+    double r_2 = pow(x(0),2)+pow(x(1),2);
+    double z_2 = pow(x(2),2);
+    return 0.5*(pow(height,2) - z_2)*(r_2 - pow(out_rad,2));
 }
 
 void Artic_sea::assemble_system(){
@@ -29,7 +25,6 @@ void Artic_sea::assemble_system(){
         //dirchlet(essential) boundary conditions
         Array<int> ess_bdr(pmesh->bdr_attributes.Max());
         ess_bdr = 1;
-        ess_bdr[12] = 0;
         fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
         //Neumann boundary conditions
@@ -55,7 +50,7 @@ void Artic_sea::assemble_system(){
     //Define solution x
     x = new ParGridFunction(fespace);
     u = new FunctionCoefficient(exact);
-    x->ProjectCoefficient(*u);
+    //x->ProjectCoefficient(*u);
 
     //Create the linear system Ax=B
     a->FormLinearSystem(ess_tdof_list, *x, *b, A, X, B);
