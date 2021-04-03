@@ -1,7 +1,7 @@
 #include "header.h"
 
 double height = 20;
-double int_rad = 4;
+double int_rad = 5;
 double out_rad = 20;
 
 int main(int argc, char *argv[]){
