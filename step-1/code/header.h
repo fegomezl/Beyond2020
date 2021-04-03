@@ -7,6 +7,8 @@
 using namespace std;
 using namespace mfem;
 
+double g(const Vector &x);   //for Nuemann condition
+
 class Artic_sea{
     public:
         Artic_sea(bool master, int order, int refinements);

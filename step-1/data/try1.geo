@@ -24,3 +24,5 @@ Physical Surface("side", 12) = {5};
 Physical Surface("innerSide", 13) = {4};
 //+
 Physical Volume("Sea", 14) = {1};
+//+
+Physical Surface(" innerSide", 13) -= {4};
