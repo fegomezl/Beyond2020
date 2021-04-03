@@ -1,6 +1,5 @@
-MFEM_INSTALL_DIR = ~/spackgcc/gcc-10.2.0/mfem-4.2.0-vxsy2qfd4okzgqnuybubclbv2fnntoga/
+MFEM_INSTALL_DIR = ~/repos/spack/opt/spack/linux-arch-sandybridge/gcc-10.2.0/mfem-4.2.0-cnxxrnnnbzf2o6blvzgu3g4546jmf2ku
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
-MESH = data/star.mesh
 
 include $(CONFIG_MK)
 
@@ -14,16 +13,12 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x
 	@echo -e 'Running program ... \n'
-<<<<<<< HEAD
-	@$(RUN)$< -m $(MESH)
-=======
-	@$(RUN)$< -o 1 -r 3 
->>>>>>> f4c7f9434a7405927babf912e0268e10b27c4a3c
+	@$(RUN)$< -o 1 -r 3
 	@echo -e '\nDone\n'
 
 graph:
 	@echo -e 'Moving graphs ... \c'
-	@cp -rf graph/ /media/sf_Shared_Folder_Arch2/
+	@cp -r graph/ /media/sf_Arch_data/
 	@echo -e 'Done\n'
 
 main.x: $(DEPENDENCIES)
