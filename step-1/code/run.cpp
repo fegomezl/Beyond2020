@@ -20,4 +20,5 @@ void Artic_sea::run(const char *mesh_file){
     delete a;
     delete b;
     delete x;
+    delete u;
 }

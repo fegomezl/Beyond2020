@@ -14,7 +14,11 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x
 	@echo -e 'Running program ... \n'
+<<<<<<< HEAD
 	@$(RUN)$< -m $(MESH)
+=======
+	@$(RUN)$< -o 1 -r 3 
+>>>>>>> f4c7f9434a7405927babf912e0268e10b27c4a3c
 	@echo -e '\nDone\n'
 
 graph:
