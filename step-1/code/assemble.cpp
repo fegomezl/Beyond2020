@@ -3,7 +3,7 @@
 double rhs(const Vector &x){
     double r_2 = pow(x(0),2)+pow(x(1),2);
     double z_2 = pow(x(2),2);
-    return 2*(pow(height,2) - z_2) + pow(out_rad,2) - z_2;
+    return 2*(pow(height,2) - z_2) + pow(out_rad,2) - r_2;
 }
 
 double g(const Vector &x){
