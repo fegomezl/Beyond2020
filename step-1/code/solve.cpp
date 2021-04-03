@@ -18,6 +18,8 @@ void Artic_sea::solve_system(){
 
     //Calculate error
     l2_error = x->ComputeL2Error(*u);
+    double volume = M_PI*height*(pow(out_rad,2) - pow(int_rad,2));
+    l2_error /= volume;
 
     //Delete used memory
     delete amg;

@@ -49,7 +49,7 @@ void Artic_sea::assemble_system(){
     //Define solution x
     x = new ParGridFunction(fespace);
     u = new FunctionCoefficient(exact);
-    //x->ProjectCoefficient(*u);
+    x->ProjectCoefficient(*u);
 
     //Create the linear system Ax=B
     a->FormLinearSystem(ess_tdof_list, *x, *b, A, X, B);
