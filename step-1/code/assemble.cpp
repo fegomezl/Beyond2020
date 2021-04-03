@@ -1,43 +1,37 @@
 #include "header.h"
 
 double rhs(const Vector &x){
-    double r = sqrt(pow(x(0),2)+pow(x(1),2));
-    double z = x(2);
-    double f = (2 - out_rad/r)*(3*height - 2*z)*pow(z,2) +
-               3*(r - 2*out_rad)*(height - 2*z)*r;
-    return f;
-}
-
-double exact(const Vector &x){
-    double r = sqrt(pow(x(0),2)+pow(x(1),2));
-    double z = x(2);
-    double f = 0.5*(2*out_rad - r)*r*(3*height - 2*z)*pow(z,2);
-    return f;
+    double r_2 = pow(x(0),2)+pow(x(1),2);
+    double z_2 = pow(x(2),2);
+    return 2*(z_2 - pow(height,2)) + r_2 - pow(out_rad,2);
 }
 
 double g(const Vector &x){
-    double xi(x(0));
-    double yi(x(1));
-    double zi(x(2));
+    double z_2 = pow(x(2),2);
+    return int_rad*(pow(height,2) - z_2);
+}
 
-    return 30*zi*zi*(30-zi);
+double exact(const Vector &x){
+    double r_2 = pow(x(0),2)+pow(x(1),2);
+    double z_2 = pow(x(2),2);
+    return 0.5*(pow(height,2) - z_2)*(r_2 - pow(out_rad,2));
 }
 
 void Artic_sea::assemble_system(){
     //Set the boundary values
-    Array<int> ess_tdof_list(0);
-    Array<int> nbc_marker;
-    if (pmesh->bdr_attributes.Size()){
-        //dirchlet(essential) boundary conditions
-        Array<int> ess_bdr(pmesh->bdr_attributes.Max());
-        ess_bdr = 0;
-        fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+    Array<int> ess_tdof_list;
+    //dirchlet(essential) boundary conditions
+    Array<int> ess_bdr(pmesh->bdr_attributes.Max());
+    ess_bdr = 0;
+    ess_bdr[9] = ess_bdr[11] = 1;
+    fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
-        //Neumann boundary conditions
-        nbc_marker.SetSize(pmesh->bdr_attributes.Max());
-        nbc_marker = 0;
-        nbc_marker[12] = nbc_marker[11] = 1;
-    }
+    //Neumann boundary conditions
+    Array<int> nbc_marker(pmesh->bdr_attributes.Max());
+    nbc_marker.SetSize(pmesh->bdr_attributes.Max());
+    nbc_marker = 0;
+    nbc_marker[12] = 1;
+
 
     //Define biliniar form
     a = new ParBilinearForm(fespace);
