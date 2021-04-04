@@ -4,9 +4,9 @@ Radius = 20;
 Height = 20;
 
 Nb = 4; Rb = 1.00;
-Nc1 = 4; Rc1 = 1.00;
-Nc2 = 4; Rc2 = 1.00;
-Nz = 10;
+Nc1 = 3; Rc1 = 1.00;
+Nc2 = 3; Rc2 = 1.00;
+Nz = 4;
 
 SetFactory("OpenCASCADE");
 //+
@@ -121,3 +121,5 @@ Physical Surface("Bottom", 2) = {3, 2, 4, 1};
 Physical Surface("Side", 3) = {18, 14, 10, 6};
 //+
 Physical Surface("Inner_Side", 4) = {16, 19, 8, 12};
+//+
+Physical Volume("Sea", 5) = {4, 3, 2, 1};

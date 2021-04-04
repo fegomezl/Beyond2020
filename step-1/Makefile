@@ -1,11 +1,13 @@
 MFEM_INSTALL_DIR = ~/spackgcc/gcc-10.2.0/mfem-4.2.0-vxsy2qfd4okzgqnuybubclbv2fnntoga/
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
-MESH = data/cylinder_hollow.msh
+MESH = data/transfinite_cylinder.msh
+REF = 0
+ORDER = 1
 
 include $(CONFIG_MK)
 
 CXX = mpic++
-FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
+FLAGS = -std=c++11 -g -O3 $(MFEM_FLAGS)
 RUN = mpirun -np 4 ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
@@ -14,7 +16,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< -o 1 -r 3 -m $(MESH)
+	@$(RUN)$< -o $(ORDER) -r $(REF) -m $(MESH)
 	@echo -e '\nDone\n'
 
 graph:
