@@ -32,11 +32,13 @@ void Artic_sea::output_results(){
     }
 
     //Print visual results to Paraview
-    ParaViewDataCollection paraview_out("graph", pmesh);
-    paraview_out.SetDataFormat(VTKFormat::BINARY);
-    paraview_out.SetCycle(0);
-    paraview_out.SetTime(0.);
-    paraview_out.SetLevelsOfDetail(order);
-    paraview_out.RegisterField("Temperature", x);
-    paraview_out.Save();
+    if (last){
+        ParaViewDataCollection paraview_out("graph", pmesh);
+        paraview_out.SetDataFormat(VTKFormat::BINARY);
+        paraview_out.SetCycle(0);
+        paraview_out.SetTime(0.);
+        paraview_out.SetLevelsOfDetail(order);
+        paraview_out.RegisterField("Temperature", x);
+        paraview_out.Save();
+    }
 }

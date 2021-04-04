@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
 
     //Run the program for different refinements
     for (int ii = 0; ii <= refinements; ii++){
-        Artic_sea artic_sea(master, order, ii);
+        Artic_sea artic_sea(master, order, ii, (ii == refinements));
         artic_sea.run(mesh_file);
     }
 
