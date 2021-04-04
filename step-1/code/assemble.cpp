@@ -1,20 +1,23 @@
 #include "header.h"
 
 double rhs(const Vector &x){
-    double r_2 = pow(x(0),2)+pow(x(1),2);
-    double z_2 = pow(x(2),2);
-    return 2*(pow(height,2) - z_2) + pow(out_rad,2) - r_2;
+    double r_2 = x(0)*x(0)+x(1)*x(1);
+    double z_2 = x(2)*x(2);
+    double f = 2*(height*height -  x(2)*x(2)) + out_rad*out_rad - x(0)*x(0)-x(1)*x(1);
+    return f;
 }
 
 double g(const Vector &x){
-    double z_2 = pow(x(2),2);
-    return int_rad*(z_2 - pow(height,2));
+    double z_2 = x(2)*x(2);
+    double f = int_rad*(x(2)*x(2) - height*height);
+    return f;
 }
 
 double exact(const Vector &x){
     double r_2 = pow(x(0),2)+pow(x(1),2);
     double z_2 = pow(x(2),2);
-    return 0.5*(z_2 - pow(height,2))*(r_2 - pow(out_rad,2));
+    double f = 0.5*(x(2)*x(2) - height*height)*(x(0)*x(0) + x(1)*x(1) - out_rad*out_rad);
+    return f;
 }
 
 void Artic_sea::assemble_system(){

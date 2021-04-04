@@ -1,8 +1,8 @@
 #include "header.h"
 
-double height = 20;
-double int_rad = 4;
-double out_rad = 20;
+double height = 10;
+double int_rad = 1;
+double out_rad = 5;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -43,8 +43,9 @@ int main(int argc, char *argv[]){
 
     //Run the program for different refinements
     for (int ii = 0; ii <= refinements; ii++){
-        Artic_sea artic_sea(master, order, ii);
-        artic_sea.run(mesh_file);
+        Artic_sea *artic_sea = new Artic_sea(master, order, ii);
+        artic_sea->run(mesh_file);
+        delete artic_sea;
     }
 
     MPI_Finalize();
