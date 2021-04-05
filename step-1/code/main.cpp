@@ -1,8 +1,8 @@
 #include "header.h"
 
-double height = 10;
-double int_rad = 1;
-double out_rad = 5;
+double height = 20;
+double int_rad = 5;
+double out_rad = 20;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
