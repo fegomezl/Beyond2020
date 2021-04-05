@@ -24,13 +24,13 @@ void Artic_sea::assemble_system(){
     //Dirchlet(essential) boundary conditions
     Array<int> ess_bdr(pmesh->bdr_attributes.Max());
     ess_bdr = 0;
-    ess_bdr[9] = ess_bdr[11] = 1;
+    ess_bdr[0] = ess_bdr[2] = 1;
     fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
     //Neumann boundary conditions
     Array<int> nbc_marker(pmesh->bdr_attributes.Max());
     nbc_marker = 0;
-    nbc_marker[12] = 1;
+    nbc_marker[3] = 1;
 
     //Define biliniar form
     a = new ParBilinearForm(fespace);

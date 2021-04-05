@@ -1,10 +1,9 @@
 #include "header.h"
 
-Artic_sea::Artic_sea(bool master, int order, int refinements, bool last):
+Artic_sea::Artic_sea(bool master, int order, int refinements):
     master(master),
     order(order),
-    refinements(refinements),
-    last(last)
+    refinements(refinements)
 {}
 
 void Artic_sea::run(const char *mesh_file){

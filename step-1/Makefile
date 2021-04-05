@@ -1,6 +1,8 @@
 MFEM_INSTALL_DIR = ~/repos/spack/opt/spack/linux-arch-sandybridge/gcc-10.2.0/mfem-4.2.0-cnxxrnnnbzf2o6blvzgu3g4546jmf2ku
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
-MESH = data/cylinder_hollow.msh
+MESH = data/transfinite_cylinder.msh
+REF = 5
+ORDER = 1
 
 include $(CONFIG_MK)
 
@@ -14,7 +16,9 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< -o 1 -r 4 
+	@$(RUN)$< -o $(ORDER) -r $(REF) -m $(MESH) 
+	@echo -e '\n'
+	@cat data/convergence.txt
 	@echo -e '\nDone\n'
 
 graph:
