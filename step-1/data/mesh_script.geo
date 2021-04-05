@@ -1,12 +1,15 @@
 // Gmsh project created on Sun Apr 04 11:41:39 2021
 
-Height = 30.4
-Radius = 22
-Radius_Inner = 7
+Height = 20;
+Radius = 20;
+Radius_Inner = 5;
 
-Nb = 2; Rb = 1.00;
-Nc1 = 33; Rc1 = 1.00;
-Nc2 = 33; Rc2 = 1.00;
+Nb = 2;
+Rb = 1.00;
+Nc1 = 33;
+Rc1 = 1.00;
+Nc2 = 33;
+Rc2 = 1.00;
 Nz = 2;
 
 SetFactory("OpenCASCADE");

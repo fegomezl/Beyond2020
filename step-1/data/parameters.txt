@@ -1,3 +1,7 @@
-30.4 #Height
-22 #Radius
-7 #Radius_Inner
+20 #Height
+20 #Radius
+5 #Radius_Inner
+2 #Nb
+33 #Nc_one
+33 #Nc_two
+2 #Nz
