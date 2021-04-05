@@ -1,9 +1,10 @@
 #include "header.h"
 
-Artic_sea::Artic_sea(bool master, int order, int refinements):
+Artic_sea::Artic_sea(bool master, int order, int refinements, bool last):
     master(master),
     order(order),
-    refinements(refinements)
+    refinements(refinements),
+    last(last)
 {}
 
 void Artic_sea::run(const char *mesh_file){
@@ -12,7 +13,9 @@ void Artic_sea::run(const char *mesh_file){
     assemble_system();
     solve_system();
     output_results();
+}
 
+Artic_sea::~Artic_sea(){
     //Delete used memory
     delete pmesh;
     if (delete_fec) delete fec;
@@ -21,4 +24,5 @@ void Artic_sea::run(const char *mesh_file){
     delete b;
     delete x;
     delete u;
+    if (master) cout << "Memory deleted!\n";
 }

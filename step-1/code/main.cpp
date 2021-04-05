@@ -13,7 +13,7 @@ int main(int argc, char *argv[]){
     bool master = (pid == 0);
 
     //Define program paramenters
-    const char *mesh_file = "data/cylinder_hollow.msh";
+    const char *mesh_file = "data/transfinite_cylinder.msh";
     int order = 1;
     int refinements = 0;
 
@@ -43,9 +43,8 @@ int main(int argc, char *argv[]){
 
     //Run the program for different refinements
     for (int ii = 0; ii <= refinements; ii++){
-        Artic_sea *artic_sea = new Artic_sea(master, order, ii);
-        artic_sea->run(mesh_file);
-        delete artic_sea;
+        Artic_sea artic_sea(master, order, ii, (ii == refinements));
+        artic_sea.run(mesh_file);
     }
 
     MPI_Finalize();

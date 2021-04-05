@@ -10,8 +10,9 @@ using namespace mfem;
 
 class Artic_sea{
     public:
-        Artic_sea(bool master, int order, int refinements);
+        Artic_sea(bool master, int order, int refinements, bool last);
         void run(const char *mesh_file);
+        ~Artic_sea();
     private:
         void make_grid(const char *mesh_file);
         void assemble_system();
@@ -20,6 +21,7 @@ class Artic_sea{
 
         //Global parameters
         bool master;
+        bool last;
         int order;
         int dim;
         int refinements;
@@ -51,7 +53,7 @@ class Artic_sea{
 //Compute functions
 double rhs(const Vector &x);
 double exact(const Vector &x);
-double g(const Vector &x);   //for Nuemann condition
+double g(const Vector &x);   //for Neumann condition
 
 extern double height;
 extern double int_rad;
