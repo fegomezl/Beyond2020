@@ -1,7 +1,7 @@
 MFEM_INSTALL_DIR = ~/repos/spack/opt/spack/linux-arch-sandybridge/gcc-10.2.0/mfem-4.2.0-cnxxrnnnbzf2o6blvzgu3g4546jmf2ku
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
 MESH = data/transfinite_cylinder.msh
-REF = 5
+REF = 0
 ORDER = 1
 
 include $(CONFIG_MK)
