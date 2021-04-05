@@ -10,7 +10,7 @@ include $(CONFIG_MK)
 MESH = data/transfinite_cylinder.msh
 
 #Program parameters
-REF = 0
+REF = 4
 ORDER = 1
 
 CXX = mpic++
@@ -23,7 +23,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x data/mesh_script.geo
 	@echo -e 'Generating mesh ... \n'
-	@gmsh data/mesh_script.geo -nt $(PROCCESORS) -format msh2 -o $(MESH) -3
+	@gmsh data/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< -o $(ORDER) -r $(REF) -m $(MESH) 
