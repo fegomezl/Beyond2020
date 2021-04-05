@@ -11,32 +11,30 @@ void Artic_sea::output_results(){
     //Print numerical results of the program
         ofstream output;
         output.precision(4);
-        if (refinements != 0){
+        if (refinements != 0)
             output.open("data/convergence.txt", std::ios::app);
-            output << left << setw(16) 
-                   << size << setw(16) 
-                   << h_min << setw(16) 
-                   << l2_error << "\n";
-        } else {
+        else{
             output.open("data/convergence.txt", std::ios::trunc);
             output << left << setw(16) 
                    << "DOFs" << setw(16) 
                    << "h" << setw(16) 
                    << "L2 error" << "\n";
-            output << left << setw(16) 
-                   << size << setw(16) 
-                   << h_min << setw(16) 
-                   << l2_error << "\n";
         }
+        output << left << setw(16) 
+               << size << setw(16) 
+               << h_min << setw(16) 
+               << l2_error << "\n";
         output.close();
     }
 
     //Print visual results to Paraview
-    ParaViewDataCollection paraview_out("graph", pmesh);
-    paraview_out.SetDataFormat(VTKFormat::BINARY);
-    paraview_out.SetCycle(0);
-    paraview_out.SetTime(0.0);
-    paraview_out.SetLevelsOfDetail(order);
-    paraview_out.RegisterField("Temperature", x);
-    paraview_out.Save();
+    if (last){
+        ParaViewDataCollection paraview_out("graph", pmesh);
+        paraview_out.SetDataFormat(VTKFormat::BINARY);
+        paraview_out.SetCycle(0);
+        paraview_out.SetTime(0.0);
+        paraview_out.SetLevelsOfDetail(order);
+        paraview_out.RegisterField("Temperature", x);
+        paraview_out.Save();
+    }
 }

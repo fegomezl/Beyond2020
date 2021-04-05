@@ -10,7 +10,7 @@ using namespace mfem;
 
 class Artic_sea{
     public:
-        Artic_sea(bool master, int order, int refinements);
+        Artic_sea(bool master, int order, int refinements, bool last);
         void run(const char *mesh_file);
         ~Artic_sea();
     private:
@@ -21,6 +21,7 @@ class Artic_sea{
 
         //Global parameters
         bool master;
+        bool last;
         int order;
         int dim;
         int refinements;
