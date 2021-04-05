@@ -1,40 +1,50 @@
+#Computer parameters
 MFEM_INSTALL_DIR = ~/repos/spack/opt/spack/linux-arch-sandybridge/gcc-10.2.0/mfem-4.2.0-cnxxrnnnbzf2o6blvzgu3g4546jmf2ku
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
-MESH = data/transfinite_cylinder.msh
-REF = 4
-ORDER = 1
+SHARE_DIR = /media/sf_Arch_data/
+PROCCESORS = 4
 
 include $(CONFIG_MK)
 
+#Mesh parameters
+MESH = data/transfinite_cylinder.msh
+
+#Program parameters
+REF = 0
+ORDER = 1
+
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
-RUN = mpirun -np 4 ./
+RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all graph clean oclean
 
-all: main.x
+all: main.x data/mesh_script.geo
+	@echo -e 'Generating mesh ... \n'
+	@gmsh data/mesh_script.geo -nt $(PROCCESORS) -format msh2 -o $(MESH) -3
+	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< -o $(ORDER) -r $(REF) -m $(MESH) 
 	@echo -e '\n'
 	@cat data/convergence.txt
-	@echo -e '\nDone\n'
+	@echo -e '\nDone!\n'
 
 graph:
 	@echo -e 'Moving graphs ... \c'
-	@cp -r graph/ /media/sf_Arch_data/
-	@echo -e 'Done\n'
+	@cp -r graph/ $(SHARE_DIR)
+	@echo -e 'Done!\n'
 
 main.x: $(DEPENDENCIES)
 	@echo -e 'Compiling' $@ '... \c'
 	@$(CXX) $(FLAGS) $^ $(MFEM_LIBS) -o $@
-	@echo -e 'Done\n'
+	@echo -e 'Done!\n'
 
 .objects/%.o: code/%.cpp
 	@echo -e 'Building' $@ '... \c'
 	@$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
-	@echo -e 'Done\n'
+	@echo -e 'Done!\n'
 
 clean:
 	@rm -rf *.x graph/*
