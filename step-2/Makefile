@@ -9,7 +9,6 @@ include $(CONFIG_MK)
 #Mesh parameters
 NMESH = $(shell sed -n 2p data/parameters.txt)  
 MESH = $(filter-out #mesh file,$(NMESH))
-HEIGHT = $(shell sed -n 3p data/parameters.txt | tr -d -c 0-9.)  
 OUTER_RADIUS = $(shell sed -n 4p data/parameters.txt | tr -d -c 0-9.)
 INNER_RADIUS = $(shell sed -n 5p data/parameters.txt | tr -d -c 0-9.)
 
@@ -32,7 +31,7 @@ all: main.x data/mesh_script.geo data/parameters.txt
 	@gmsh data/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh $(MESH) --height $(HEIGHT) \
+	@$(RUN)$< --mesh $(MESH) \
 					  --internal_radius $(INNER_RADIUS) --outer_radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) 
 	@echo -e '\nDone!\n'

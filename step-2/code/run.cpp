@@ -6,9 +6,18 @@ void Artic_sea::run(const char *mesh_file){
     //Run the program
     make_grid(mesh_file);
     assemble_system();
-    for (iteration; last; iteration++)
+    for (int ii = 0; !last; ii++){
+        iteration = ii;
         time_step();
+    }
     output_results();
+}
+
+Conduction_Operator::~Conduction_Operator(){
+    //Delete used memory
+    delete m;
+    delete k;
+    delete T;
 }
 
 Artic_sea::~Artic_sea(){

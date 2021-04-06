@@ -25,31 +25,32 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &f, 
-                           double alpha, double kappa, const Vector &u);
-        virtual void Mult(const Vector &u, Vector &du_dt) const; 
+        Conduction_Operator(ParFiniteElementSpace &fespace, double t_init,
+                            double alpha, double kappa, const Vector &X);
+        virtual void Mult(const Vector &X, Vector &dX_dt) const; 
         //Solve the Backward-Euler equation k = f(u + dt*k, t) for k
-        virtual void ImplicitSolve(const double dt, const Vector &u, Vector &k);
+        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt);
         //Update the diffusion BillinearForm K using the trueDOF vector X
-        void SetParameters(const Vector &u);
+        void SetParameters(const Vector &X);
         virtual ~Conduction_Operator();
 
     protected:
         ParFiniteElementSpace &fespace;
         Array<int> ess_tdof_list; 
 
-        ParBilinearForm *M;
-        ParBilinearForm *K;
+        ParBilinearForm *m;
+        ParBilinearForm *k;
 
-        HypreParMatrix Mmat;
-        HypreParMatrix Kmat;
+        HypreParMatrix M;
+        HypreParMatrix K;
         HypreParMatrix *T;    // T = M + dt K
+        double t_init;
         double current_dt;
 
-        CGSolver M_Solver;    //Krylov solver for M^-1
+        CGSolver M_solver;    //Krylov solver for M^-1
         HypreSmoother M_prec; //Preconditioner por M
 
-        CGSolver T_Solver;    //Implicit solver for T = M + dt K
+        CGSolver T_solver;    //Implicit solver for T = M + dt K
         HypreSmoother T_prec; //Preconditioner por implicit solver
 
         double alpha, kappa;  //Nonlinear parameters
@@ -75,7 +76,6 @@ class Artic_sea{
         int iteration;
         double t;
         double dt;
-        int vis_steps;
         bool last;
 
         //Output parameters
@@ -101,8 +101,7 @@ class Artic_sea{
         bool delete_fec;
 };
 
-double initial_conditions(const Vector &x);
+double initial_conditions(const Vector &X);
 
-extern double height;
 extern double int_rad;
 extern double out_rad;

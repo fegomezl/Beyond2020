@@ -1,6 +1,5 @@
 #include "header.h"
 
-double height;
 double out_rad;
 double int_rad;
 
@@ -19,18 +18,16 @@ int main(int argc, char *argv[]){
     config.serial_refinements = 1;
     config.ode_solver_type = 3;
     config.t_init = 0.;
-    config.t_final = 0.5;
+    config.t_final = 10;
     config.dt_init = 1.0e-2;
     config.alpha = 1.0e-2;
     config.kappa = 0.5;
-    config.vis_steps = 5;
+    config.vis_steps = 10;
 
     //Make program parameters readeable in execution
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
                    "Mesh file to use.");
-    args.AddOption(&height, "-h", "--height",
-                   "Height of the container.");
     args.AddOption(&out_rad, "-o_r", "--outer_radius",
                    "Outer radius of the container.");
     args.AddOption(&int_rad, "-i_r", "--internal_radius",
