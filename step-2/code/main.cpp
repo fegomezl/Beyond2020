@@ -15,7 +15,7 @@ int main(int argc, char *argv[]){
     const char *mesh_file;
     Config config;
     config.master = (pid == 0);
-    config.serial_refinements = 1;
+    config.serial_refinements = 0;
     config.ode_solver_type = 3;
     config.t_init = 0.;
     config.t_final = 1.;

@@ -21,8 +21,8 @@ Conduction_Operator::~Conduction_Operator(){
 Artic_sea::~Artic_sea(){
     //Delete used memory
     delete pmesh;
-    if (delete_fec) delete fec;
     delete fespace;
+    if (delete_fec) delete fec;
     delete x;
     delete oper;
     delete ode_solver;

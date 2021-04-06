@@ -26,36 +26,40 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, double t_init,
+        Conduction_Operator(ParFiniteElementSpace *&fespace, double t_init,
                             double alpha, double kappa, const Vector &X);
-        virtual void Mult(const Vector &X, Vector &dX_dt) const; 
-        //Solve the Backward-Euler equation k = f(u + dt*k, t) for k
-        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt);
-        //Update the diffusion BillinearForm K using the trueDOF vector X
-        void SetParameters(const Vector &X);
+
+        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
+        virtual void ImplicitSolve(const double dt, 
+                                   const Vector &X, Vector &dX_dt); //Solver for implicit methods
+        void SetParameters(const Vector &X);                        //Update the bilinear forms
+
         virtual ~Conduction_Operator();
-
     protected:
-        ParFiniteElementSpace &fespace;
-        Array<int> ess_tdof_list; 
-
-        ParBilinearForm *m;
-        ParBilinearForm *k;
-
-        HypreParMatrix M;
-        HypreParMatrix K;
-        HypreParMatrix *T;    // T = M + dt K
+        //Operator parameters
         double t_init;
         double current_dt;
+        double alpha;
+        double kappa;
 
-        CGSolver M_solver;    //Krylov solver for M^-1
-        HypreSmoother M_prec; //Preconditioner por M
+        //Mesh objects
+        ParFiniteElementSpace *fespace;
+        Array<int> ess_tdof_list; 
 
-        CGSolver T_solver;    //Implicit solver for T = M + dt K
-        HypreSmoother T_prec; //Preconditioner por implicit solver
+        //System objects
+        ParBilinearForm *m;  //Mass operator
+        ParBilinearForm *k;  //Difussion operator
 
-        double alpha, kappa;  //Nonlinear parameters
+        //Solver objects
+        HypreParMatrix M;
+        HypreParMatrix K;
+        HypreParMatrix *T;    //T = M + dt K
+        CGSolver M_solver;    
+        CGSolver T_solver;    
+        HypreSmoother M_prec; 
+        HypreSmoother T_prec; 
 
+        //Extra
         mutable Vector z;     //Auxiliar vector
 };
 
@@ -99,7 +103,7 @@ class Artic_sea{
 
         //Extra
         ParaViewDataCollection *paraview_out;
-        bool delete_fec;
+        bool delete_fec;   //Need to delete fec at the end
 };
 
 double initial_conditions(const Vector &X);

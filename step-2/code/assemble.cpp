@@ -9,7 +9,7 @@ void Artic_sea::assemble_system(){
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, config.t_init, config.alpha, config.kappa, X);
+    oper = new Conduction_Operator(fespace, config.t_init, config.alpha, config.kappa, X);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -65,28 +65,22 @@ double initial_conditions(const Vector &X){
         return 20;
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, double t_init,
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, double t_init,
                                         double alpha, double kappa, const Vector &X):
     fespace(fespace),
     t_init(t_init),
     alpha(alpha),
     kappa(kappa),
     current_dt(0.),
-    TimeDependentOperator(fespace.GetTrueVSize(), t_init),
+    TimeDependentOperator(fespace->GetTrueVSize(), t_init),
     m(NULL),
     k(NULL),
     T(NULL),
-    M_solver(fespace.GetComm()),
-    T_solver(fespace.GetComm()),
+    M_solver(fespace->GetComm()),
+    T_solver(fespace->GetComm()),
     z(height)
 {
     const double rel_tol = 1e-8;
-
-    //Construct M
-    m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator());
-    m->Assemble(0);
-    m->FormSystemMatrix(ess_tdof_list, M);
 
     //Configure M solver
     M_solver.iterative_mode = false;
@@ -94,9 +88,8 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, double 
     M_solver.SetAbsTol(0.);
     M_solver.SetMaxIter(100);
     M_solver.SetPrintLevel(0);
-    M_prec.SetType(HypreSmoother::Jacobi);
     M_solver.SetPreconditioner(M_prec);
-    M_solver.SetOperator(M);
+    M_prec.SetType(HypreSmoother::Jacobi);
 
     //Configure T solver
     T_solver.iterative_mode = false;
@@ -105,29 +98,4 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, double 
     T_solver.SetMaxIter(100);
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
-
-    //Update the bilinear operator K
-    SetParameters(X);
-}
-
-void Conduction_Operator::SetParameters(const Vector &X){
-    //Renovate k
-    delete k;
-    k = new ParBilinearForm(&fespace);
-
-    //Arrange nonlinear operator
-    ParGridFunction X_alpha(&fespace);
-    X_alpha.SetFromTrueDofs(X);
-    for (int ii = 0; ii < X_alpha.Size(); ii++)
-        X_alpha(ii) = kappa + alpha*X_alpha(ii);
-    GridFunctionCoefficient X_coeff(&X_alpha);
-
-    //Create the new K
-    k->AddDomainIntegrator(new DiffusionIntegrator(X_coeff));
-    k->Assemble(0);
-    k->FormSystemMatrix(ess_tdof_list, K);
-
-    //Renovate T
-    delete T;
-    T = NULL;
 }
