@@ -1,8 +1,8 @@
 #include "header.h"
 
-double height = 20;
-double int_rad = 5;
-double out_rad = 20;
+double height;
+double out_rad;
+double int_rad;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -13,24 +13,24 @@ int main(int argc, char *argv[]){
     bool master = (pid == 0);
 
     //Define program paramenters
-    const char *mesh_file = "data/transfinite_cylinder.msh";
-    int order = 1;
-    int refinements = 0;
+    const char *mesh_file;
+    int order;
+    int refinements;
 
     //Make program parameters readeable in execution
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
                    "Mesh file to use.");
+    args.AddOption(&height, "-h", "--height",
+                   "Height of the container.");
+    args.AddOption(&out_rad, "-o-r", "--outer-radius",
+                   "Outer radius of the container.");
+    args.AddOption(&int_rad, "-i-r", "--internal-radius",
+                   "Internal radius of the container.");
     args.AddOption(&order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
     args.AddOption(&refinements, "-r", "--refinements",
                   "Number of total uniform refinements");
-    args.AddOption(&height, "-h", "--height",
-                   "Height of the container.");
-    args.AddOption(&int_rad, "-i-r", "--internal-radius",
-                   "Internal radius of the container.");
-    args.AddOption(&out_rad, "-o-r", "--outer-radius",
-                   "Outer radius of the container.");
 
     //Check if parameters were read correctly
     args.Parse();
