@@ -1,24 +1,28 @@
 // Gmsh project created on Sun Apr 04 11:41:39 2021
-Inner_Radius = 5;
-Radius = 20;
-Height = 20;
 
-Nb = 2; Rb = 1.00;
-Nc1 = 33; Rc1 = 1.00;
-Nc2 = 33; Rc2 = 1.00;
+Height = 10;
+Radius = 10;
+Radius_Inner = 5;
+
+Nb = 2;
+Rb = 1.00;
+Nc1 = 33;
+Rc1 = 1.00;
+Nc2 = 33;
+Rc2 = 1.00;
 Nz = 2;
 
 SetFactory("OpenCASCADE");
 //+
 Point(1) = {0, 0, 0, 1.0};
 //+
-Point(2) = {Inner_Radius*0.70710678, Inner_Radius*0.70710678, 0, 1.0};
+Point(2) = {Radius_Inner*0.70710678, Radius_Inner*0.70710678, 0, 1.0};
 //+
-Point(3) = {-Inner_Radius*0.70710678, Inner_Radius*0.70710678, 0, 1.0};
+Point(3) = {-Radius_Inner*0.70710678, Radius_Inner*0.70710678, 0, 1.0};
 //+
-Point(4) = {Inner_Radius*0.70710678, -Inner_Radius*0.70710678, 0, 1.0};
+Point(4) = {Radius_Inner*0.70710678, -Radius_Inner*0.70710678, 0, 1.0};
 //+
-Point(5) = {-Inner_Radius*0.70710678, -Inner_Radius*0.70710678, 0, 1.0};
+Point(5) = {-Radius_Inner*0.70710678, -Radius_Inner*0.70710678, 0, 1.0};
 //+
 Circle(1) = {5, 1, 4};
 //+
