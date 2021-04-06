@@ -39,7 +39,7 @@ all: main.x data/mesh_script.geo data/parameters.txt
 graph:
 	@echo -e 'Moving graphs ... \c'
 	@cp -r graph/ $(SHARE_DIR)
-	@echo -e 'Done!\n'
+	@echo -e 'Done!'
 
 main.x: $(DEPENDENCIES)
 	@echo -e 'Compiling' $@ '... \c'

@@ -9,9 +9,13 @@ void Artic_sea::time_step(){
 
     //Print the system state, if neccesary
     if (last || (iteration % config.vis_steps) == 0){
+        double percentage = 100*(t - config.t_init)/(config.t_final - config.t_init);
+        string progress = to_string((int)percentage)+"%";
         if (config.master) 
-            cout << "step " << iteration 
-                 << ", t = " << t << ".\n";
+            cout << left << setw(8)
+                 << iteration << setw(8)
+                 << t << setw(8)
+                 << progress << "\n";
         x->SetFromTrueDofs(X);
         paraview_out->SetCycle(iteration);
         paraview_out->SetTime(t);

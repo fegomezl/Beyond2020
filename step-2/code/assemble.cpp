@@ -40,18 +40,29 @@ void Artic_sea::assemble_system(){
     last = false;
 
     //Open the paraview output and print initial state
-    x->SetFromTrueDofs(X);
     paraview_out = new ParaViewDataCollection("graph", pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x);
-    paraview_out->SetCycle(0);
-    paraview_out->SetTime(t);
-    paraview_out->Save();
+
+    //Start program check
+    if (config.master) 
+        cout << "\n"
+             << "---------------------------\n"
+             << left << setw(8)
+             << "Step" << setw(8)
+             << "Time" << setw(8)
+             << "Progress\n"
+             << "---------------------------\n";
 }
 
 double initial_conditions(const Vector &X){
-    return 0.1*(pow(X(0),2)+pow(X(1),2));
+    double r = sqrt(pow(X(0),2)+pow(X(1),2));
+    double mid = (int_rad + out_rad)/2.; 
+    if (r < mid)
+        return 0;
+    else
+        return 20;
 }
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, double t_init,

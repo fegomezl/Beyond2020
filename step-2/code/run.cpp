@@ -6,10 +6,8 @@ void Artic_sea::run(const char *mesh_file){
     //Run the program
     make_grid(mesh_file);
     assemble_system();
-    for (int ii = 0; !last; ii++){
-        iteration = ii;
+    for (iteration = 0; !last; iteration++)
         time_step();
-    }
     output_results();
 }
 

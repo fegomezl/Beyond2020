@@ -18,7 +18,7 @@ int main(int argc, char *argv[]){
     config.serial_refinements = 1;
     config.ode_solver_type = 3;
     config.t_init = 0.;
-    config.t_final = 10;
+    config.t_final = 1.;
     config.dt_init = 1.0e-2;
     config.alpha = 1.0e-2;
     config.kappa = 0.5;
