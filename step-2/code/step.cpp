@@ -25,30 +25,39 @@ void Artic_sea::time_step(){
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
-    //Initialize the bilinear forms
-    delete k;
+    //Read the solution x
+    ParGridFunction x(fespace);
+    x.SetFromTrueDofs(X);
 
-    //Define K coefficient
-    ParGridFunction x_k(fespace);
-    x_k.SetFromTrueDofs(X);
-    for (int ii = 0; ii < x_k.Size(); ii++){
-        if (x_k(ii) < T_f) x_k(ii) *= alpha_s;
-        else x_k(ii) *= alpha_l;
+    //Set the lower term for the coefficient
+    GradientGridFunctionCoefficient dx(&x);
+    InnerProductCoefficient dx_2(dx, dx);
+    PowerCoefficient Rx(dx_2, -0.5);
+
+    //Set the higher term for the coefficient
+    for (int ii = 0; ii < x.Size(); ii++){
+        if (x(ii) > T_f) 
+            x(ii) = alpha_l*(x(ii) - T_f);
+        else if (x(ii) < T_f) 
+            x(ii) = -alpha_s*(T_f - x(ii));
+        else
+            x(ii) = 0;
     }
-    GridFunctionCoefficient coeff_k(&x_k);
+    GradientGridFunctionCoefficient da(&x);
+    InnerProductCoefficient da_2(da, da);
+    PowerCoefficient Ra(da_2, 0.5);
 
     //Create the new K
+    delete k;
     k = new ParBilinearForm(fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(coeff_k));
+    ProductCoefficient coeff(Ra, Rx);
+    k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
     k->FormSystemMatrix(ess_tdof_list, K);
 
     //Renovate T
     delete T;
     T = NULL;
-
-    //Update the solvers
-    M_solver.SetOperator(M);
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{

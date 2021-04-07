@@ -4,7 +4,7 @@ Height = 10;
 Radius = 10;
 Radius_Inner = 5;
 
-Nb = 50;
+Nb = 20;
 Rb = 1.00;
 Nc1 = 33;
 Rc1 = 1.00;
