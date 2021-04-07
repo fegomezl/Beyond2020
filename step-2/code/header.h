@@ -19,15 +19,15 @@ struct Config{
     double t_init;
     double t_final;
     double dt_init;
-    double alpha;
-    double kappa;
+    double alpha_l;
+    double alpha_s;
     int vis_steps;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(ParFiniteElementSpace *&fespace, double t_init,
-                            double alpha, double kappa, const Vector &X);
+                            double alpha_l, double alpha_s, const Vector &X);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
@@ -39,8 +39,8 @@ class Conduction_Operator : public TimeDependentOperator{
         //Operator parameters
         double t_init;
         double current_dt;
-        double alpha;
-        double kappa;
+        double alpha_l;
+        double alpha_s;
 
         //Mesh objects
         ParFiniteElementSpace *fespace;
@@ -110,3 +110,5 @@ double initial_conditions(const Vector &X);
 
 extern double int_rad;
 extern double out_rad;
+extern double T_f;
+extern double T_i;

@@ -26,27 +26,15 @@ void Artic_sea::time_step(){
 
 void Conduction_Operator::SetParameters(const Vector &X){
     //Initialize the bilinear forms
-    delete m;
     delete k;
-
-    //Define M coefficient
-    ParGridFunction x_m(fespace);
-    x_m.SetFromTrueDofs(X);
-    for (int ii = 0; ii < x_m.Size(); ii++)
-        x_m(ii) = kappa + alpha*x_m(ii);
-    GridFunctionCoefficient coeff_m(&x_m);
-
-    //Create the new M
-    m = new ParBilinearForm(fespace);
-    m->AddDomainIntegrator(new MassIntegrator(coeff_m));
-    m->Assemble(0);
-    m->FormSystemMatrix(ess_tdof_list, M);
 
     //Define K coefficient
     ParGridFunction x_k(fespace);
     x_k.SetFromTrueDofs(X);
-    for (int ii = 0; ii < x_k.Size(); ii++)
-        x_k(ii) = kappa + alpha*x_k(ii);
+    for (int ii = 0; ii < x_k.Size(); ii++){
+        if (x_k(ii) < T_f) x_k(ii) *= alpha_s;
+        else x_k(ii) *= alpha_l;
+    }
     GridFunctionCoefficient coeff_k(&x_k);
 
     //Create the new K

@@ -2,6 +2,8 @@
 
 double out_rad;
 double int_rad;
+double T_f = 0.;
+double T_i = 10.;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -18,10 +20,10 @@ int main(int argc, char *argv[]){
     config.serial_refinements = 0;
     config.ode_solver_type = 3;
     config.t_init = 0.;
-    config.t_final = 1.;
-    config.dt_init = 1.0e-2;
-    config.alpha = 1.0e-2;
-    config.kappa = 0.5;
+    config.t_final = 0.9;
+    config.dt_init = 0.001;
+    config.alpha_l = 0.4;
+    config.alpha_s = 1.;
     config.vis_steps = 10;
 
     //Make program parameters readeable in execution
@@ -47,10 +49,14 @@ int main(int argc, char *argv[]){
                    "Final time.");
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
-    args.AddOption(&config.alpha, "-a", "--alpha",
-                   "Alpha coefficient.");
-    args.AddOption(&config.kappa, "-k", "--kappa",
-                   "Kappa coefficient offset.");
+    args.AddOption(&config.alpha_l, "-a_l", "--alpha_liquid",
+                   "Alpha coefficient for liquid phase.");
+    args.AddOption(&config.alpha_s, "-a_s", "--alpha_solid",
+                   "Alpha coefficient for solid phase.");
+    args.AddOption(&T_f, "-T_f", "--Temperature_fusion",
+                   "Fusion Temperature of the material.");
+    args.AddOption(&T_i, "-T_i", "--Temperature_initial",
+                   "Initial temperature of the material.");
     args.AddOption(&config.vis_steps, "-v_s", "--visualization_steps",
                    "Visualize every n-th timestep.");
 

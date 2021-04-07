@@ -9,7 +9,7 @@ void Artic_sea::assemble_system(){
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(fespace, config.t_init, config.alpha, config.kappa, X);
+    oper = new Conduction_Operator(fespace, config.t_init, config.alpha_l, config.alpha_s, X);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -60,17 +60,17 @@ double initial_conditions(const Vector &X){
     double r = sqrt(pow(X(0),2)+pow(X(1),2));
     double mid = (int_rad + out_rad)/2.; 
     if (r < mid)
-        return 0;
+        return T_f;
     else
-        return 20;
+        return T_i;
 }
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, double t_init,
-                                        double alpha, double kappa, const Vector &X):
+                                        double alpha_l, double alpha_s, const Vector &X):
     fespace(fespace),
     t_init(t_init),
-    alpha(alpha),
-    kappa(kappa),
+    alpha_l(alpha_l),
+    alpha_s(alpha_s),
     current_dt(0.),
     TimeDependentOperator(fespace->GetTrueVSize(), t_init),
     m(NULL),
@@ -82,6 +82,12 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, double
 {
     const double rel_tol = 1e-8;
 
+    //Construct M
+    m = new ParBilinearForm(fespace);
+    m->AddDomainIntegrator(new MassIntegrator());
+    m->Assemble(0);
+    m->FormSystemMatrix(ess_tdof_list, M);
+
     //Configure M solver
     M_solver.iterative_mode = false;
     M_solver.SetRelTol(rel_tol);
@@ -89,6 +95,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, double
     M_solver.SetMaxIter(100);
     M_solver.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
+    M_solver.SetOperator(M);
     M_prec.SetType(HypreSmoother::Jacobi);
 
     //Configure T solver
