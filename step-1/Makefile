@@ -1,34 +1,40 @@
-#computer parameters
+#Computer parameters
 MFEM_INSTALL_DIR = ~/spackgcc/gcc-10.2.0/mfem-4.2.0-vxsy2qfd4okzgqnuybubclbv2fnntoga/
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
 SHARE_DIR = /media/sf_Shared_Folder_Arch2/
-PROCESSORS = 6
+PROCCESORS = $(shell sed -n 14p data/parameters.txt | tr -d -c 0-9.)
 
 include $(CONFIG_MK)
 
 #Mesh parameters
-MESH = data/transfinite_cylinder.msh 
+NMESH = $(shell sed -n 2p data/parameters.txt)  
+MESH = $(filter-out #mesh file,$(NMESH))
+HEIGHT = $(shell sed -n 3p data/parameters.txt | tr -d -c 0-9.)  
+OUTER_RADIUS = $(shell sed -n 4p data/parameters.txt | tr -d -c 0-9.)
+INNER_RADIUS = $(shell sed -n 5p data/parameters.txt | tr -d -c 0-9.)
 
 #Program parameters
-REF = 2
-ORDER = 1
+REF = $(shell sed -n 12p data/parameters.txt | tr -d -c 0-9.) 
+ORDER = $(shell sed -n 13p data/parameters.txt | tr -d -c 0-9.)
 
 CXX = mpic++
-FLAGS = -std=c++11 -g -O3 $(MFEM_FLAGS)
-RUN = mpirun -np $(PROCESSORS) ./
+FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
+RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all graph clean oclean
 
-all: main.x data/mesh_script.geo code/parameters_script.sh
-	@echo -e "Reading parameters ... \n"
-	bash code/parameters_script.sh
+all: main.x data/mesh_script.geo data/parameters.txt
+	@echo -e 'Reading parameters ... \c'
+	@bash script/parameters_script.sh
 	@echo -e 'Generating mesh ... \n'
 	@gmsh data/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< -o $(ORDER) -r $(REF) -m $(MESH)
+	@$(RUN)$< --mesh $(MESH) --height $(HEIGHT) \
+					  --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
+  					--order $(ORDER) --refinements $(REF) 
 	@echo -e '\n'
 	@cat data/convergence.txt
 	@echo -e '\nDone!\n'
@@ -36,17 +42,17 @@ all: main.x data/mesh_script.geo code/parameters_script.sh
 graph:
 	@echo -e 'Moving graphs ... \c'
 	@cp -r graph/ $(SHARE_DIR)
-	@echo -e 'Done\n'
+	@echo -e 'Done!\n'
 
 main.x: $(DEPENDENCIES)
 	@echo -e 'Compiling' $@ '... \c'
 	@$(CXX) $(FLAGS) $^ $(MFEM_LIBS) -o $@
-	@echo -e 'Done\n'
+	@echo -e 'Done!\n'
 
 .objects/%.o: code/%.cpp
 	@echo -e 'Building' $@ '... \c'
 	@$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
-	@echo -e 'Done\n'
+	@echo -e 'Done!\n'
 
 clean:
 	@rm -rf *.x graph/*
