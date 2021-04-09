@@ -16,18 +16,14 @@ struct Config{
     int serial_refinements;
     int refinements;
     int ode_solver_type;
-    double t_init;
-    double t_final;
     double dt_init;
-    double alpha_l;
-    double alpha_s;
+    double t_final;
     int vis_steps;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace *&fespace, double t_init,
-                            double alpha_l, double alpha_s, const Vector &X);
+        Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
@@ -37,10 +33,7 @@ class Conduction_Operator : public TimeDependentOperator{
         virtual ~Conduction_Operator();
     protected:
         //Operator parameters
-        double t_init;
         double current_dt;
-        double alpha_l;
-        double alpha_s;
 
         //Mesh objects
         ParFiniteElementSpace *fespace;
@@ -106,9 +99,12 @@ class Artic_sea{
         bool delete_fec;   //Need to delete fec at the end
 };
 
-double initial_conditions(const Vector &X);
+double theta(double x, double alpha);
+double exact(const Vector &x, double t);
 
-extern double int_rad;
-extern double out_rad;
-extern double T_f;
-extern double T_i;
+extern double T_f;     //Fusion temperature
+extern double T_i;     //Initial temperature
+
+extern double alpha_s; //Solid thermal conduction
+extern double alpha_l; //Liquid thermal conduction
+extern double lamda;   //s(t) = sqrt(4*lamda*(alpha_s+alpha_l)*t)

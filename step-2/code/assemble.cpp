@@ -1,15 +1,20 @@
 #include "header.h"
 
 void Artic_sea::assemble_system(){
+    //Set boundary conditions
+    Array<int> ess_bdr(pmesh->bdr_attributes.Max());
+    ess_bdr = 1;  
+    ConstantCoefficient boundary(T_f);
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
-    FunctionCoefficient x_0(initial_conditions);
+    ConstantCoefficient x_0(T_i);
     x->ProjectCoefficient(x_0);
+    x->ProjectBdrCoefficient(boundary, ess_bdr);
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(fespace, config.t_init, config.alpha_l, config.alpha_s, X);
+    oper = new Conduction_Operator(fespace, X, pmesh->bdr_attributes.Max());
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -35,8 +40,8 @@ void Artic_sea::assemble_system(){
 
     //Initialize the system
     ode_solver->Init(*oper);
-    t = config.t_init;
     dt = config.dt_init;
+    t = 0;
     last = false;
 
     //Open the paraview output and print initial state
@@ -56,31 +61,34 @@ void Artic_sea::assemble_system(){
              << "---------------------------\n";
 }
 
-double initial_conditions(const Vector &X){
-    double r = sqrt(pow(X(0),2)+pow(X(1),2));
-    double mid = (int_rad + out_rad)/2.; 
-    if (r < mid)
-        return T_f;
-    else
-        return T_i;
+double theta(double x, double alpha){
+    return exp(-x/alpha)/sqrt(x) - sqrt(M_PI/alpha)*erfc(sqrt(x/alpha));
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, double t_init,
-                                        double alpha_l, double alpha_s, const Vector &X):
+double exact(const Vector &x, double t){
+    double r_2 = pow(x.Norml2(),2);
+    if (r_2 > 4*lamda*(alpha_s + alpha_l)*t)
+        return T_i - (T_i - T_f)*theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_l)/theta(lamda,alpha_l);
+    else
+        return T_f - (T_i - T_f)*(theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_s) - theta(lamda,alpha_s));
+}
+
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size):
     fespace(fespace),
-    t_init(t_init),
-    alpha_l(alpha_l),
-    alpha_s(alpha_s),
-    current_dt(0.),
-    TimeDependentOperator(fespace->GetTrueVSize(), t_init),
-    m(NULL),
-    k(NULL),
-    T(NULL),
+    TimeDependentOperator(fespace->GetTrueVSize(), 0.),
     M_solver(fespace->GetComm()),
     T_solver(fespace->GetComm()),
-    z(height)
+    z(height),
+    current_dt(0.),
+    m(NULL),
+    k(NULL),
+    T(NULL)
 {
     const double rel_tol = 1e-8;
+
+    Array<int> ess_bdr(b_size);
+    ess_bdr = 1;
+    fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
     //Construct M
     m = new ParBilinearForm(fespace);

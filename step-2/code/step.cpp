@@ -8,15 +8,17 @@ void Artic_sea::time_step(){
     oper->SetParameters(X);
     ode_solver->Step(X, t, dt);
 
-    //Print the system state, if neccesary
+    //Print the system state 
+    double percentage = 100*t/config.t_final;
+    string progress = to_string((int)percentage)+"%";
+    if (config.master){
+        cout << left << setw(8)
+             << iteration << setw(8)
+             << t << setw(8)
+             << progress << "\r";
+        cout.flush();
+    }
     if (last || (iteration % config.vis_steps) == 0){
-        double percentage = 100*(t - config.t_init)/(config.t_final - config.t_init);
-        string progress = to_string((int)percentage)+"%";
-        if (config.master) 
-            cout << left << setw(8)
-                 << iteration << setw(8)
-                 << t << setw(8)
-                 << progress << "\n";
         x->SetFromTrueDofs(X);
         paraview_out->SetCycle(iteration);
         paraview_out->SetTime(t);
@@ -29,28 +31,18 @@ void Conduction_Operator::SetParameters(const Vector &X){
     ParGridFunction x(fespace);
     x.SetFromTrueDofs(X);
 
-    //Set the lower term for the coefficient
-    GradientGridFunctionCoefficient dx(&x);
-    InnerProductCoefficient dx_2(dx, dx);
-    PowerCoefficient Rx(dx_2, -0.5);
-
-    //Set the higher term for the coefficient
+    //Create the K coefficient
     for (int ii = 0; ii < x.Size(); ii++){
         if (x(ii) > T_f) 
-            x(ii) = alpha_l*(x(ii) - T_f);
-        else if (x(ii) < T_f) 
-            x(ii) = -alpha_s*(T_f - x(ii));
-        else
-            x(ii) = 0;
+            x(ii) *= alpha_l;
+        else  
+            x(ii) *= alpha_s;
     }
-    GradientGridFunctionCoefficient da(&x);
-    InnerProductCoefficient da_2(da, da);
-    PowerCoefficient Ra(da_2, 0.5);
+    GridFunctionCoefficient coeff(&x);
 
     //Create the new K
     delete k;
     k = new ParBilinearForm(fespace);
-    ProductCoefficient coeff(Ra, Rx);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
     k->FormSystemMatrix(ess_tdof_list, K);
@@ -79,3 +71,21 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
     z.Neg();
     T_solver.Mult(z, dX_dt);
 }
+
+    /*Set the lower term for the coefficient
+    GradientGridFunctionCoefficient dx(&x);
+    InnerProductCoefficient dx_2(dx, dx);
+    PowerCoefficient Rx(dx_2, -0.5);
+
+    //Set the higher term for the coefficient
+    for (int ii = 0; ii < x.Size(); ii++){
+        if (x(ii) > T_f) 
+            x(ii) = alpha_l*(x(ii) - T_f);
+        else if (x(ii) < T_f) 
+            x(ii) = -alpha_s*(T_f - x(ii));
+        else
+            x(ii) = 0;
+    }
+    GradientGridFunctionCoefficient da(&x);
+    InnerProductCoefficient da_2(da, da);
+    PowerCoefficient Ra(da_2, 0.5);*/

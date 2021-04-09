@@ -31,9 +31,7 @@ all: main.x data/mesh_script.geo data/parameters.txt
 	@gmsh data/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh $(MESH) \
-					  --internal_radius $(INNER_RADIUS) --outer_radius $(OUTER_RADIUS) \
-  					--order $(ORDER) --refinements $(REF) 
+	@$(RUN)$< --mesh $(MESH) --order $(ORDER) --refinements $(REF) 
 	@echo -e '\nDone!\n'
 
 graph:

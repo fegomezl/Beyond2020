@@ -6,7 +6,6 @@ void Artic_sea::make_grid(const char *mesh_file){
     dim = mesh->Dimension();
 
     //Refine mesh (serial)
-    config.serial_refinements = min(config.serial_refinements, (int)floor(log(10000./mesh->GetNE())/log(2.)/dim));
     config.serial_refinements = min(config.refinements, config.serial_refinements);
     for (int ii = 0; ii < config.serial_refinements; ii++)
         mesh->UniformRefinement();

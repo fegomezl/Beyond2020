@@ -6,7 +6,7 @@ data/transfinite_cylinder.msh #mesh file
 20 #Nb
 33 #Nc_one
 33 #Nc_two
-2  #Nz
+20  #Nz
 
 FE parameters
 0  #Refinements
