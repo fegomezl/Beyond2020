@@ -1,14 +1,16 @@
 // Gmsh project created on Sun Apr 04 11:41:39 2021
 
+Mesh.ElementOrder = 2;
+Mesh.SecondOrderLinear = 0;
 Height = 20;
 Radius = 20;
 Radius_Inner = 5;
 
-Nb = 2;
+Nb = 4;
 Rb = 1.00;
-Nc1 = 33;
+Nc1 = 5;
 Rc1 = 1.00;
-Nc2 = 33;
+Nc2 = 5;
 Rc2 = 1.00;
 Nz = 2;
 
