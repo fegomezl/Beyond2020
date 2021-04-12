@@ -1,5 +1,7 @@
 #include "header.h"
 
+Config::Config(bool master):master(master){}
+
 Artic_sea::Artic_sea(Config config):config(config){}
 
 void Artic_sea::run(const char *mesh_file){

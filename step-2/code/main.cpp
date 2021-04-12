@@ -13,16 +13,14 @@ int main(int argc, char *argv[]){
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);
-    bool master = (pid == 0);
 
     //Define program paramenters
     const char *mesh_file;
-    Config config;
-    config.master = (pid == 0);
+    Config config(pid == 0);
     config.serial_refinements = 0;
     config.ode_solver_type = 3;
     config.dt_init = 0.001;
-    config.t_final = 0.1;
+    config.t_final = 0.02;
     config.vis_steps = 10;
 
     //Make program parameters readeable in execution
@@ -58,11 +56,11 @@ int main(int argc, char *argv[]){
     //Check if parameters were read correctly
     args.Parse();
     if (!args.Good()){
-        if (master) args.PrintUsage(cout);
+        if (config.master) args.PrintUsage(cout);
         MPI_Finalize();
         return 1;
     }
-    if (master) args.PrintOptions(cout);
+    if (config.master) args.PrintOptions(cout);
 
     //Run the program for different refinements
     Artic_sea artic_sea(config);

@@ -10,6 +10,8 @@ using namespace std;
 using namespace mfem;
 
 struct Config{
+    //Constructor
+    Config(bool master);
     //Passing parameters
     bool master;
     int order;

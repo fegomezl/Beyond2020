@@ -8,7 +8,7 @@ include $(CONFIG_MK)
 
 #Mesh parameters
 NMESH = $(shell sed -n 2p data/parameters.txt)  
-MESH = $(filter-out #mesh file,$(NMESH))
+MESH = $(filter-out #Mesh_file,$(NMESH))
 OUTER_RADIUS = $(shell sed -n 4p data/parameters.txt | tr -d -c 0-9.)
 INNER_RADIUS = $(shell sed -n 5p data/parameters.txt | tr -d -c 0-9.)
 
@@ -24,11 +24,11 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all graph clean oclean
 
-all: main.x data/mesh_script.geo data/parameters.txt
+all: main.x data/parameters.txt
 	@echo -e 'Reading parameters ... \c'
 	@bash script/parameters_script.sh
 	@echo -e 'Generating mesh ... \n'
-	@gmsh data/mesh_script.geo -format msh2 -o $(MESH) -3
+	@gmsh script/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh $(MESH) --order $(ORDER) --refinements $(REF) 

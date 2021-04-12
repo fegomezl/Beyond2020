@@ -1,12 +1,12 @@
 Mesh parameters
-data/transfinite_cylinder.msh #mesh file
+graph/transfinite_cylinder.msh #Mesh_file
 10 #Height
 10 #Radius
 5  #Radius_Inner
 20 #Nb
 33 #Nc_one
 33 #Nc_two
-20  #Nz
+20 #Nz
 
 FE parameters
 0  #Refinements
