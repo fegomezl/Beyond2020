@@ -25,15 +25,14 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all graph clean oclean
 
-all: main.x data/mesh_script.geo data/parameters.txt
+all: main.x data/parameters.txt
 	@echo -e 'Reading parameters ... \c'
 	@bash script/parameters_script.sh
 	@echo -e 'Generating mesh ... \n'
-	@gmsh data/mesh_script.geo -format msh2 -o $(MESH) -3
+	@gmsh script/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh $(MESH) --height $(HEIGHT) \
-					  --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
+	@$(RUN)$< --mesh $(MESH) --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) 
 	@echo -e '\n'
 	@cat data/convergence.txt

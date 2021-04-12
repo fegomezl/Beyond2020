@@ -1,5 +1,5 @@
 Mesh parameters
-data/transfinite_cylinder.msh #mesh file
+graph/transfinite_cylinder.msh #mesh file
 20 #Height
 20 #Radius
 5  #Radius_Inner
