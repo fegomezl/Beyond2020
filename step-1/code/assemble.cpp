@@ -6,7 +6,7 @@ double rhs(const Vector &x){
     return (pow(10,-4)/7)*(2*(pow(height,2) - z_2) + pow(out_rad,2) - r_2);
 }
 
-double g(const Vector &x){
+double boundary(const Vector &x){
     double z_2 = pow(x(2),2);
     return (pow(10,-4)/7)*int_rad*(pow(height,2) - z_2);
 }
@@ -40,8 +40,8 @@ void Artic_sea::assemble_system(){
 
     //Create RHS
     b = new ParLinearForm(fespace);
-    FunctionCoefficient gcoeff(g);
-    b->AddBoundaryIntegrator(new BoundaryLFIntegrator(gcoeff), nbc_marker);
+    FunctionCoefficient boundarycoeff(boundary);
+    b->AddBoundaryIntegrator(new BoundaryLFIntegrator(boundarycoeff), nbc_marker);
     FunctionCoefficient f(rhs);
     b->AddDomainIntegrator(new DomainLFIntegrator(f));
     b->Assemble();

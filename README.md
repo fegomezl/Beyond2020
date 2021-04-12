@@ -1,2 +1,2 @@
-# Project Proposal Beyond 2020-I
+# Project Beyond 2020-I
 ---
