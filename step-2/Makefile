@@ -1,7 +1,7 @@
 #Computer parameters
-MFEM_INSTALL_DIR = ~/repos/spack/opt/spack/linux-arch-sandybridge/gcc-10.2.0/mfem-4.2.0-cnxxrnnnbzf2o6blvzgu3g4546jmf2ku
+MFEM_INSTALL_DIR = ~/spackgcc/gcc-10.2.0/mfem-4.2.0-vxsy2qfd4okzgqnuybubclbv2fnntoga/
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
-SHARE_DIR = /media/sf_Arch_data/
+SHARE_DIR = /media/sf_Shared_Folder_Arch2/
 PROCCESORS = 4
 
 include $(CONFIG_MK)
