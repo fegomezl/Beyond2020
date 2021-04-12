@@ -51,9 +51,9 @@ class Artic_sea{
 };
 
 //Compute functions
-double rhs(const Vector &x);
-double exact(const Vector &x);
-double g(const Vector &x);   //for Neumann condition
+double rhs(const Vector &x);        //Right hand side of the equation
+double boundary(const Vector &x);   //for Neumann condition
+double exact(const Vector &x);      //Exact solution for the equation
 
 extern double height;
 extern double int_rad;

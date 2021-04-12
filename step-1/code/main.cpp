@@ -30,7 +30,7 @@ int main(int argc, char *argv[]){
     args.AddOption(&order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
     args.AddOption(&refinements, "-r", "--refinements",
-                  "Number of total uniform refinements");
+                   "Number of total uniform refinements");
 
     //Check if parameters were read correctly
     args.Parse();

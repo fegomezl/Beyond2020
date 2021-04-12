@@ -9,5 +9,5 @@ graph/transfinite_cylinder.msh #mesh file
 1  #Nz
 
 FE parameters
-5  #Refinements
+4  #Refinements
 2  #Order
