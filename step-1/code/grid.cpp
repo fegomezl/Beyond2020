@@ -5,8 +5,16 @@ void Artic_sea::make_grid(const char *mesh_file){
     Mesh *mesh = new Mesh(mesh_file, 1, 1);
     dim = mesh->Dimension();
 
+    //Calculate how many serial refinements are needed
+    //More than 1000 cells per processor
+    int elements = mesh->GetNE();
+    int min_elements = 1000.*config.nproc;
+    if (min_elements > elements) 
+        serial_refinements = min(config.refinements, (int)floor(log(min_elements/elements)/(dim*log(2.))));
+    else 
+        serial_refinements = 0;
+
     //Refine mesh (serial)
-    serial_refinements = min(refinements, (int)floor(log(10000./mesh->GetNE())/log(2.)/dim));
     for (int ii = 0; ii < serial_refinements; ii++)
         mesh->UniformRefinement();
 
@@ -15,7 +23,7 @@ void Artic_sea::make_grid(const char *mesh_file){
     delete mesh;
 
     //Refine mesh (parallel)
-    for (int ii = 0; ii < refinements - serial_refinements; ii++)
+    for (int ii = 0; ii < config.refinements - serial_refinements; ii++)
         pmesh->UniformRefinement();
 
     //Calculate minimum size of elements
@@ -23,16 +31,10 @@ void Artic_sea::make_grid(const char *mesh_file){
     pmesh->GetCharacteristics(h_min, null, null, null);
 
     //Create the FEM space associated with the mesh
-    if (order > 0) {
-        fec = new H1_FECollection(order, dim);
-        delete_fec = true;
-    } else if (pmesh->GetNodes()){
-        fec = pmesh->GetNodes()->OwnFEC();
-        delete_fec = false;
-    } else {
-        fec = new H1_FECollection(order = 1, dim);
-        delete_fec = true;
-    }
+    if (config.order > 0)
+        fec = new H1_FECollection(config.order, dim);
+    else
+        fec = new H1_FECollection(config.order = 1, dim);
     fespace = new ParFiniteElementSpace(pmesh, fec);
     size = fespace->GlobalTrueVSize();
 }
