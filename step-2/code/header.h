@@ -10,15 +10,17 @@ using namespace std;
 using namespace mfem;
 
 struct Config{
+    //Constructor
+    Config(bool master, int nproc);
     //Passing parameters
     bool master;
+    int nproc;
     int order;
-    int serial_refinements;
     int refinements;
-    int ode_solver_type;
     double dt_init;
     double t_final;
     int vis_steps;
+    int ode_solver_type;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -78,6 +80,7 @@ class Artic_sea{
 
         //Output parameters
         int dim;
+        int serial_refinements;
         double h_min;
         HYPRE_Int size;
 
@@ -96,15 +99,11 @@ class Artic_sea{
 
         //Extra
         ParaViewDataCollection *paraview_out;
-        bool delete_fec;   //Need to delete fec at the end
 };
-
-double theta(double x, double alpha);
-double exact(const Vector &x, double t);
 
 extern double T_f;     //Fusion temperature
 extern double T_i;     //Initial temperature
 
-extern double alpha_s; //Solid thermal conduction
 extern double alpha_l; //Liquid thermal conduction
-extern double lamda;   //s(t) = sqrt(4*lamda*(alpha_s+alpha_l)*t)
+extern double alpha_s; //Solid thermal conduction
+extern double lambda;   //s(t) = sqrt(4*lamda*(alpha_s+alpha_l)*t)

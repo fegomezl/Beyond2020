@@ -1,6 +1,13 @@
 #include "header.h"
 
-Artic_sea::Artic_sea(Config config):config(config){}
+Config::Config(bool master, int nproc):
+    master(master),
+    nproc(nproc)
+{}
+
+Artic_sea::Artic_sea(Config config):
+    config(config)
+{}
 
 void Artic_sea::run(const char *mesh_file){
     //Run the program
@@ -22,7 +29,7 @@ Artic_sea::~Artic_sea(){
     //Delete used memory
     delete pmesh;
     delete fespace;
-    if (delete_fec) delete fec;
+    delete fec;
     delete x;
     delete oper;
     delete ode_solver;

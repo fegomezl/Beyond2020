@@ -71,21 +71,3 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
     z.Neg();
     T_solver.Mult(z, dX_dt);
 }
-
-    /*Set the lower term for the coefficient
-    GradientGridFunctionCoefficient dx(&x);
-    InnerProductCoefficient dx_2(dx, dx);
-    PowerCoefficient Rx(dx_2, -0.5);
-
-    //Set the higher term for the coefficient
-    for (int ii = 0; ii < x.Size(); ii++){
-        if (x(ii) > T_f) 
-            x(ii) = alpha_l*(x(ii) - T_f);
-        else if (x(ii) < T_f) 
-            x(ii) = -alpha_s*(T_f - x(ii));
-        else
-            x(ii) = 0;
-    }
-    GradientGridFunctionCoefficient da(&x);
-    InnerProductCoefficient da_2(da, da);
-    PowerCoefficient Ra(da_2, 0.5);*/

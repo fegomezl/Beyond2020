@@ -67,10 +67,10 @@ double theta(double x, double alpha){
 
 double exact(const Vector &x, double t){
     double r_2 = pow(x.Norml2(),2);
-    if (r_2 > 4*lamda*(alpha_s + alpha_l)*t)
-        return T_i - (T_i - T_f)*theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_l)/theta(lamda,alpha_l);
+    if (r_2 > 4*lambda*(alpha_s + alpha_l)*t)
+        return T_i - (T_i - T_f)*theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_l)/theta(lambda,alpha_l);
     else
-        return T_f - (T_i - T_f)*(theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_s) - theta(lamda,alpha_s));
+        return T_f - (T_i - T_f)*(theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_s) - theta(lambda,alpha_s));
 }
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size):

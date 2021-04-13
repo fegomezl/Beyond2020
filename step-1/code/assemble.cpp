@@ -1,17 +1,20 @@
 #include "header.h"
 
-double rhs(const Vector &x){
+//Right hand side of the equation
+double rhs(const Vector &x){                 
     double r_2 = pow(x(0),2) + pow(x(1),2);
     double z_2 = pow(x(2),2);
     return (pow(10,-4)/7)*(2*(pow(height,2) - z_2) + pow(out_rad,2) - r_2);
 }
 
-double g(const Vector &x){
+//for Neumann condition
+double boundary(const Vector &x){            
     double z_2 = pow(x(2),2);
     return (pow(10,-4)/7)*int_rad*(pow(height,2) - z_2);
 }
 
-double exact(const Vector &x){
+//Exact solution for the equation
+double exact(const Vector &x){               
     double r_2 = pow(x(0),2) + pow(x(1),2);
     double z_2 = pow(x(2),2);
     return (pow(10,-4)/7)*0.5*(z_2 - pow(height,2))*(r_2 - pow(out_rad,2));
@@ -40,8 +43,8 @@ void Artic_sea::assemble_system(){
 
     //Create RHS
     b = new ParLinearForm(fespace);
-    FunctionCoefficient gcoeff(g);
-    b->AddBoundaryIntegrator(new BoundaryLFIntegrator(gcoeff), nbc_marker);
+    FunctionCoefficient boundarycoeff(boundary);
+    b->AddBoundaryIntegrator(new BoundaryLFIntegrator(boundarycoeff), nbc_marker);
     FunctionCoefficient f(rhs);
     b->AddDomainIntegrator(new DomainLFIntegrator(f));
     b->Assemble();

@@ -1,21 +1,15 @@
-#Computer parameters
-MFEM_INSTALL_DIR = ~/spackgcc/gcc-10.2.0/mfem-4.2.0-vxsy2qfd4okzgqnuybubclbv2fnntoga/
-CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
-SHARE_DIR = /media/sf_Shared_Folder_Arch2/
-PROCCESORS = $(shell sed -n 14p data/parameters.txt | tr -d -c 0-9.)
-
-include $(CONFIG_MK)
+include ../local_config.mk
 
 #Mesh parameters
 NMESH = $(shell sed -n 2p data/parameters.txt)  
-MESH = $(filter-out #mesh file,$(NMESH))
+MESH = $(filter-out #Mesh_file,$(NMESH))
 HEIGHT = $(shell sed -n 3p data/parameters.txt | tr -d -c 0-9.)  
 OUTER_RADIUS = $(shell sed -n 4p data/parameters.txt | tr -d -c 0-9.)
 INNER_RADIUS = $(shell sed -n 5p data/parameters.txt | tr -d -c 0-9.)
 
 #Program parameters
-REF = $(shell sed -n 12p data/parameters.txt | tr -d -c 0-9.) 
-ORDER = $(shell sed -n 13p data/parameters.txt | tr -d -c 0-9.)
+REF = $(shell sed -n 11p data/parameters.txt | tr -d -c 0-9.) 
+ORDER = $(shell sed -n 12p data/parameters.txt | tr -d -c 0-9.)
 
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
@@ -25,15 +19,14 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all graph clean oclean
 
-all: main.x data/mesh_script.geo data/parameters.txt
+all: main.x data/parameters.txt
 	@echo -e 'Reading parameters ... \c'
 	@bash script/parameters_script.sh
 	@echo -e 'Generating mesh ... \n'
-	@gmsh data/mesh_script.geo -format msh2 -o $(MESH) -3
+	@gmsh script/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh $(MESH) --height $(HEIGHT) \
-					  --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
+	@$(RUN)$< --mesh $(MESH) --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) 
 	@echo -e '\n'
 	@cat data/convergence.txt
