@@ -8,5 +8,5 @@ graph/transfinite_cylinder.msh #Mesh_file
 3   #Vertical_cells
 
 FE parameters
-3  #Refinements
+2  #Refinements
 2  #Order
