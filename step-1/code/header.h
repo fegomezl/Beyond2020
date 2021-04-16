@@ -5,12 +5,23 @@
 #include <cmath>
 #include "mfem.hpp"
 
+struct Config{
+    //Constructor
+    Config(bool master, int nproc);
+    //Passing parameters
+    bool master;
+    int nproc;
+    int order;
+    int refinements;
+    bool last;
+};
+
 using namespace std;
 using namespace mfem;
 
 class Artic_sea{
     public:
-        Artic_sea(bool master, int order, int refinements, bool last);
+        Artic_sea(Config config);
         void run(const char *mesh_file);
         ~Artic_sea();
     private:
@@ -20,11 +31,10 @@ class Artic_sea{
         void output_results();
 
         //Global parameters
-        bool master;
-        bool last;
-        int order;
+        Config config;
+
+        //Output parameters
         int dim;
-        int refinements;
         int serial_refinements;
         HYPRE_Int size;
         double h_min;
@@ -45,15 +55,7 @@ class Artic_sea{
         HypreParMatrix A;
         Vector B;
         Vector X;
-
-        //Extra
-        bool delete_fec;
 };
-
-//Compute functions
-double rhs(const Vector &x);        //Right hand side of the equation
-double boundary(const Vector &x);   //for Neumann condition
-double exact(const Vector &x);      //Exact solution for the equation
 
 extern double height;
 extern double int_rad;

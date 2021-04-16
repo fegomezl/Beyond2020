@@ -1,17 +1,17 @@
 #include "header.h"
 
 void Artic_sea::output_results(){
-    if (master){
+    if (config.master){
     //Print general information of the program
         cout << "\nSize: " << size << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
-             << "Parallel refinements: " << max(refinements-serial_refinements,0) << "\n"
-             << "Total refinements: " << refinements << "\n";
+             << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
+             << "Total refinements: " << config.refinements << "\n";
 
     //Print numerical results of the program
         ofstream output;
         output.precision(4);
-        if (refinements != 0)
+        if (config.refinements != 0)
             output.open("data/convergence.txt", std::ios::app);
         else{
             output.open("data/convergence.txt", std::ios::trunc);
@@ -28,12 +28,12 @@ void Artic_sea::output_results(){
     }
 
     //Print visual results to Paraview
-    if (last){
+    if (config.last){
         ParaViewDataCollection paraview_out("graph", pmesh);
         paraview_out.SetDataFormat(VTKFormat::BINARY);
         paraview_out.SetCycle(0);
         paraview_out.SetTime(0.);
-        paraview_out.SetLevelsOfDetail(order);
+        paraview_out.SetLevelsOfDetail(config.order);
         paraview_out.RegisterField("Temperature", x);
         paraview_out.Save();
     }

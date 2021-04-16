@@ -1,0 +1,23 @@
+Mesh parameters
+graph/transfinite_cylinder.msh #Mesh_file
+20  #Height
+20  #Radius
+5   #Radius_Inner
+4   #Radial_cells
+10  #Angular_cells(times_four)
+3   #Vertical_cells
+
+FE parameters
+0   #Refinements
+2   #Order
+
+Simulation parameters
+0       #Fusion_temperature
+10      #Initial_temperature
+7.8     #Liquid_thermal_diffusion_constant
+70.8    #Solid_thermal_diffusion_constant
+0.0721  #Lambda
+0.001   #Dt
+0.2    #Final_time
+10      #Visualization_steps
+9       #ODE_solver_type
