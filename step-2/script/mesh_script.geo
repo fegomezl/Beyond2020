@@ -1,16 +1,18 @@
 // Gmsh project created on Sun Apr 04 11:41:39 2021
 
-Height = 10;
-Radius = 10;
+Mesh.ElementOrder = 2;
+Mesh.SecondOrderLinear = 0;
+Height = 20;
+Radius = 20;
 Radius_Inner = 5;
 
-Nb = 2;
+Nb = 4+1;
 Rb = 1.00;
-Nc1 = 33;
+Nc1 = 10+1;
 Rc1 = 1.00;
-Nc2 = 33;
+Nc2 = 10+1;
 Rc2 = 1.00;
-Nz = 2;
+Nz = 3;
 
 SetFactory("OpenCASCADE");
 //+
