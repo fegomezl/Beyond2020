@@ -1,10 +1,15 @@
-#Computer parameters
-MFEM_INSTALL_DIR = ~/repos/spack/opt/spack/linux-arch-sandybridge/gcc-10.2.0/mfem-4.2.0-cnxxrnnnbzf2o6blvzgu3g4546jmf2ku
-CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
-SHARE_DIR = /media/sf_Arch_data/
-PROCCESORS = 4
+include ../local_config.mk
 
-include $(CONFIG_MK)
+#Mesh parameters
+NMESH = $(shell sed -n 2p data/parameters.txt)  
+MESH = $(filter-out #Mesh_file,$(NMESH))
+HEIGHT = $(shell sed -n 3p data/parameters.txt | tr -d -c 0-9.)  
+OUTER_RADIUS = $(shell sed -n 4p data/parameters.txt | tr -d -c 0-9.)
+INNER_RADIUS = $(shell sed -n 5p data/parameters.txt | tr -d -c 0-9.)
+
+#Program parameters
+REF = $(shell sed -n 11p data/parameters.txt | tr -d -c 0-9.) 
+ORDER = $(shell sed -n 12p data/parameters.txt | tr -d -c 0-9.)
 
 #Mesh parameters
 NMESH = $(shell sed -n 2p data/parameters.txt)  
