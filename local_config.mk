@@ -1,6 +1,6 @@
 #Computer parameters
-MFEM_INSTALL_DIR = ~/repos/spack/opt/spack/linux-arch-sandybridge/gcc-10.2.0/mfem-4.2.0-4bqzidc6xxuyfw2pfocmtt5e7eumymps
-SHARE_DIR = /media/sf_Arch_data/
+MFEM_INSTALL_DIR =~/Library/spack/opt/spack/linux-pop20-excavator/gcc-10.2.0/mfem-4.2.0-c4o6keal7hdkfy5kdoipgjdltk3ddtda
+SHARE_DIR = ~/Pictures/Beyond
 PROCCESORS = 4
 
 #Add variables from MFEM
