@@ -11,17 +11,6 @@ INNER_RADIUS = $(shell sed -n 5p data/parameters.txt | tr -d -c 0-9.)
 REF = $(shell sed -n 11p data/parameters.txt | tr -d -c 0-9.) 
 ORDER = $(shell sed -n 12p data/parameters.txt | tr -d -c 0-9.)
 
-#Mesh parameters
-NMESH = $(shell sed -n 2p data/parameters.txt)  
-MESH = $(filter-out #mesh file,$(NMESH))
-HEIGHT = $(shell sed -n 3p data/parameters.txt | tr -d -c 0-9.)  
-OUTER_RADIUS = $(shell sed -n 4p data/parameters.txt | tr -d -c 0-9.)
-INNER_RADIUS = $(shell sed -n 5p data/parameters.txt | tr -d -c 0-9.)
-
-#Program parameters
-REF = $(shell sed -n 12p data/parameters.txt | tr -d -c 0-9.) 
-ORDER = $(shell sed -n 13p data/parameters.txt | tr -d -c 0-9.)
-
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
 RUN = mpirun -np $(PROCCESORS) ./
