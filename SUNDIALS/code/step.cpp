@@ -9,14 +9,22 @@ void Artic_sea::time_step(){
 
     //Perform the time_step
     ode_solver->Step(X, t, dt_real);//******************************************
-    oper->SetParameters(X);
+    oper.SetParameters(X);
     
     //ode_solver->Step(X, t, dt);
 
     //Print the system state 
     double percentage = 100*t/config.t_final;
     string progress = to_string((int)percentage)+"%";
-    /* if (last_step || (ti % vis_steps) == 0)*********************************************************************************
+
+    if (config.master){
+      cout << left << setw(8)
+	   << iteration << setw(8)
+	   << t << setw(8)
+	   << progress << "\r";
+      cout.flush();
+    }
+    /*if (last || (ti % vis_steps) == 0)//*********************************************************************************
       {
          if (myid == 0)
          {
@@ -25,7 +33,7 @@ void Artic_sea::time_step(){
             if (arkode) { arkode->PrintInfo(); }
          }
 
-         u_gf.SetFromTrueDofs(u);
+         u_gf.SetFromTrueDofs(X);
          if (visualization)
          {
             sout << "parallel " << num_procs << " " << myid << "\n";
@@ -39,13 +47,7 @@ void Artic_sea::time_step(){
             visit_dc.Save();
          }
 	 }*///****************************************************************************************************************
-    if (config.master){
-        cout << left << setw(8)
-             << iteration << setw(8)
-             << t << setw(8)
-             << progress << "\r";
-        cout.flush();
-    }
+
     if (last || (iteration % config.vis_steps) == 0){
         x->SetFromTrueDofs(X);
         paraview_out->SetCycle(iteration);

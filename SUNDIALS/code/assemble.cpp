@@ -22,6 +22,70 @@ void Artic_sea::assemble_system(){
     dt = config.dt_init;
     t = 0;
     last = false;
+    /*   FunctionCoefficient u_0(InitialTemperature);
+   u_gf.ProjectCoefficient(u_0);
+   Vector u;
+   u_gf.GetTrueDofs(u);
+
+   // 8. Initialize the conduction operator and the VisIt visualization.
+   ConductionOperator oper(fespace, alpha, kappa, u);
+
+   u_gf.SetFromTrueDofs(u);
+   {
+      ostringstream mesh_name, sol_name;
+      mesh_name << "ex16-mesh." << setfill('0') << setw(6) << myid;
+      sol_name << "ex16-init." << setfill('0') << setw(6) << myid;
+      ofstream omesh(mesh_name.str().c_str());
+      omesh.precision(precision);
+      pmesh->Print(omesh);
+      ofstream osol(sol_name.str().c_str());
+      osol.precision(precision);
+      u_gf.Save(osol);
+   }
+
+   VisItDataCollection visit_dc("Example16-Parallel", pmesh);
+   visit_dc.RegisterField("temperature", &u_gf);
+   if (visit)
+   {
+      visit_dc.SetCycle(0);
+      visit_dc.SetTime(0.0);
+      visit_dc.Save();
+   }
+
+   socketstream sout;
+   if (visualization)
+   {
+      char vishost[] = "localhost";
+      int  visport   = 19916;
+      sout.open(vishost, visport);
+      sout << "parallel " << num_procs << " " << myid << endl;
+      int good = sout.good(), all_good;
+      MPI_Allreduce(&good, &all_good, 1, MPI_INT, MPI_MIN, pmesh->GetComm());
+      if (!all_good)
+      {
+         sout.close();
+         visualization = false;
+         if (myid == 0)
+         {
+            cout << "Unable to connect to GLVis server at "
+                 << vishost << ':' << visport << endl;
+            cout << "GLVis visualization disabled.\n";
+         }
+      }
+      else
+      {
+         sout.precision(precision);
+         sout << "solution\n" << *pmesh << u_gf;
+         sout << "pause\n";
+         sout << flush;
+         if (myid == 0)
+         {
+            cout << "GLVis visualization paused."
+                 << " Press space (in the GLVis window) to resume it.\n";
+         }
+      }
+   }
+*/
 
     const double reltol = 1e-4, abstol = 1e-4;//*******************************************************
 
@@ -45,13 +109,13 @@ void Artic_sea::assemble_system(){
       // CVODE
       case 8:
          cvode = new CVODESolver(MPI_COMM_WORLD, CV_ADAMS);
-         cvode->Init(oper);
+         cvode->Init(opert);
          cvode->SetSStolerances(reltol, abstol);
          cvode->SetMaxStep(dt);
          ode_solver = cvode; break;
       case 9:
          cvode = new CVODESolver(MPI_COMM_WORLD, CV_BDF);
-         cvode->Init(oper);
+         cvode->Init(opert);
          cvode->SetSStolerances(reltol, abstol);
          cvode->SetMaxStep(dt);
          ode_solver = cvode; break;
@@ -72,7 +136,7 @@ void Artic_sea::assemble_system(){
          ode_solver = arkode; break;
    }
    // Initialize MFEM integrators, SUNDIALS integrators are initialized above
-   if (config.ode_solver_type < 8) { ode_solver->Init(oper); }
+   if (config.ode_solver_type < 8) { ode_solver->Init(opert); }
 
    // Since we want to update the diffusion coefficient after every time step,
    // we need to use the "one-step" mode of the SUNDIALS solvers.
