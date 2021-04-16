@@ -17,7 +17,7 @@ Simulation parameters
 7.8     #Liquid_thermal_diffusion_constant
 70.8    #Solid_thermal_diffusion_constant
 0.0721  #Lambda
-0.001   #Dt
-0.02    #Final_time
-10      #Visualization_steps
+0.002   #Dt
+1    #Final_time
+2      #Visualization_steps
 3       #ODE_solver_type

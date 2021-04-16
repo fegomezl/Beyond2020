@@ -86,8 +86,9 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const 
 {
     const double rel_tol = 1e-8;
 
+    //Boundary conditions (Essential dirichlet)
     Array<int> ess_bdr(b_size);
-    ess_bdr = 1;
+    ess_bdr = 1; ess_bdr[2] = ess_bdr[3] = 0;
     fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
     //Construct M
