@@ -3,8 +3,7 @@
 void Artic_sea::assemble_system(){
     //Set boundary conditions
     Array<int> ess_bdr(pmesh->bdr_attributes.Max());
-    ess_bdr = 1;  
-    ConstantCoefficient boundary(T_f);
+    ess_bdr = 1;
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
@@ -73,6 +72,10 @@ double exact(const Vector &x, double t){
         return T_f - (T_i - T_f)*(theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_s) - theta(lambda,alpha_s));
 }
 
+double Artic_sea::d_bdr(const Vector &x, double t){
+    return 40*t + 2.;
+}
+
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size):
     fespace(fespace),
     TimeDependentOperator(fespace->GetTrueVSize(), 0.),
@@ -88,7 +91,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const 
 
     //Boundary conditions (Essential dirichlet)
     Array<int> ess_bdr(b_size);
-    ess_bdr = 1; ess_bdr[2] = ess_bdr[3] = 0;
+    ess_bdr = 1;
     fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
     //Construct M

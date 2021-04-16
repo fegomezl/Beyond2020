@@ -1,6 +1,14 @@
 #include "header.h"
 
 void Artic_sea::time_step(){
+    boundary.SetTime(t);
+
+
+    Array<int> ess_bdr(pmesh->bdr_attributes.Max());
+    ess_bdr = 1;
+    x->ProjectBdrCoefficient(boundary, ess_bdr);
+
+
     //Check for last iteration
     last = (t + dt >= config.t_final - dt/2.);
 
@@ -27,6 +35,7 @@ void Artic_sea::time_step(){
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
+
     //Read the solution x
     ParGridFunction x(fespace);
     x.SetFromTrueDofs(X);

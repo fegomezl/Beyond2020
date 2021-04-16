@@ -68,6 +68,7 @@ class Artic_sea{
         void assemble_system();
         void time_step();
         void output_results();
+        static double d_bdr(const Vector &x, double t);
 
         //Global parameters
         Config config;
@@ -93,6 +94,7 @@ class Artic_sea{
         ParGridFunction *x;
         Vector X;
         Conduction_Operator *oper;
+        FunctionCoefficient boundary = FunctionCoefficient(d_bdr);
 
         //Solver objects
         ODESolver *ode_solver;
