@@ -8,7 +8,7 @@ graph/transfinite_cylinder.msh #Mesh_file
 3   #Vertical_cells
 
 FE parameters
-0   #Refinements
+2   #Refinements
 2   #Order
 
 Simulation parameters
@@ -17,7 +17,7 @@ Simulation parameters
 7.8     #Liquid_thermal_diffusion_constant
 70.8    #Solid_thermal_diffusion_constant
 0.0721  #Lambda
-0.001   #Dt
-0.02    #Final_time
-10      #Visualization_steps
+0.002   #Dt
+1       #Final_time
+5       #Visualization_steps
 3       #ODE_solver_type

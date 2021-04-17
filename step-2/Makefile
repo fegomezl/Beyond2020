@@ -34,7 +34,8 @@ all: main.x data/parameters.txt
 	@gmsh script/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh $(MESH) --temperature_fusion $(T_FU) --temperature_initial $(T_I) \
+	@$(RUN)$< --mesh $(MESH) --internal-radius $(INNER_RADIUS) \
+		 				--temperature_fusion $(T_FU) --temperature_initial $(T_I) \
 						--alpha_liquid $(ALPHA_L) --alpha_solid $(ALPHA_S) --lambda $(LAMBDA) \
 						--order $(ORDER) --refinements $(REF) --time_step $(DT) \
 						--t_final $(T_FI) --visualization_steps $(VIS) --ode_solver $(ODE)

@@ -18,6 +18,7 @@ struct Config{
     int order;
     int refinements;
     double dt_init;
+    double t_init;
     double t_final;
     int vis_steps;
     int ode_solver_type;
@@ -30,7 +31,7 @@ class Conduction_Operator : public TimeDependentOperator{
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
-        void SetParameters(const Vector &X);                        //Update the bilinear forms
+        void SetParameters(const Vector &X, Array<int> ess_bdr);                        //Update the bilinear forms
 
         virtual ~Conduction_Operator();
     protected:
@@ -57,6 +58,9 @@ class Conduction_Operator : public TimeDependentOperator{
         //Extra
         mutable Vector z;     //Auxiliar vector
 };
+
+extern double d_bdr(const Vector &x, double t);
+extern double exact(const Vector &x, double t);
 
 class Artic_sea{
     public:
@@ -93,6 +97,7 @@ class Artic_sea{
         ParGridFunction *x;
         Vector X;
         Conduction_Operator *oper;
+        FunctionCoefficient boundary;
 
         //Solver objects
         ODESolver *ode_solver;

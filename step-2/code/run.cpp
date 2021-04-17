@@ -6,7 +6,8 @@ Config::Config(bool master, int nproc):
 {}
 
 Artic_sea::Artic_sea(Config config):
-    config(config)
+    config(config),
+    boundary(exact)
 {}
 
 void Artic_sea::run(const char *mesh_file){

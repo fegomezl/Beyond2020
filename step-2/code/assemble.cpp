@@ -1,15 +1,19 @@
 #include "header.h"
 
 void Artic_sea::assemble_system(){
+    //Initialize the system
+    t = config.t_init;     
+    dt = config.dt_init;
+    last = false;
+    boundary.SetTime(config.t_init);
+
     //Set boundary conditions
     Array<int> ess_bdr(pmesh->bdr_attributes.Max());
     ess_bdr = 1;  
-    ConstantCoefficient boundary(T_f);
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
-    ConstantCoefficient x_0(T_i);
-    x->ProjectCoefficient(x_0);
+    x->ProjectCoefficient(boundary);
     x->ProjectBdrCoefficient(boundary, ess_bdr);
     x->GetTrueDofs(X);
 
@@ -37,12 +41,7 @@ void Artic_sea::assemble_system(){
                 << "Setting ODE to BackwardEulerSolver.\n";
                  ode_solver = new BackwardEulerSolver; break;
     }
-
-    //Initialize the system
     ode_solver->Init(*oper);
-    dt = config.dt_init;
-    t = 0;
-    last = false;
 
     //Open the paraview output and print initial state
     paraview_out = new ParaViewDataCollection("graph", pmesh);
@@ -71,6 +70,10 @@ double exact(const Vector &x, double t){
         return T_i - (T_i - T_f)*theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_l)/theta(lambda,alpha_l);
     else
         return T_f - (T_i - T_f)*(theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_s) - theta(lambda,alpha_s));
+}
+
+double d_bdr(const Vector &x, double t){
+    return 6*t + 1;
 }
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size):

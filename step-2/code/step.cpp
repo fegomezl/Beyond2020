@@ -2,31 +2,38 @@
 
 void Artic_sea::time_step(){
     //Check for last iteration
-    last = (t + dt >= config.t_final - dt/2.);
+    last = (t + dt >= (config.t_final + config.t_init) - dt/2);
+
+    //Update boundary conditions
+    boundary.SetTime(t);
+    Array<int> ess_bdr(pmesh->bdr_attributes.Max());
+    ess_bdr = 1;
+    x->ProjectBdrCoefficient(boundary, ess_bdr);
+    x->GetTrueDofs(X);
 
     //Perform the time_step
-    oper->SetParameters(X);
+    oper->SetParameters(X, ess_bdr);
     ode_solver->Step(X, t, dt);
 
     //Print the system state 
-    double percentage = 100*t/config.t_final;
+    double percentage = 100*(t - config.t_init)/config.t_final;
     string progress = to_string((int)percentage)+"%";
     if (config.master){
         cout << left << setw(8)
              << iteration << setw(8)
-             << t << setw(8)
+             << t - config.t_init << setw(8)
              << progress << "\r";
         cout.flush();
     }
     if (last || (iteration % config.vis_steps) == 0){
         x->SetFromTrueDofs(X);
         paraview_out->SetCycle(iteration);
-        paraview_out->SetTime(t);
+        paraview_out->SetTime(t - config.t_init);
         paraview_out->Save();
     }
 }
 
-void Conduction_Operator::SetParameters(const Vector &X){
+void Conduction_Operator::SetParameters(const Vector &X, Array<int> ess_bdr){
     //Read the solution x
     ParGridFunction x(fespace);
     x.SetFromTrueDofs(X);
