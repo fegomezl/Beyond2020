@@ -72,8 +72,8 @@ double exact(const Vector &x, double t){
         return T_f - (T_i - T_f)*(theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_s) - theta(lambda,alpha_s));
 }
 
-double Artic_sea::d_bdr(const Vector &x, double t){
-    return 40*t + 2.;
+double d_bdr(const Vector &x, double t){
+    return 6*t + 1.;
 }
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size):

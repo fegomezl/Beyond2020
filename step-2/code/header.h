@@ -9,6 +9,7 @@
 using namespace std;
 using namespace mfem;
 
+
 struct Config{
     //Constructor
     Config(bool master, int nproc);
@@ -30,7 +31,7 @@ class Conduction_Operator : public TimeDependentOperator{
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
-        void SetParameters(const Vector &X);                        //Update the bilinear forms
+        void SetParameters(const Vector &X, Array<int> ess_bdr);                        //Update the bilinear forms
 
         virtual ~Conduction_Operator();
     protected:
@@ -58,6 +59,8 @@ class Conduction_Operator : public TimeDependentOperator{
         mutable Vector z;     //Auxiliar vector
 };
 
+extern double d_bdr(const Vector &x, double t);
+
 class Artic_sea{
     public:
         Artic_sea(Config config);
@@ -68,7 +71,6 @@ class Artic_sea{
         void assemble_system();
         void time_step();
         void output_results();
-        static double d_bdr(const Vector &x, double t);
 
         //Global parameters
         Config config;

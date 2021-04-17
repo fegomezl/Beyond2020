@@ -7,13 +7,14 @@ void Artic_sea::time_step(){
     Array<int> ess_bdr(pmesh->bdr_attributes.Max());
     ess_bdr = 1;
     x->ProjectBdrCoefficient(boundary, ess_bdr);
+    x->GetTrueDofs(X);
 
 
     //Check for last iteration
     last = (t + dt >= config.t_final - dt/2.);
 
     //Perform the time_step
-    oper->SetParameters(X);
+    oper->SetParameters(X, ess_bdr);
     ode_solver->Step(X, t, dt);
 
     //Print the system state 
@@ -34,7 +35,7 @@ void Artic_sea::time_step(){
     }
 }
 
-void Conduction_Operator::SetParameters(const Vector &X){
+void Conduction_Operator::SetParameters(const Vector &X, Array<int> ess_bdr){
 
     //Read the solution x
     ParGridFunction x(fespace);
