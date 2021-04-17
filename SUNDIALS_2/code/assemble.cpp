@@ -13,10 +13,6 @@ void Artic_sea::assemble_system(){
     x->ProjectBdrCoefficient(boundary, ess_bdr);
     x->GetTrueDofs(X);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << "\n--\naja\n--\n";
-    MPI_Barrier(MPI_COMM_WORLD);
-
     //Create operator
     oper = new Conduction_Operator(fespace, X, pmesh->bdr_attributes.Max());//*****************************
 
