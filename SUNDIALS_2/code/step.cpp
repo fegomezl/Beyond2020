@@ -13,9 +13,9 @@ void Artic_sea::time_step(){
     double percentage = 100*t/config.t_final;
     string progress = to_string((int)percentage)+"%";
     if (config.master){
-        cout << left << setw(8)
-             << iteration << setw(8)
-             << t << setw(8)
+        cout << left << setw(12)
+             << iteration << setw(12)
+             << t << setw(12)
              << progress << "\r";
         cout.flush();
     }

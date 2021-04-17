@@ -86,14 +86,16 @@ void Artic_sea::assemble_system(){
     paraview_out->RegisterField("Temperature", x);
 
     //Start program check
+    cout.precision(4);
     if (config.master) 
-        cout << "\n"
-             << "---------------------------\n"
-             << left << setw(8)
-             << "Step" << setw(8)
-             << "Time" << setw(8)
-             << "Progress\n"
-             << "---------------------------\n";
+        cout << left << setw(12)
+             << "--------------------------------\n"
+             << left << setw(12)
+             << "Step" << setw(12)
+             << "Time" << setw(12)
+             << "Progress"
+             << left << setw(12)
+             << "\n--------------------------------\n";
 }
 
 double theta(double x, double alpha){
