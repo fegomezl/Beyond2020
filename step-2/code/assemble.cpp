@@ -8,7 +8,7 @@ void Artic_sea::assemble_system(){
     boundary.SetTime(config.t_init);
 
     //Set boundary conditions
-    Array<int> ess_bdr(pmesh->bdr_attributes.Max());
+    ess_bdr.SetSize(pmesh->bdr_attributes.Max());
     ess_bdr = 1;  
 
     //Define solution x and apply initial conditions
@@ -18,7 +18,7 @@ void Artic_sea::assemble_system(){
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(fespace, X, pmesh->bdr_attributes.Max());
+    oper = new Conduction_Operator(fespace, X, ess_bdr);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -76,7 +76,7 @@ double d_bdr(const Vector &x, double t){
     return 6*t + 1;
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size):
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, Array<int> ess_bdr):
     fespace(fespace),
     TimeDependentOperator(fespace->GetTrueVSize(), 0.),
     M_solver(fespace->GetComm()),
@@ -89,8 +89,6 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace *&fespace, const 
 {
     const double rel_tol = 1e-8;
 
-    Array<int> ess_bdr(b_size);
-    ess_bdr = 1;
     fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
     //Construct M

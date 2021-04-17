@@ -6,8 +6,6 @@ void Artic_sea::time_step(){
 
     //Update boundary conditions
     boundary.SetTime(t);
-    Array<int> ess_bdr(pmesh->bdr_attributes.Max());
-    ess_bdr = 1;
     x->ProjectBdrCoefficient(boundary, ess_bdr);
     x->GetTrueDofs(X);
 

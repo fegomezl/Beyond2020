@@ -26,7 +26,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size);
+        Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, Array<int> ess_bdr);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
@@ -98,6 +98,7 @@ class Artic_sea{
         Vector X;
         Conduction_Operator *oper;
         FunctionCoefficient boundary;
+        Array<int> ess_bdr; 
 
         //Solver objects
         ODESolver *ode_solver;
