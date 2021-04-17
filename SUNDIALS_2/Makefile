@@ -41,6 +41,7 @@ all: main.x data/parameters.txt
 						--order $(ORDER) --refinements $(REF) --time_step $(DT) \
 						--t_final $(T_FI) --visualization_steps $(VIS) --ode_solver $(ODE)
 	@echo -e '\nDone!\n'
+	@echo $(MFEM_FLAGS)
 
 graph:
 	@echo -e 'Moving graphs ... \c'
