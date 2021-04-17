@@ -18,6 +18,7 @@ struct Config{
     int order;
     int refinements;
     double dt_init;
+    double t_init;
     double t_final;
     int vis_steps;
     int ode_solver_type;
@@ -25,20 +26,23 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace *&fespace, const Vector &X, double b_size);
+        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
-        void SetParameters(const Vector &X);                        //Update the bilinear forms
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &b, 
+                                     int j_update, int *j_status, double scaled_dt);
+	      virtual int SUNImplicitSolve(const Vector &b, Vector &X, 
+                                     double tol);
+
+
+        void SetParameters(const Vector &X, Array<int> ess_bdr);                        //Update the bilinear forms
 
         virtual ~Conduction_Operator();
     protected:
-        //Operator parameters
-        double current_dt;
-
         //Mesh objects
-        ParFiniteElementSpace *fespace;
+        ParFiniteElementSpace &fespace;
         Array<int> ess_tdof_list; 
 
         //System objects
@@ -92,14 +96,20 @@ class Artic_sea{
         //System objects
         ParGridFunction *x;
         Vector X;
+        Array<int> ess_bdr; 
+        FunctionCoefficient boundary;
         Conduction_Operator *oper;
 
         //Solver objects
         ODESolver *ode_solver;
+        CVODESolver *cvode;
+        ARKStepSolver *arkode;
 
         //Extra
         ParaViewDataCollection *paraview_out;
 };
+
+extern double exact(const Vector &x, double t);
 
 extern double T_f;     //Fusion temperature
 extern double T_i;     //Initial temperature

@@ -21,6 +21,7 @@ ODE = $(shell sed -n 23p data/parameters.txt | tr -d -c 0-9.)
 
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
+DEBUGG = -g -Wall -fsanitize=address -fsanitize=leak -fsanitize=undefined
 RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
@@ -34,7 +35,8 @@ all: main.x data/parameters.txt
 	@gmsh script/mesh_script.geo -format msh2 -o $(MESH) -3
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh $(MESH) --temperature_fusion $(T_FU) --temperature_initial $(T_I) \
+	@$(RUN)$< --mesh $(MESH) --internal-radius $(INNER_RADIUS) \
+		 				--temperature_fusion $(T_FU) --temperature_initial $(T_I) \
 						--alpha_liquid $(ALPHA_L) --alpha_solid $(ALPHA_S) --lambda $(LAMBDA) \
 						--order $(ORDER) --refinements $(REF) --time_step $(DT) \
 						--t_final $(T_FI) --visualization_steps $(VIS) --ode_solver $(ODE)

@@ -16,15 +16,15 @@ Nz = 3;
 
 SetFactory("OpenCASCADE");
 //+
-Point(1) = {0, 0, 0, 1.0};
+Point(1) = {0, 0, -Height/2, 1.0};
 //+
-Point(2) = {Radius_Inner*0.70710678, Radius_Inner*0.70710678, 0, 1.0};
+Point(2) = {Radius_Inner*0.70710678, Radius_Inner*0.70710678, -Height/2, 1.0};
 //+
-Point(3) = {-Radius_Inner*0.70710678, Radius_Inner*0.70710678, 0, 1.0};
+Point(3) = {-Radius_Inner*0.70710678, Radius_Inner*0.70710678, -Height/2, 1.0};
 //+
-Point(4) = {Radius_Inner*0.70710678, -Radius_Inner*0.70710678, 0, 1.0};
+Point(4) = {Radius_Inner*0.70710678, -Radius_Inner*0.70710678, -Height/2, 1.0};
 //+
-Point(5) = {-Radius_Inner*0.70710678, -Radius_Inner*0.70710678, 0, 1.0};
+Point(5) = {-Radius_Inner*0.70710678, -Radius_Inner*0.70710678, -Height/2, 1.0};
 //+
 Circle(1) = {5, 1, 4};
 //+
@@ -34,13 +34,13 @@ Circle(3) = {2, 1, 3};
 //+
 Circle(4) = {3, 1, 5};
 //+
-Point(6) = {Radius*0.70710678, Radius*0.70710678, 0, 1.0};
+Point(6) = {Radius*0.70710678, Radius*0.70710678, -Height/2, 1.0};
 //+
-Point(7) = {-Radius*0.70710678, Radius*0.70710678, 0, 1.0};
+Point(7) = {-Radius*0.70710678, Radius*0.70710678, -Height/2, 1.0};
 //+
-Point(8) = {-Radius*0.70710678, -Radius*0.70710678, 0, 1.0};
+Point(8) = {-Radius*0.70710678, -Radius*0.70710678, -Height/2, 1.0};
 //+
-Point(9) = {Radius*0.70710678, -Radius*0.70710678, 0, 1.0};
+Point(9) = {Radius*0.70710678, -Radius*0.70710678, -Height/2, 1.0};
 //+
 Circle(5) = {8, 1, 9};
 //+
@@ -115,7 +115,7 @@ Recombine Surface {3};
 Recombine Surface {4};
 //+
 Extrude {0, 0, Height} {
-  Surface{4}; Surface{1}; Surface{2}; Surface{3}; 
+  Surface{4}; Surface{1}; Surface{2}; Surface{3};
   Layers{Nz};
   Recombine;
 }
