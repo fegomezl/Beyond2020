@@ -2,10 +2,12 @@
 
 void Artic_sea::assemble_system(){
     //Initialize the system
-    const double reltol = 1e-4, abstol = 1e-4;
     t = config.t_init;     
     dt = config.dt_init;
     last = false;
+    actual_error = 0;
+    total_error = 0;
+    iterations_error = 0;
     boundary.SetTime(config.t_init);
 
     //Set boundary conditions
@@ -22,6 +24,7 @@ void Artic_sea::assemble_system(){
     oper = new Conduction_Operator(*fespace, X, ess_bdr);
 
     //Set the ODE solver type
+    const double reltol = 1e-4, abstol = 1e-4;
     switch (config.ode_solver_type){
         // MFEM explicit methods
         case 1: ode_solver = new ForwardEulerSolver; break;
@@ -89,13 +92,14 @@ void Artic_sea::assemble_system(){
     //Start program check
     if (config.master)
         cout << left << setw(12)
-             << "--------------------------------\n"
+             << "--------------------------------------------------\n"
              << left << setw(12)
              << "Step" << setw(12)
              << "Time" << setw(12)
-             << "Progress"
+             << "Progress" << setw(12)
+             << "Error"
              << left << setw(12)
-             << "\n--------------------------------\n";
+             << "\n--------------------------------------------------\n";
 }
 
 double theta(double x, double alpha){

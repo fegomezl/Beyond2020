@@ -82,6 +82,11 @@ class Artic_sea{
         double dt;
         bool last;
 
+        //Convergence parameters
+        double actual_error;
+        double total_error;
+        int iterations_error;
+
         //Output parameters
         int dim;
         int serial_refinements;
