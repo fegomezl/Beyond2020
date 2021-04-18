@@ -82,6 +82,9 @@ void Artic_sea::assemble_system(){
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x);
+    paraview_out->SetCycle(0);
+    paraview_out->SetTime(0);
+    paraview_out->Save();
 
     //Start program check
     if (config.master)
@@ -100,11 +103,11 @@ double theta(double x, double alpha){
 }
 
 double exact(const Vector &x, double t){
-    double r_2 = pow(x.Norml2(),2);
-    if (r_2 > 4*lambda*(alpha_s + alpha_l)*t)
-        return T_i - (T_i - T_f)*theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_l)/theta(lambda,alpha_l);
+    double eta = pow(x.Norml2(),2)/(4*(alpha_s + alpha_l)*t);
+    if (eta > lambda)
+        return T_i - (T_i - T_f)*theta(eta, alpha_l)/theta(lambda, alpha_l);
     else
-        return T_f - (T_i - T_f)*(theta(r_2/(4*(alpha_s + alpha_l)*t),alpha_s) - theta(lambda,alpha_s));
+        return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
 }
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
