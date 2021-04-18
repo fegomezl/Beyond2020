@@ -12,8 +12,7 @@ REF = $(shell sed -n 11p data/parameters.txt | tr -d -c 0-9.)
 ORDER = $(shell sed -n 12p data/parameters.txt | tr -d -c 0-9.)
 
 CXX = mpic++
-FLAGS = -std=c++11 -O3 $(MFEM_FLAGS) $(DEBUGG)
-DEBUGG = -g -Wall -fsanitize=address -fsanitize=leak -fsanitize=undefined
+FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
 RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
