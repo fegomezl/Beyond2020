@@ -18,6 +18,8 @@ DT = $(shell sed -n 20p data/parameters.txt | tr -d -c 0-9.)
 T_FI = $(shell sed -n 21p data/parameters.txt | tr -d -c 0-9.)
 VIS = $(shell sed -n 22p data/parameters.txt | tr -d -c 0-9.)
 ODE = $(shell sed -n 23p data/parameters.txt | tr -d -c 0-9.)
+RELT = $(shell sed -n 24p data/parameters.txt | tr -d -c 0-9.)
+ABST = $(shell sed -n 25p data/parameters.txt | tr -d -c 0-9.)
 
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
@@ -38,7 +40,7 @@ all: main.x data/parameters.txt
 		 				--temperature_fusion $(T_FU) --temperature_initial $(T_I) \
 						--alpha_liquid $(ALPHA_L) --alpha_solid $(ALPHA_S) --lambda $(LAMBDA) \
 						--order $(ORDER) --refinements $(REF) --time_step $(DT) \
-						--t_final $(T_FI) --visualization_steps $(VIS) --ode_solver $(ODE)
+						--t_final $(T_FI) --visualization_steps $(VIS) --ode_solver $(ODE) --tolrelativaSUNDIALS $(RELT) --tolabsolutaSUNDIALS $(ABST)
 	@echo -e '\nDone!\n'
 
 graph:

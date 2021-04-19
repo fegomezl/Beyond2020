@@ -22,6 +22,8 @@ struct Config{
     double t_final;
     int vis_steps;
     int ode_solver_type;
+    double reltol;
+    double abstol;
 };
 
 class Conduction_Operator : public TimeDependentOperator{

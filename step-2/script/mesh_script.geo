@@ -12,7 +12,7 @@ Nc1 = 10+1;
 Rc1 = 1.00;
 Nc2 = 10+1;
 Rc2 = 1.00;
-Nz = 3;
+Nz = 2;
 
 SetFactory("OpenCASCADE");
 //+
