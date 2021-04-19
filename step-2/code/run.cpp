@@ -37,8 +37,6 @@ Artic_sea::~Artic_sea(){
     delete x;
     delete oper;
     delete ode_solver;
-    if (cvode) delete cvode;
-    if (arkode) delete arkode;
     delete paraview_out;
     if (config.master) cout << "Memory deleted!\n";
 }

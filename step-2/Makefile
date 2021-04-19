@@ -21,7 +21,6 @@ ODE = $(shell sed -n 23p data/parameters.txt | tr -d -c 0-9.)
 
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
-DEBUGG = -g -Wall -fsanitize=address -fsanitize=leak -fsanitize=undefined
 RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
