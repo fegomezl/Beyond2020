@@ -14,6 +14,20 @@ void Artic_sea::time_step(){
     oper->SetParameters(X, ess_bdr);
     ode_solver->Step(X, t, dt);
 
+    //Output from the solution
+    if (last || (iteration % config.vis_steps) == 0){
+        //Calculate convergence
+        x->SetFromTrueDofs(X);
+        actual_error = x->ComputeL2Error(boundary);
+        total_error += actual_error;
+        iterations_error += 1;
+
+        //Graph
+        paraview_out->SetCycle(iteration);
+        paraview_out->SetTime(t - config.t_init);
+        paraview_out->Save();
+    }
+    
     //Print the system state 
     double percentage = 100*(t - config.t_init)/config.t_final;
     string progress = to_string((int)percentage)+"%";
@@ -22,14 +36,9 @@ void Artic_sea::time_step(){
         cout << left << setw(12)
              << iteration << setw(12)
              << t - config.t_init << setw(12)
-             << progress << "\r";
+             << progress << setw(12)
+             << actual_error << "\r";
         cout.flush();
-    }
-    if (last || (iteration % config.vis_steps) == 0){
-        x->SetFromTrueDofs(X);
-        paraview_out->SetCycle(iteration);
-        paraview_out->SetTime(t - config.t_init);
-        paraview_out->Save();
     }
 }
 

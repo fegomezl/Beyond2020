@@ -22,6 +22,8 @@ struct Config{
     double t_final;
     int vis_steps;
     int ode_solver_type;
+    double reltol;
+    double abstol;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -81,6 +83,11 @@ class Artic_sea{
         double t;
         double dt;
         bool last;
+
+        //Convergence parameters
+        double actual_error;
+        double total_error;
+        int iterations_error;
 
         //Output parameters
         int dim;

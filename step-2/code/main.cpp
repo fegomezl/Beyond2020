@@ -50,6 +50,10 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
                    "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
                    "            11 - Forward Euler, 12 - RK2, 13 - RK3 SSP, 14 - RK4.");
+    args.AddOption(&config.reltol, "-restol", "--tolrelativaSUNDIALS",
+                   "Initial time step.");
+    args.AddOption(&config.abstol, "abstol", "--tolabsolutaSUNDIALS",
+                   "Initial time step.");
 
     //Check if parameters were read correctly
     args.Parse();
