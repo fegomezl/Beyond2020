@@ -6,14 +6,18 @@ Config::Config(bool master, int nproc):
 {}
 
 Artic_sea::Artic_sea(Config config):
-    config(config)
+    config(config),
+    boundary(exact),
+    pmesh(NULL), fec(NULL), fespace(NULL),
+    x(NULL), oper(NULL), ode_solver(NULL),
+    cvode(NULL), arkode(NULL), paraview_out(NULL)
 {}
 
 void Artic_sea::run(const char *mesh_file){
     //Run the program
     make_grid(mesh_file);
     assemble_system();
-    for (iteration = 0; !last; iteration++)
+    for (iteration = 1; !last; iteration++)
         time_step();
     output_results();
 }

@@ -18,10 +18,15 @@ int main(int argc, char *argv[]){
     const char *mesh_file;
     Config config((pid == 0), nproc);
 
+    //Define auxiliar parameters
+    double int_rad;
+
     //Make program parameters readeable in execution
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
                    "Mesh file to use.");
+    args.AddOption(&int_rad, "-i-r", "--internal-radius",
+                   "Internal radius of the container.");
     args.AddOption(&T_f, "-T_f", "--temperature_fusion",
                    "Fusion Temperature of the material.");
     args.AddOption(&T_i, "-T_i", "--temperature_initial",
@@ -45,6 +50,10 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
                    "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
                    "            11 - Forward Euler, 12 - RK2, 13 - RK3 SSP, 14 - RK4.");
+    args.AddOption(&config.reltol, "-restol", "--tolrelativaSUNDIALS",
+                   "Initial time step.");
+    args.AddOption(&config.abstol, "abstol", "--tolabsolutaSUNDIALS",
+                   "Initial time step.");
 
     //Check if parameters were read correctly
     args.Parse();
@@ -54,6 +63,9 @@ int main(int argc, char *argv[]){
         return 1;
     }
     if (config.master) args.PrintOptions(cout);
+
+    //Auxiliar calculations
+    config.t_init = pow(int_rad,2)/(4*(alpha_s + alpha_l)*lambda);
 
     //Run the program for different refinements
     Artic_sea artic_sea(config);
