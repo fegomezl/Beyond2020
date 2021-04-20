@@ -11,8 +11,12 @@ void Artic_sea::assemble_system(){
     boundary.SetTime(t);
 
     //Set boundary conditions
+    //Dirichlet
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 1; ess_bdr[0] = ess_bdr[2] = 0;
+    ess_bdr = 1; ess_bdr[2] =0;
+    //Neumann
+    Array<int> nbc_marker(pmesh->bdr_attributes.Max());
+    nbc_marker = 0; nbc_marker[2] = 1;
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
@@ -21,7 +25,7 @@ void Artic_sea::assemble_system(){
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, ess_bdr);
+    oper = new Conduction_Operator(*fespace, X, ess_bdr, nbc_marker, n_boundary);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -101,12 +105,18 @@ double exact(const Vector &x, double t){
         return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
+double neumann_bdr(const Vector &x, double t){
+    return 5*sin(x(2));
+}
+
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, Array<int> nbc_marker, FunctionCoefficient n_boundary):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
     m(NULL),
     k(NULL),
+    f(NULL),
     T(NULL),
+
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
     z(height)
@@ -120,6 +130,11 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     m->AddDomainIntegrator(new MassIntegrator());
     m->Assemble(0);
     m->FormSystemMatrix(ess_tdof_list, M);
+
+    //Construct F
+    f = new ParLinearForm(&fespace);
+    f->AddBoundaryIntegrator(new BoundaryLFIntegrator (n_boundary), nbc_marker);
+    f->Assemble();
 
     //Configure M solver
     M_solver.iterative_mode = false;
@@ -140,4 +155,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T_solver.SetPreconditioner(T_prec);
 
     SetParameters(X, ess_bdr);
+
+    F=*f->ParallelAssemble();
+
 }

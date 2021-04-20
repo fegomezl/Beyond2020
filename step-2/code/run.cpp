@@ -8,6 +8,7 @@ Config::Config(bool master, int nproc):
 Artic_sea::Artic_sea(Config config):
     config(config),
     boundary(exact),
+    n_boundary(neumann_bdr),
     pmesh(NULL), fec(NULL), fespace(NULL),
     x(NULL), oper(NULL), ode_solver(NULL),
     cvode(NULL), arkode(NULL), paraview_out(NULL)
@@ -26,6 +27,7 @@ Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete m;
     delete k;
+    delete f;
     delete T;
 }
 

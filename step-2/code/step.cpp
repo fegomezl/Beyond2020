@@ -68,6 +68,7 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //Solve M(dX_dt) = -K(X) for dX_dt
     K.Mult(X,z);
     z.Neg();
+    z += F;
     M_solver.Mult(z, dX_dt);
 }
 
