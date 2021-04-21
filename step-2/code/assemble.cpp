@@ -8,7 +8,7 @@ void Artic_sea::assemble_system(){
     actual_error = 0;
     total_error = 0;
     iterations_error = 0;
-    boundary.SetTime(config.t_init);
+    boundary.SetTime(t);
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
@@ -24,60 +24,48 @@ void Artic_sea::assemble_system(){
     oper = new Conduction_Operator(*fespace, X, ess_bdr);
 
     //Set the ODE solver type
-  switch (config.ode_solver_type)
-    {
-      // MFEM explicit methods
-    case 1: ode_solver = new ForwardEulerSolver; break;
-    case 2: ode_solver = new RK2Solver(0.5); break; // midpoint method
-    case 3: ode_solver = new RK3SSPSolver; break;
-    case 4: ode_solver = new RK4Solver; break;
-      // MFEM implicit L-stable methods
-    case 5: ode_solver = new BackwardEulerSolver; break;
-    case 6: ode_solver = new SDIRK23Solver(2); break;
-    case 7: ode_solver = new SDIRK33Solver; break;
-      // CVODE
-    case 8:
-      cvode = new CVODESolver(MPI_COMM_WORLD, CV_ADAMS);
-      cvode->Init(*oper);
-      cvode->SetSStolerances(config.reltol, config.abstol);
-      cvode->SetMaxStep(dt);
-      ode_solver = cvode; break;
-    case 9:
-      cvode = new CVODESolver(MPI_COMM_WORLD, CV_BDF);
-      cvode->Init(*oper);
-      cvode->SetSStolerances(config.reltol, config.abstol);
-      cvode->SetMaxStep(dt);
-      ode_solver = cvode; break;
-      // ARKODE
-    case 11:
-      arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::EXPLICIT);
-      arkode->Init(*oper);
-      arkode->SetSStolerances(config.reltol,config.abstol);
-      arkode->SetMaxStep(dt);
-      if (config.ode_solver_type == 11) { arkode->SetERKTableNum(FEHLBERG_13_7_8); }
-      ode_solver = arkode; break;
-    case 12:
-      arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT);
-      arkode->Init(*oper);
-      arkode->SetSStolerances(config.reltol, config.abstol);
-      arkode->SetMaxStep(dt);
-      ode_solver = arkode; break;
-    default:
-      cout << "Unknown ODE solver type: " << config.ode_solver_type << '\n'
-	   << "Setting ODE to BackwardEulerSolver.\n";
-      ode_solver = new BackwardEulerSolver; break;
+    switch (config.ode_solver_type){
+        // MFEM explicit methods
+        case 1: ode_solver = new ForwardEulerSolver; break;
+        case 2: ode_solver = new RK2Solver(0.5); break;
+        case 3: ode_solver = new RK3SSPSolver; break;
+        case 4: ode_solver = new RK4Solver; break;
+        // MFEM implicit L-stable methods
+        case 5: ode_solver = new BackwardEulerSolver; break;
+        case 6: ode_solver = new SDIRK23Solver(2); break;
+        case 7: ode_solver = new SDIRK33Solver; break;
+        // CVODE
+        case 8: cvode = new CVODESolver(MPI_COMM_WORLD, CV_ADAMS); break;
+        case 9: cvode = new CVODESolver(MPI_COMM_WORLD, CV_BDF); break;
+        // ARKODE
+        case 10: arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::EXPLICIT); break;
+        case 11: arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::EXPLICIT); break;
+        case 12: arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT); break;
+        default:
+          cout << "Unknown ODE solver type: " << config.ode_solver_type << "\n" 
+               << "Setting ODE to BackwardEulerSolver.\n";
+          config.ode_solver_type = 1;
+          ode_solver = new BackwardEulerSolver; break;
     }
-  
-  // Initialize MFEM integrators, SUNDIALS integrators are initialized above
-  if (config.ode_solver_type < 8)
-    ode_solver->Init(*oper);
-  
-  // Since we want to update the diffusion coefficient after every time step,
-  // we need to use the "one-step" mode of the SUNDIALS solvers.
-  if (cvode) 
-    cvode->SetStepMode(CV_ONE_STEP); 
-  if (arkode)
-    arkode->SetStepMode(ARK_ONE_STEP);
+    
+    // Initialize ODE solver
+    if (config.ode_solver_type < 8)
+        ode_solver->Init(*oper);
+    else if (cvode){   
+        cvode->Init(*oper);
+        cvode->SetSStolerances(config.reltol, config.abstol);
+        cvode->SetMaxStep(dt);
+        cvode->SetStepMode(CV_ONE_STEP); 
+        ode_solver = cvode;
+    } 
+    else if (arkode){
+        arkode->Init(*oper);
+        arkode->SetSStolerances(config.reltol, config.abstol);
+        arkode->SetMaxStep(dt);
+        arkode->SetStepMode(ARK_ONE_STEP);
+        if (config.ode_solver_type == 11) arkode->SetERKTableNum(FEHLBERG_13_7_8);
+        ode_solver = arkode;
+    }
 
     //Open the paraview output and print initial state
     paraview_out = new ParaViewDataCollection("graph", pmesh);
@@ -113,11 +101,13 @@ double exact(const Vector &x, double t){
         return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
 }
 
+
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
     m(NULL),
     k(NULL),
+    f(NULL),
     T(NULL),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
@@ -127,11 +117,10 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
 
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
-    //Construct M
-    m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator());
-    m->Assemble(0);
-    m->FormSystemMatrix(ess_tdof_list, M);
+    ConstantCoefficient coeff(0.);
+    f = new ParLinearForm(&fespace);
+    f->AddDomainIntegrator(new DomainLFIntegrator(coeff));
+    f->Assemble();
 
     //Configure M solver
     M_solver.iterative_mode = false;
@@ -140,7 +129,6 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     M_solver.SetMaxIter(100);
     M_solver.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
-    M_solver.SetOperator(M);
     M_prec.SetType(HypreSmoother::Jacobi);
 
     //Configure T solver

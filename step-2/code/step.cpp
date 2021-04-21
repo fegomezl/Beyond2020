@@ -56,12 +56,20 @@ void Conduction_Operator::SetParameters(const Vector &X, Array<int> ess_bdr){
     }
     GridFunctionCoefficient coeff(&x);
 
+    //Construct M
+    delete m;
+    m = new ParBilinearForm(&fespace);
+    m->AddDomainIntegrator(new MassIntegrator());
+    m->Assemble(0);
+    m->FormLinearSystem(ess_tdof_list, x, *f, M, Z, F, 1);
+    M_solver.SetOperator(M);
+
     //Create the new K
     delete k;
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
-    k->FormSystemMatrix(ess_tdof_list, K);
+    m->FormLinearSystem(ess_tdof_list, x, *f, K, Z, F, 1);
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{

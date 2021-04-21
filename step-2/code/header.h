@@ -38,7 +38,6 @@ class Conduction_Operator : public TimeDependentOperator{
 	      virtual int SUNImplicitSolve(const Vector &b, Vector &X, 
                                      double tol);
 
-
         void SetParameters(const Vector &X, Array<int> ess_bdr);                        //Update the bilinear forms
 
         virtual ~Conduction_Operator();
@@ -50,11 +49,13 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
+        ParLinearForm *f;    //Bounary term
 
         //Solver objects
         HypreParMatrix M;
         HypreParMatrix K;
         HypreParMatrix *T;    //T = M + dt K
+        Vector F; 
         CGSolver M_solver;    
         CGSolver T_solver;    
         HypreSmoother M_prec; 
@@ -62,6 +63,7 @@ class Conduction_Operator : public TimeDependentOperator{
 
         //Extra
         mutable Vector z;     //Auxiliar vector
+        Vector Z;             //Auxiliar vector 
 };
 
 class Artic_sea{
