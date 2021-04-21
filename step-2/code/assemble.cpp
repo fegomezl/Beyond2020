@@ -21,7 +21,7 @@ void Artic_sea::assemble_system(){
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, ess_bdr, boundary);
+    oper = new Conduction_Operator(*fespace, X, ess_bdr);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -94,22 +94,20 @@ double theta(double x, double alpha){
 }
 
 double exact(const Vector &x, double t){
-    /*
     double eta = pow(x.Norml2(),2)/(4*(alpha_s + alpha_l)*t);
     if (eta > lambda)
         return T_i - (T_i - T_f)*theta(eta, alpha_l)/theta(lambda, alpha_l);
     else
         return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
-    */
-    return T_i;
 }
 
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Vector &X, Array<int> ess_bdr, FunctionCoefficient boundary):
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
     m(NULL),
     k(NULL),
+    f(NULL),
     T(NULL),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
@@ -141,5 +139,5 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Vector 
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
-    SetParameters(X, ess_bdr, boundary);
+    SetParameters(X, ess_bdr);
 }
