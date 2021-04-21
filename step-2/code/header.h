@@ -28,7 +28,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, Array<int> nbc_marker, FunctionCoefficient n_boundary);
+        Conduction_Operator(ParFiniteElementSpace &fespace, Vector &X, Array<int> ess_bdr, FunctionCoefficient);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
@@ -39,7 +39,7 @@ class Conduction_Operator : public TimeDependentOperator{
                                      double tol);
 
 
-        void SetParameters(const Vector &X, Array<int> ess_bdr);                        //Update the bilinear forms
+        void SetParameters(Vector &X, Array<int> ess_bdr, FunctionCoefficient boundary);                        //Update the bilinear forms
 
         virtual ~Conduction_Operator();
     protected:
@@ -50,17 +50,17 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
-        ParLinearForm *f; //boundary term
+        ParLinearForm *f;    //Bounary term
 
         //Solver objects
         HypreParMatrix M;
         HypreParMatrix K;
         HypreParMatrix *T;    //T = M + dt K
-        CGSolver M_solver;
+        Vector F; 
+        CGSolver M_solver;    
         CGSolver T_solver;    
         HypreSmoother M_prec; 
-        HypreSmoother T_prec;
-        Vector F;
+        HypreSmoother T_prec; 
 
         //Extra
         mutable Vector z;     //Auxiliar vector
@@ -107,7 +107,6 @@ class Artic_sea{
         Vector X;
         Array<int> ess_bdr; 
         FunctionCoefficient boundary;
-        FunctionCoefficient n_boundary;
         Conduction_Operator *oper;
 
         //Solver objects
@@ -120,7 +119,6 @@ class Artic_sea{
 };
 
 extern double exact(const Vector &x, double t);
-extern double neumann_bdr(const Vector &x, double t);
 
 extern double T_f;     //Fusion temperature
 extern double T_i;     //Initial temperature

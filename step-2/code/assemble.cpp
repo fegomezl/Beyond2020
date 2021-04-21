@@ -11,12 +11,8 @@ void Artic_sea::assemble_system(){
     boundary.SetTime(t);
 
     //Set boundary conditions
-    //Dirichlet
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 1; ess_bdr[2] =0;
-    //Neumann
-    Array<int> nbc_marker(pmesh->bdr_attributes.Max());
-    nbc_marker = 0; nbc_marker[2] = 1;
+    ess_bdr = 1;  
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
@@ -25,7 +21,7 @@ void Artic_sea::assemble_system(){
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, ess_bdr, nbc_marker, n_boundary);
+    oper = new Conduction_Operator(*fespace, X, ess_bdr, boundary);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -105,18 +101,13 @@ double exact(const Vector &x, double t){
         return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
 }
 
-double neumann_bdr(const Vector &x, double t){
-    return 5*sin(x(2));
-}
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, Array<int> nbc_marker, FunctionCoefficient n_boundary):
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Vector &X, Array<int> ess_bdr, FunctionCoefficient boundary):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
     m(NULL),
     k(NULL),
-    f(NULL),
     T(NULL),
-
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
     z(height)
@@ -125,15 +116,9 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
 
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
-    //Construct M
-    m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator());
-    m->Assemble(0);
-    m->FormSystemMatrix(ess_tdof_list, M);
-
-    //Construct F
+    ConstantCoefficient coeff(0.);
     f = new ParLinearForm(&fespace);
-    f->AddBoundaryIntegrator(new BoundaryLFIntegrator (n_boundary), nbc_marker);
+    f->AddDomainIntegrator(new DomainLFIntegrator(boundary));
     f->Assemble();
 
     //Configure M solver
@@ -143,7 +128,6 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     M_solver.SetMaxIter(100);
     M_solver.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
-    M_solver.SetOperator(M);
     M_prec.SetType(HypreSmoother::Jacobi);
 
     //Configure T solver
@@ -154,8 +138,5 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
-    SetParameters(X, ess_bdr);
-
-    F=*f->ParallelAssemble();
-
+    SetParameters(X, ess_bdr, boundary);
 }
