@@ -8,16 +8,16 @@ void Artic_sea::assemble_system(){
     actual_error = 0;
     total_error = 0;
     iterations_error = 0;
-    boundary.SetTime(t);
+    function.SetTime(t);
 
     //Set boundary conditions
-    ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 1;  
+    ess_bdr.SetSize(pmesh->bdr_attributes.Max());//*********
+    ess_bdr = 1;//******************************************  
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
-    x->ProjectCoefficient(boundary);
-    x->ProjectBdrCoefficient(boundary, ess_bdr);
+    x->ProjectCoefficient(function);
+    x->ProjectBdrCoefficient(function, ess_bdr);
     x->GetTrueDofs(X);
 
     //Create operator
@@ -73,7 +73,7 @@ void Artic_sea::assemble_system(){
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x);
     paraview_out->SetCycle(0);
-    paraview_out->SetTime(0);
+    paraview_out->SetTime(t);
     paraview_out->Save();
 
     //Start program check
