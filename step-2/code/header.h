@@ -28,7 +28,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr);
+        Conduction_Operator(ParFiniteElementSpace &fespace, Vector &X, Array<int> ess_bdr, FunctionCoefficient);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
@@ -39,7 +39,7 @@ class Conduction_Operator : public TimeDependentOperator{
                                      double tol);
 
 
-        void SetParameters(const Vector &X, Array<int> ess_bdr);                        //Update the bilinear forms
+        void SetParameters(Vector &X, Array<int> ess_bdr, FunctionCoefficient boundary);                        //Update the bilinear forms
 
         virtual ~Conduction_Operator();
     protected:
@@ -50,11 +50,13 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
+        ParLinearForm *f;    //Bounary term
 
         //Solver objects
         HypreParMatrix M;
         HypreParMatrix K;
         HypreParMatrix *T;    //T = M + dt K
+        Vector F; 
         CGSolver M_solver;    
         CGSolver T_solver;    
         HypreSmoother M_prec; 

@@ -26,6 +26,7 @@ Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete m;
     delete k;
+    delete f;
     delete T;
 }
 

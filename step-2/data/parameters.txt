@@ -18,7 +18,7 @@ Simulation parameters
 70.8    #Solid_thermal_diffusion_constant
 0.0719  #Lambda
 0.01    #Dt
-0.05       #Final_time
+1.5       #Final_time
 5       #Visualization_steps
 10       #ODE_solver_type
 0.000001    #reltol (tolerancia relativa de SUNDIALS solvers)

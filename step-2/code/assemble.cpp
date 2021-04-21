@@ -21,7 +21,7 @@ void Artic_sea::assemble_system(){
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, ess_bdr);
+    oper = new Conduction_Operator(*fespace, X, ess_bdr, boundary);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -94,14 +94,18 @@ double theta(double x, double alpha){
 }
 
 double exact(const Vector &x, double t){
+    /*
     double eta = pow(x.Norml2(),2)/(4*(alpha_s + alpha_l)*t);
     if (eta > lambda)
         return T_i - (T_i - T_f)*theta(eta, alpha_l)/theta(lambda, alpha_l);
     else
         return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
+    */
+    return T_i;
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
+
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Vector &X, Array<int> ess_bdr, FunctionCoefficient boundary):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
     m(NULL),
@@ -115,11 +119,10 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
 
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
-    //Construct M
-    m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator());
-    m->Assemble(0);
-    m->FormSystemMatrix(ess_tdof_list, M);
+    ConstantCoefficient coeff(0.);
+    f = new ParLinearForm(&fespace);
+    f->AddDomainIntegrator(new DomainLFIntegrator(coeff));
+    f->Assemble();
 
     //Configure M solver
     M_solver.iterative_mode = false;
@@ -128,7 +131,6 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     M_solver.SetMaxIter(100);
     M_solver.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
-    M_solver.SetOperator(M);
     M_prec.SetType(HypreSmoother::Jacobi);
 
     //Configure T solver
@@ -139,5 +141,5 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
-    SetParameters(X, ess_bdr);
+    SetParameters(X, ess_bdr, boundary);
 }
