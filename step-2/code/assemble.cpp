@@ -21,7 +21,7 @@ void Artic_sea::assemble_system(){
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, ess_bdr, boundary);
+    oper = new Conduction_Operator(*fespace, X, ess_bdr, *x);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -102,11 +102,12 @@ double exact(const Vector &x, double t){
 }
 
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Vector &X, Array<int> ess_bdr, FunctionCoefficient boundary):
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, ParGridFunction &x):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
     m(NULL),
     k(NULL),
+    f(NULL),
     T(NULL),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
@@ -118,7 +119,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Vector 
 
     ConstantCoefficient coeff(0.);
     f = new ParLinearForm(&fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(boundary));
+    f->AddDomainIntegrator(new DomainLFIntegrator(coeff));
     f->Assemble();
 
     //Configure M solver
@@ -138,5 +139,5 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Vector 
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
-    SetParameters(X, ess_bdr, boundary);
+    SetParameters(X, ess_bdr, x);
 }

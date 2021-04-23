@@ -20,6 +20,6 @@ Simulation parameters
 0.005    #Dt
 2       #Final_time
 5       #Visualization_steps
-10       #ODE_solver_type
+3       #ODE_solver_type
 0.000001    #reltol (tolerancia relativa de SUNDIALS solvers)
 0.000001    #abstol (tolerancia absoluta de SUNDIALS solvers)

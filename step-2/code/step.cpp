@@ -11,7 +11,7 @@ void Artic_sea::time_step(){
     x->GetTrueDofs(X);
 
     //Perform the time_step
-    oper->SetParameters(X, ess_bdr, boundary);
+    oper->SetParameters(X, ess_bdr, *x);
     ode_solver->Step(X, t, dt);
 
     //Output from the solution
@@ -42,27 +42,26 @@ void Artic_sea::time_step(){
     }
 }
 
-void Conduction_Operator::SetParameters(Vector &X, Array<int> ess_bdr, FunctionCoefficient boundary){
+void Conduction_Operator::SetParameters(const Vector &X, Array<int> ess_bdr, ParGridFunction &x){
     //Read the solution X
-    ParGridFunction x(&fespace);
-    x.SetFromTrueDofs(X);
-    x.ProjectBdrCoefficient(boundary, ess_bdr);
+    ParGridFunction aux(&fespace);
+    aux.SetFromTrueDofs(X);
 
     //Create the K coefficient
-    for (int ii = 0; ii < x.Size(); ii++){
-        if (x(ii) > T_f) 
-            x(ii) *= alpha_l;
+    for (int ii = 0; ii < aux.Size(); ii++){
+        if (aux(ii) > T_f)
+            aux(ii) *= alpha_l;
         else  
-            x(ii) *= alpha_s;
+            aux(ii) *= alpha_s;
     }
-    GridFunctionCoefficient coeff(&x);
+    GridFunctionCoefficient coeff(&aux);
 
     //Construct M
     delete m;
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator());
     m->Assemble(0);
-    m->FormLinearSystem(ess_tdof_list, x, *f, M, X, F, 1);
+    m->FormLinearSystem(ess_tdof_list, x, *f, M, Z, F, 1);
     M_solver.SetOperator(M);
 
     //Create the new K
@@ -70,7 +69,7 @@ void Conduction_Operator::SetParameters(Vector &X, Array<int> ess_bdr, FunctionC
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
-    m->FormLinearSystem(ess_tdof_list, x, *f, K, X, F, 1);
+    m->FormLinearSystem(ess_tdof_list, x, *f, K, Z, F, 1);
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
