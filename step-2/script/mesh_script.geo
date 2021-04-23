@@ -3,7 +3,7 @@
 Mesh.ElementOrder = 2;
 Mesh.SecondOrderLinear = 0;
 Height = 20;
-Radius = 10;
+Radius = 20;
 Radius_Inner = 5;
 
 Nb = 4+1;
@@ -12,7 +12,7 @@ Nc1 = 10+1;
 Rc1 = 1.00;
 Nc2 = 10+1;
 Rc2 = 1.00;
-Nz = 4;
+Nz = 2;
 
 SetFactory("OpenCASCADE");
 //+
