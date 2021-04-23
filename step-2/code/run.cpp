@@ -7,7 +7,7 @@ Config::Config(bool master, int nproc):
 
 Artic_sea::Artic_sea(Config config):
     config(config),
-    boundary(exact),
+    exact_coeff(exact),
     pmesh(NULL), fec(NULL), fespace(NULL),
     x(NULL), oper(NULL), ode_solver(NULL),
     cvode(NULL), arkode(NULL), paraview_out(NULL)

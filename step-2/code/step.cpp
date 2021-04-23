@@ -6,20 +6,19 @@ void Artic_sea::time_step(){
     dt = min(dt, (config.t_final + config.t_init) - t);
 
     //Update boundary conditions
-    boundary.SetTime(t);
-    x->ProjectBdrCoefficient(boundary, ess_bdr);
+    exact_coeff.SetTime(t);
     x->GetTrueDofs(X);
 
     //Perform the time_step
-    oper->SetParameters(X, ess_bdr);
+    oper->SetParameters(X, t);
     ode_solver->Step(X, t, dt);
 
     //Output from the solution
     if (last || (iteration % config.vis_steps) == 0){
         //Calculate convergence
-        boundary.SetTime(t);
+        exact_coeff.SetTime(t);
         x->SetFromTrueDofs(X);
-        actual_error = x->ComputeL2Error(boundary);
+        actual_error = x->ComputeL2Error(exact_coeff);
         total_error += actual_error;
         iterations_error += 1;
 
@@ -43,11 +42,9 @@ void Artic_sea::time_step(){
     }
 }
 
-void Conduction_Operator::SetParameters(const Vector &X, Array<int> ess_bdr){
+void Conduction_Operator::SetParameters(const Vector &X, double t){
     //Read the solution X
-    ParGridFunction x(&fespace);
     ParGridFunction aux(&fespace);
-    x.SetFromTrueDofs(X);
     aux.SetFromTrueDofs(X);
 
     //Create the K coefficient
@@ -59,26 +56,35 @@ void Conduction_Operator::SetParameters(const Vector &X, Array<int> ess_bdr){
     }
     GridFunctionCoefficient coeff(&aux);
 
-    //Construct M
-    delete m;
-    m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator());
-    m->Assemble(0);
-    m->FormLinearSystem(ess_tdof_list, x, *f, M, Z, F);
-    M_solver.SetOperator(M);
-
     //Create the new K
     delete k;
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
-    k->FormLinearSystem(ess_tdof_list, x, *f, K, Z, F);
+    k->FormSystemMatrix(ess_tdof_list, K);
+
+    //Update RHS coefficients
+    nbc_1.SetTime(t);
+    nbc_2.SetTime(t);
+    nbc_3.SetTime(t);
+    nbc_4.SetTime(t);
+
+    //Construct RHS
+    delete f;
+    f = new ParLinearForm(&fespace);
+    f->AddBoundaryIntegrator(new DomainLFIntegrator(nbc_1), nbc_marker_1);
+    f->AddBoundaryIntegrator(new DomainLFIntegrator(nbc_2), nbc_marker_2);
+    f->AddBoundaryIntegrator(new DomainLFIntegrator(nbc_3), nbc_marker_3);
+    f->AddBoundaryIntegrator(new DomainLFIntegrator(nbc_4), nbc_marker_4);
+    f->Assemble();
+    F = *(f->ParallelAssemble());
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //Solve M(dX_dt) = -K(X) for dX_dt
     K.Mult(X,z);
     z.Neg();
+    z += F;
     M_solver.Mult(z, dX_dt);
 }
 
@@ -90,6 +96,7 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
 
     K.Mult(X, z);
     z.Neg();
+    z += F;
     T_solver.Mult(z, dX_dt);
 }
 
@@ -107,6 +114,7 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &b, Vector &X,
                              double tol){
     //Solve the system Ax = z -> (M - gamma*K)x = Mb
     M.Mult(b,z);
+    z += F;
     T_solver.Mult(z,X);
     return 0;
 }
