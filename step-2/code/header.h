@@ -28,7 +28,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, ParGridFunction &x);
+        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, double t_init);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
@@ -38,7 +38,7 @@ class Conduction_Operator : public TimeDependentOperator{
 	      virtual int SUNImplicitSolve(const Vector &b, Vector &X, 
                                      double tol);
 
-        void SetParameters(const Vector &X, Array<int> ess_bdr, ParGridFunction &x);                        //Update the bilinear forms
+        void SetParameters(const Vector &X, Array<int> ess_bdr);                        //Update the bilinear forms
 
         virtual ~Conduction_Operator();
     protected:
@@ -63,7 +63,7 @@ class Conduction_Operator : public TimeDependentOperator{
 
         //Extra
         mutable Vector z;     //Auxiliar vector
-        Vector Z;             //Auxiliar vector 
+        mutable Vector Z;             //Auxiliar vector 
 };
 
 class Artic_sea{
