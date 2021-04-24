@@ -29,7 +29,7 @@ void Artic_sea::output_results(){
 
     //Print visual results to Paraview
     if (config.last){
-        ParaViewDataCollection paraview_out("graph", pmesh);
+        ParaViewDataCollection paraview_out("graph/step-1", pmesh);
         paraview_out.SetDataFormat(VTKFormat::BINARY);
         paraview_out.SetCycle(0);
         paraview_out.SetTime(0.);

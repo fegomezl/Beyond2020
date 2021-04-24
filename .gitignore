@@ -6,3 +6,4 @@
 *.msh
 *~
 *convergence.txt
+local_config.mk

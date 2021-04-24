@@ -45,7 +45,8 @@ all: main.x data/parameters.txt
 
 graph:
 	@echo -e 'Moving graphs ... \c'
-	@cp -r graph/ $(SHARE_DIR)
+	@rm -rf $(SHARE_DIR)/step-2
+	@cp -r graph/step-2 $(SHARE_DIR)/step-2
 	@echo -e 'Done!'
 
 main.x: $(DEPENDENCIES)

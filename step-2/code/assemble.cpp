@@ -76,7 +76,7 @@ void Artic_sea::assemble_system(){
     }
 
     //Open the paraview output and print initial state
-    paraview_out = new ParaViewDataCollection("graph", pmesh);
+    paraview_out = new ParaViewDataCollection("graph/step-2", pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x);
