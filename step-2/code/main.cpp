@@ -7,6 +7,8 @@ double alpha_l;  //Liquid thermal conduction
 double alpha_s; //Solid thermal conduction
 double lambda; //s(t) = sqrt(4*lamda*(alpha_s+alpha_l)*t)
 
+double int_rad;
+
 int main(int argc, char *argv[]){
     //Define MPI parameters
     int nproc = 0, pid = 0;
@@ -17,9 +19,6 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-
-    //Define auxiliar parameters
-    double int_rad;
 
     //Make program parameters readeable in execution
     OptionsParser args(argc, argv);

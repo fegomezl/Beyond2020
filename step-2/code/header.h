@@ -128,3 +128,5 @@ extern double T_i;     //Initial temperature
 extern double alpha_l; //Liquid thermal conduction
 extern double alpha_s; //Solid thermal conduction
 extern double lambda;   //s(t) = sqrt(4*lamda*(alpha_s+alpha_l)*t)
+
+extern double int_rad;

@@ -31,14 +31,12 @@ void Artic_sea::assemble_system(){
              << "\n--------------------------------------------------\n";
 }
 
-double theta(double x, double alpha){
-    return exp(-x/alpha)/sqrt(x) - sqrt(M_PI/alpha)*erfc(sqrt(x/alpha));
-}
-
 double Function(const Vector &x, double t){
-    double eta = pow(x.Norml2(),2)/(4*(alpha_s + alpha_l)*t);
-    if (eta > lambda)
-        return T_i - (T_i - T_f)*theta(eta, alpha_l)/theta(lambda, alpha_l);
+    double int_rad = 5;
+    double r_2 = pow(x(0),2) + pow(x(1),2);
+    double R_2 = pow(int_rad, 2) + 355.2*T_i*int_rad*t;
+    if (R_2 <= r_2)
+        return T_f;
     else
-        return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
+        return T_f + 0.89*T_i*int_rad*log(R_2/r_2);
 }

@@ -1,14 +1,14 @@
 Mesh parameters
 graph/transfinite_cylinder.msh #Mesh_file
 20  #Height
-20  #Radius
+10  #Radius
 5   #Radius_Inner
 4   #Radial_cells
 10  #Angular_cells(times_four)
-4   #Vertical_cells
+2   #Vertical_cells
 
 FE parameters
-0  #Refinements
+1  #Refinements
 2   #Order
 
 Simulation parameters
@@ -17,9 +17,9 @@ Simulation parameters
 7.8     #Liquid_thermal_diffusion_constant
 70.8    #Solid_thermal_diffusion_constant
 0.0719  #Lambda
-0.005    #Dt
-0.6       #Final_time
-5       #Visualization_steps
-12       #ODE_solver_type
+0.00005    #Dt
+0.004       #Final_time
+10       #Visualization_steps
+8       #ODE_solver_type
 0.000001    #reltol (tolerancia relativa de SUNDIALS solvers)
 0.000001    #abstol (tolerancia absoluta de SUNDIALS solvers)

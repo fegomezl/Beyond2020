@@ -13,7 +13,7 @@ void Artic_sea::assemble_system(){
     dir_bdr.SetSize(pmesh->bdr_attributes.Max());
     new_bdr.SetSize(pmesh->bdr_attributes.Max());
     dir_bdr = 0;     new_bdr = 0; 
-    dir_bdr[3] = 1;  new_bdr[2] = 1;
+    dir_bdr[2] = 1;  new_bdr[3] = 1;
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
@@ -98,7 +98,12 @@ void Artic_sea::assemble_system(){
 }
 
 double exact(const Vector &x, double t){
-    return T_f;
+    double r_2 = pow(x(0),2) + pow(x(1),2);
+    double R_2 = pow(int_rad, 2) + 355.2*T_i*int_rad*t;
+    if (R_2 <= r_2)
+        return T_f;
+    else
+        return T_f + 0.89*T_i*int_rad*log(R_2/r_2);
 }
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> dir_bdr, Array<int> new_bdr, double t_init):
