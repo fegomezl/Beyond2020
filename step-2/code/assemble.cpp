@@ -2,21 +2,34 @@
 
 void Artic_sea::assemble_system(){
     //Initialize the system
-    t = config.t_init;     
+    t = 0;     
     dt = config.dt_init;
     last = false;
     actual_error = 0;
     total_error = 0;
     iterations_error = 0;
-    exact_coeff.SetTime(t);
+
+    //Set boundary conditions
+    dir_bdr.SetSize(pmesh->bdr_attributes.Max());
+    new_bdr.SetSize(pmesh->bdr_attributes.Max());
+    dir_bdr = 0;     new_bdr = 0; 
+    dir_bdr[3] = 1;  new_bdr[2] = 1;
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
-    x->ProjectCoefficient(exact_coeff);
+    ConstantCoefficient outer(0.);
+    x->ProjectBdrCoefficient(outer, dir_bdr);
+    x->ProjectCoefficient(outer);
     x->GetTrueDofs(X);
 
+    //Define added boundary solution
+    ParGridFunction boundary(fespace);
+    ConstantCoefficient boundary_coeff(T_f);
+    boundary.ProjectCoefficient(boundary_coeff);
+    boundary.GetTrueDofs(Boundary);
+
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, t, pmesh->bdr_attributes.Max());
+    oper = new Conduction_Operator(*fespace, X, dir_bdr, new_bdr, t);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -84,67 +97,13 @@ void Artic_sea::assemble_system(){
              << "\n--------------------------------------------------\n";
 }
 
-//Auxiliar functions
-double theta(double x, double alpha){
-    return exp(-x/alpha)/sqrt(x) - sqrt(M_PI/alpha)*erfc(sqrt(x/alpha));
-}
-
-double g(double x){
-    if (x > lambda){
-        double alpha_l_rel = alpha_l/(alpha_l + alpha_s);
-        return alpha_l*exp(-x/alpha_l_rel)/(theta(x,alpha_l_rel)*sqrt(x));
-    }
-    else {
-        double alpha_s_rel = alpha_s/(alpha_l + alpha_s);
-        return alpha_s*exp(-x/alpha_s_rel)/sqrt(x);
-    }
-}
-
-//Exact solution of the problem
 double exact(const Vector &x, double t){
-    double eta = pow(x.Norml2(),2)/(4*(alpha_s + alpha_l)*t);
-    if (eta > lambda)
-        return T_i - (T_i - T_f)*theta(eta, alpha_l)/theta(lambda, alpha_l);
-    else
-        return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
+    return T_f;
 }
 
-//Boundary conditions
-double fnbc_1(const Vector &x, double t){
-    double u = x(2);
-    double r_2 = pow(x.Norml2(),2);
-    double eta = r_2/(4*(alpha_s + alpha_l)*t);
-    return (T_i - T_f)*(u/r_2)*g(eta);
-}
-
-double fnbc_2(const Vector &x, double t){
-    double u = x(2);
-    double r_2 = pow(x.Norml2(),2);
-    double eta = r_2/(4*(alpha_s + alpha_l)*t);
-    return -(T_i - T_f)*(u/r_2)*g(eta);
-}
-
-double fnbc_3(const Vector &x, double t){
-    double u = sqrt(pow(x(0),2) + pow(x(1),2));
-    double r_2 = pow(x.Norml2(),2);
-    double eta = r_2/(4*(alpha_s + alpha_l)*t);
-    return (T_i - T_f)*(u/r_2)*g(eta);
-}
-
-double fnbc_4(const Vector &x, double t){
-    double u = sqrt(pow(x(0),2) + pow(x(1),2));
-    double r_2 = pow(x.Norml2(),2);
-    double eta = r_2/(4*(alpha_s + alpha_l)*t);
-    return -(T_i - T_f)*(u/r_2)*g(eta);
-}
-
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, double t_init, int bdr_size):
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> dir_bdr, Array<int> new_bdr, double t_init):
     TimeDependentOperator(fespace.GetTrueVSize(), t_init),
     fespace(fespace),
-    nbc_1(fnbc_1),
-    nbc_2(fnbc_2),
-    nbc_3(fnbc_3),
-    nbc_4(fnbc_4),
     m(NULL),
     k(NULL),
     f(NULL),
@@ -155,34 +114,26 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
 {
     const double rel_tol = 1e-8;
 
-    //Set dirichlet boundary conditions
-    ess_bdr.SetSize(bdr_size);
-    ess_bdr = 0; 
-    fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+    fespace.GetEssentialTrueDofs(dir_bdr, ess_tdof_list);
 
-    //Set neumman boundary conditions
-    nbc_marker_1.SetSize(bdr_size); nbc_marker_1 = 0;
-    nbc_marker_2.SetSize(bdr_size); nbc_marker_2 = 0;
-    nbc_marker_3.SetSize(bdr_size); nbc_marker_3 = 0;
-    nbc_marker_4.SetSize(bdr_size); nbc_marker_4 = 0;
-    nbc_marker_1[0] = 1;
-    nbc_marker_2[1] = 1;
-    nbc_marker_3[2] = 1;
-    nbc_marker_4[3] = 1;
-
-    //Construct M
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator());
     m->Assemble(0);
     m->FormSystemMatrix(ess_tdof_list, M);
 
+    ConstantCoefficient inner(T_i);
+    f = new ParLinearForm(&fespace);
+    f->AddBoundaryIntegrator(new DomainLFIntegrator(inner), new_bdr);
+    f->Assemble();
+    F = *(f->ParallelAssemble());
+
     //Configure M solver
+    M_prec.SetType(HypreSmoother::Jacobi);
     M_solver.iterative_mode = false;
     M_solver.SetRelTol(rel_tol);
     M_solver.SetAbsTol(0.);
     M_solver.SetMaxIter(100);
     M_solver.SetPrintLevel(0);
-    M_prec.SetType(HypreSmoother::Jacobi);
     M_solver.SetPreconditioner(M_prec);
     M_solver.SetOperator(M);
 
@@ -194,5 +145,5 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
-    SetParameters(X, t_init);
+    SetParameters(X);
 }

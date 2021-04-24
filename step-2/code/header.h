@@ -28,7 +28,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, double t_init, int bdr_size);
+        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> dir_bdr, Array<int> new_bdr, double t_init);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
@@ -38,24 +38,13 @@ class Conduction_Operator : public TimeDependentOperator{
 	      virtual int SUNImplicitSolve(const Vector &b, Vector &X, 
                                      double tol);
 
-        void SetParameters(const Vector &X, double t);                        //Update the bilinear forms
+        void SetParameters(const Vector &X);                        //Update the bilinear forms
 
         virtual ~Conduction_Operator();
     protected:
         //Mesh objects
         ParFiniteElementSpace &fespace;
         Array<int> ess_tdof_list; 
-        Array<int> ess_bdr;
-        Array<int> nbc_marker_1;
-        Array<int> nbc_marker_2;
-        Array<int> nbc_marker_3;
-        Array<int> nbc_marker_4;
-
-        //Boundary Objects
-        FunctionCoefficient nbc_1;
-        FunctionCoefficient nbc_2;
-        FunctionCoefficient nbc_3;
-        FunctionCoefficient nbc_4;
 
         //System objects
         ParBilinearForm *m;  //Mass operator
@@ -115,8 +104,12 @@ class Artic_sea{
         //System objects
         ParGridFunction *x;
         Vector X;
-        FunctionCoefficient exact_coeff;
+        Array<int> dir_bdr; 
+        Array<int> new_bdr; 
         Conduction_Operator *oper;
+        FunctionCoefficient exact_coeff;
+        Vector Boundary;
+        Vector X_real;
 
         //Solver objects
         ODESolver *ode_solver;
