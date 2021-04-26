@@ -6,13 +6,13 @@ Height = 20;
 Radius = 10;
 Radius_Inner = 5;
 
-Nb = 4+1;
+Nb = 3+1;
 Rb = 1.00;
-Nc1 = 10+1;
+Nc1 = 4+1;
 Rc1 = 1.00;
-Nc2 = 10+1;
+Nc2 = 4+1;
 Rc2 = 1.00;
-Nz = 4;
+Nz = 3;
 
 SetFactory("OpenCASCADE");
 //+
