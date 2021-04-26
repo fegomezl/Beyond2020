@@ -1,13 +1,13 @@
 #include "header.h"
 
 double T_f;       //Fusion temperature
-double T_i;      //Initial temperature
+
+double Q;      //Inner heat transfer
 
 double alpha_l;  //Liquid thermal conduction
 double alpha_s; //Solid thermal conduction
-double lambda; //s(t) = sqrt(4*lamda*(alpha_s+alpha_l)*t)
 
-double int_rad;
+double int_rad;   //Inner radius
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -28,14 +28,12 @@ int main(int argc, char *argv[]){
                    "Internal radius of the container.");
     args.AddOption(&T_f, "-T_f", "--temperature_fusion",
                    "Fusion Temperature of the material.");
-    args.AddOption(&T_i, "-T_i", "--temperature_initial",
-                   "Initial temperature of the material.");
+    args.AddOption(&Q, "-Q", "--heat_transfer",
+                   "Inner heat transfer.");
     args.AddOption(&alpha_l, "-a_l", "--alpha_liquid",
                    "Alpha coefficient for liquid phase.");
     args.AddOption(&alpha_s, "-a_s", "--alpha_solid",
                    "Alpha coefficient for solid phase.");
-    args.AddOption(&lambda, "-l", "--lambda",
-                   "Lambda constant.");
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
     args.AddOption(&config.refinements, "-r", "--refinements",
@@ -62,9 +60,6 @@ int main(int argc, char *argv[]){
         return 1;
     }
     if (config.master) args.PrintOptions(cout);
-
-    //Auxiliar calculations
-    config.t_init = pow(int_rad,2)/(4*(alpha_s + alpha_l)*lambda);
 
     //Run the program for different refinements
     Artic_sea artic_sea(config);

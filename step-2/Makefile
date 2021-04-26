@@ -10,16 +10,15 @@ INNER_RADIUS = $(shell sed -n 5p data/parameters.txt | tr -d -c 0-9.)
 REF = $(shell sed -n 11p data/parameters.txt | tr -d -c 0-9.) 
 ORDER = $(shell sed -n 12p data/parameters.txt | tr -d -c 0-9.)
 T_FU = $(shell sed -n 15p data/parameters.txt | tr -d -c 0-9.)
-T_I = $(shell sed -n 16p data/parameters.txt | tr -d -c 0-9.)
+Q = $(shell sed -n 16p data/parameters.txt | tr -d -c 0-9.)
 ALPHA_L = $(shell sed -n 17p data/parameters.txt | tr -d -c 0-9.)
 ALPHA_S = $(shell sed -n 18p data/parameters.txt | tr -d -c 0-9.)
-LAMBDA = $(shell sed -n 19p data/parameters.txt | tr -d -c 0-9.)
-DT = $(shell sed -n 20p data/parameters.txt | tr -d -c 0-9.)
-T_FI = $(shell sed -n 21p data/parameters.txt | tr -d -c 0-9.)
-VIS = $(shell sed -n 22p data/parameters.txt | tr -d -c 0-9.)
-ODE = $(shell sed -n 23p data/parameters.txt | tr -d -c 0-9.)
-RELT = $(shell sed -n 24p data/parameters.txt | tr -d -c 0-9.)
-ABST = $(shell sed -n 25p data/parameters.txt | tr -d -c 0-9.)
+DT = $(shell sed -n 19p data/parameters.txt | tr -d -c 0-9.)
+T_FI = $(shell sed -n 20p data/parameters.txt | tr -d -c 0-9.)
+VIS = $(shell sed -n 21p data/parameters.txt | tr -d -c 0-9.)
+ODE = $(shell sed -n 22p data/parameters.txt | tr -d -c 0-9.)
+RELT = $(shell sed -n 23p data/parameters.txt | tr -d -c 0-9.)
+ABST = $(shell sed -n 24p data/parameters.txt | tr -d -c 0-9.)
 
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
@@ -37,8 +36,8 @@ all: main.x data/parameters.txt
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh $(MESH) --internal-radius $(INNER_RADIUS) \
-		 				--temperature_fusion $(T_FU) --temperature_initial $(T_I) \
-						--alpha_liquid $(ALPHA_L) --alpha_solid $(ALPHA_S) --lambda $(LAMBDA) \
+		 				--temperature_fusion $(T_FU) --heat_transfer $(Q) \
+						--alpha_liquid $(ALPHA_L) --alpha_solid $(ALPHA_S) \
 						--order $(ORDER) --refinements $(REF) --time_step $(DT) \
 						--t_final $(T_FI) --visualization_steps $(VIS) --ode_solver $(ODE) --tolrelativaSUNDIALS $(RELT) --tolabsolutaSUNDIALS $(ABST)
 	@echo -e '\nDone!\n'

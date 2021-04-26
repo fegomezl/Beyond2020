@@ -18,7 +18,6 @@ struct Config{
     int order;
     int refinements;
     double dt_init;
-    double t_init;
     double t_final;
     int vis_steps;
     int ode_solver_type;
@@ -28,7 +27,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> dir_bdr, Array<int> new_bdr, double t_init);
+        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> dir_bdr, Array<int> new_bdr);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, 
@@ -123,10 +122,10 @@ class Artic_sea{
 extern double exact(const Vector &x, double t);
 
 extern double T_f;     //Fusion temperature
-extern double T_i;     //Initial temperature
+
+extern double Q;     //Heat inner transfer
 
 extern double alpha_l; //Liquid thermal conduction
 extern double alpha_s; //Solid thermal conduction
-extern double lambda;   //s(t) = sqrt(4*lamda*(alpha_s+alpha_l)*t)
 
 extern double int_rad;

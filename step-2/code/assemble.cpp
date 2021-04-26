@@ -29,7 +29,7 @@ void Artic_sea::assemble_system(){
     boundary.GetTrueDofs(Boundary);
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, dir_bdr, new_bdr, t);
+    oper = new Conduction_Operator(*fespace, X, dir_bdr, new_bdr);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -87,27 +87,28 @@ void Artic_sea::assemble_system(){
     //Start program check
     if (config.master)
         cout << left << setw(12)
-             << "--------------------------------------------------\n"
+             << "-------------------------------------------------------\n"
              << left << setw(12)
              << "Step" << setw(12)
              << "Time" << setw(12)
+             << "Dt" << setw(12)
              << "Progress" << setw(12)
              << "Error"
              << left << setw(12)
-             << "\n--------------------------------------------------\n";
+             << "\n-------------------------------------------------------\n";
 }
 
 double exact(const Vector &x, double t){
     double r_2 = pow(x(0),2) + pow(x(1),2);
-    double R_2 = pow(int_rad, 2) + 355.2*T_i*int_rad*t;
+    double R_2 = pow(int_rad, 2) + 355.2*Q*int_rad*t;
     if (R_2 <= r_2)
         return T_f;
     else
-        return T_f + 0.89*T_i*int_rad*log(R_2/r_2);
+        return T_f + 0.89*Q*int_rad*log(R_2/r_2);
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> dir_bdr, Array<int> new_bdr, double t_init):
-    TimeDependentOperator(fespace.GetTrueVSize(), t_init),
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> dir_bdr, Array<int> new_bdr):
+    TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
     m(NULL),
     k(NULL),
@@ -126,7 +127,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     m->Assemble(0);
     m->FormSystemMatrix(ess_tdof_list, M);
 
-    ConstantCoefficient inner(T_i);
+    ConstantCoefficient inner(Q);
     f = new ParLinearForm(&fespace);
     f->AddBoundaryIntegrator(new DomainLFIntegrator(inner), new_bdr);
     f->Assemble();

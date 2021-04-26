@@ -41,6 +41,7 @@ void Artic_sea::time_step(){
         cout << left << setw(12)
              << iteration << setw(12)
              << t << setw(12)
+             << dt << setw(12)
              << progress << setw(12)
              << actual_error << "\r";
         cout.flush();
