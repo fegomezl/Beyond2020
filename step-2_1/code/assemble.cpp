@@ -2,34 +2,28 @@
 
 void Artic_sea::assemble_system(){
     //Initialize the system
-    t = 0;     
+    t = config.t_init;     
     dt = config.dt_init;
     last = false;
     actual_error = 0;
     total_error = 0;
     iterations_error = 0;
+    //boundary.SetTime(t);
 
     //Set boundary conditions
-    dir_bdr.SetSize(pmesh->bdr_attributes.Max());
-    new_bdr.SetSize(pmesh->bdr_attributes.Max());
-    dir_bdr = 0;     new_bdr = 0; 
-    dir_bdr[2] = 1;  new_bdr[3] = 1;
+    ess_bdr.SetSize(pmesh->bdr_attributes.Max());
+    ess_bdr = 1;  
+    ess_bdr[0] = 0;   ess_bdr[1] = 0; 
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
-    ConstantCoefficient outer(0.);
-    x->ProjectBdrCoefficient(outer, dir_bdr);
-    x->ProjectCoefficient(outer);
-    x->GetTrueDofs(X);
-
-    //Define added boundary solution
-    ParGridFunction boundary(fespace);
-    ConstantCoefficient boundary_coeff(T_f);
-    boundary.ProjectCoefficient(boundary_coeff);
-    boundary.GetTrueDofs(Boundary);
+    X = new HypreParVector(fespace);
+    //x->ProjectBdrCoefficient(boundary, ess_bdr);
+    x->ProjectCoefficient(initial);
+    X = x->GetTrueDofs();
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, dir_bdr, new_bdr);
+    oper = new Conduction_Operator(*fespace, *X, ess_bdr, t);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -98,17 +92,18 @@ void Artic_sea::assemble_system(){
              << "\n-------------------------------------------------------\n";
 }
 
-double exact(const Vector &x, double t){
-    double r_2 = pow(x(0),2) + pow(x(1),2);
-    double R_2 = pow(int_rad, 2) + 355.2*Q*int_rad*t;
-    if (R_2 <= r_2)
-        return T_f;
-    else
-        return T_f + 0.89*Q*int_rad*log(R_2/r_2);
+double theta(double x, double alpha){
+    return exp(-x/alpha)/sqrt(x) - sqrt(M_PI/alpha)*erfc(sqrt(x/alpha));
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> dir_bdr, Array<int> new_bdr):
-    TimeDependentOperator(fespace.GetTrueVSize(), 0.),
+double initial_conditions(const Vector &x, double t){
+    double r = sqrt(pow(x(0),2) + pow(x(1),2));
+    return 0.1*(r - 5)*(10 - r);
+}
+
+
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const HypreParVector &X, Array<int> ess_bdr, double t_init):
+    TimeDependentOperator(fespace.GetTrueVSize(), t_init),
     fespace(fespace),
     m(NULL),
     k(NULL),
@@ -116,31 +111,33 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T(NULL),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
-    z(height)
+    F(&fespace),
+    z(&fespace)
 {
     const double rel_tol = 1e-8;
 
-    fespace.GetEssentialTrueDofs(dir_bdr, ess_tdof_list);
+    fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
+    //Construct M
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator());
     m->Assemble(0);
     m->FormSystemMatrix(ess_tdof_list, M);
 
-    ConstantCoefficient inner(Q);
+    ConstantCoefficient zero(0.);
     f = new ParLinearForm(&fespace);
-    f->AddBoundaryIntegrator(new DomainLFIntegrator(inner), new_bdr);
+    f->AddDomainIntegrator(new DomainLFIntegrator(zero));
     f->Assemble();
-    F = *(f->ParallelAssemble());
+    F = *f->ParallelAssemble();
 
     //Configure M solver
-    M_prec.SetType(HypreSmoother::Jacobi);
     M_solver.iterative_mode = false;
     M_solver.SetRelTol(rel_tol);
     M_solver.SetAbsTol(0.);
     M_solver.SetMaxIter(100);
     M_solver.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
+    M_prec.SetType(HypreSmoother::Jacobi);
     M_solver.SetOperator(M);
 
     //Configure T solver
@@ -151,5 +148,5 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
-    SetParameters(X);
+    SetParameters(X, ess_bdr);
 }
