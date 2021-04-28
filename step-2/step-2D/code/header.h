@@ -18,7 +18,7 @@ struct Config{
   int refinements;
   double dt_init;
   double t_final;
-  int vis_steps;
+  int vis_steps_max;
   int ode_solver_type;
   double reltol;
   double abstol;
@@ -82,6 +82,8 @@ class Artic_sea{
         double t;
         double dt;
         bool last;
+        int vis_iteration;
+        int vis_steps;
 
         int dim;
         int serial_refinements;

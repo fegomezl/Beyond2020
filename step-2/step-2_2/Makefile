@@ -1,4 +1,4 @@
-include ../local_config.mk
+include ../../local_config.mk
 
 #Mesh parameters
 NMESH = $(shell sed -n 2p data/parameters.txt)  

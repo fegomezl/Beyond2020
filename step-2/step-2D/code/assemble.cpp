@@ -5,6 +5,7 @@ void Artic_sea::assemble_system(){
     t = 0;
     dt = config.dt_init;
     last = false;
+    vis_steps = config.vis_steps_max;
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
@@ -77,6 +78,7 @@ void Artic_sea::assemble_system(){
              << "--------------------------------------------------\n"
              << left << setw(12)
              << "Step" << setw(12)
+             << "Dt" << setw(12)
              << "Time" << setw(12)
              << "Progress"
              << left << setw(12)

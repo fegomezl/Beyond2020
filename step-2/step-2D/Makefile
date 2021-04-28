@@ -1,4 +1,4 @@
-include ../local_config.mk
+include ../../local_config.mk
 
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
@@ -6,7 +6,7 @@ RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 MESH = graph/mesh.msh
-SCRIPT = scripts/structured_square.geo
+SCRIPT = scripts/square.geo
 
 .PHONY: all graph clean oclean
 

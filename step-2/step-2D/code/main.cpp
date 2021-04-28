@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
     config.refinements = 3;
     config.dt_init = 0.001;
     config.t_final = 0.5;
-    config.vis_steps = 5;
+    config.vis_steps_max = 5;
     config.ode_solver_type = 12;
     config.reltol = config.abstol = 0.0001;
 
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
                    "Initial time step.");
     args.AddOption(&config.t_final, "-t_f", "--t_final",
                    "Final time.");
-    args.AddOption(&config.vis_steps, "-v_s", "--visualization_steps",
+    args.AddOption(&config.vis_steps_max, "-v_s", "--visualization_steps",
                    "Visualize every n-th timestep.");
     args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
                    "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"

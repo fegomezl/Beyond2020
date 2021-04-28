@@ -9,14 +9,16 @@ void Artic_sea::time_step(){
     oper->SetParameters(*X);
     ode_solver->Step(*X, t, dt);
 
-    if (last || (iteration % config.vis_steps) == 0){
-      //Calculate convergence
-      x->SetFromTrueDofs(*X);
+    //Update visualization steps
+    vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
 
-      //Graph
-      paraview_out->SetCycle(iteration);
-      paraview_out->SetTime(t);
-      paraview_out->Save();
+    //Print solution
+    if (last || vis_steps <= vis_iteration){
+        vis_iteration = 0;
+        //Graph
+        paraview_out->SetCycle(iteration);
+        paraview_out->SetTime(t);
+        paraview_out->Save();
     }
 
     //Print the system state
@@ -26,6 +28,7 @@ void Artic_sea::time_step(){
         cout.precision(4);
         cout << left << setw(12)
              << iteration << setw(12)
+             << dt << setw(12)
              << t  << setw(12)
              << progress << "\r";
           cout.flush();
