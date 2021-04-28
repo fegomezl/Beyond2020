@@ -16,12 +16,12 @@ void Artic_sea::assemble_system(){
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
-    x->ProjectCoefficient(boundary);
     x->ProjectBdrCoefficient(boundary, ess_bdr);
+    x->ProjectCoefficient(boundary);
     x->GetTrueDofs(X);
 
     //Create operator
-    oper = new Conduction_Operator(*fespace, X, ess_bdr);
+    oper = new Conduction_Operator(*fespace, X, ess_bdr, t);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -94,16 +94,19 @@ double theta(double x, double alpha){
 }
 
 double exact(const Vector &x, double t){
+    /*
     double eta = pow(x.Norml2(),2)/(4*(alpha_s + alpha_l)*t);
     if (eta > lambda)
         return T_i - (T_i - T_f)*theta(eta, alpha_l)/theta(lambda, alpha_l);
     else
         return T_f - (T_i - T_f)*(theta(eta, alpha_s) - theta(lambda, alpha_s));
+        */
+    return T_i;
 }
 
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
-    TimeDependentOperator(fespace.GetTrueVSize(), 0.),
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, double t_init):
+    TimeDependentOperator(fespace.GetTrueVSize(), t_init),
     fespace(fespace),
     m(NULL),
     k(NULL),
@@ -111,15 +114,16 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T(NULL),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
-    z(height)
+    z(height),
+    Z(height)
 {
     const double rel_tol = 1e-8;
 
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
-    ConstantCoefficient coeff(0.);
+    ConstantCoefficient zero(0.);
     f = new ParLinearForm(&fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(coeff));
+    f->AddDomainIntegrator(new DomainLFIntegrator(zero));
     f->Assemble();
 
     //Configure M solver
