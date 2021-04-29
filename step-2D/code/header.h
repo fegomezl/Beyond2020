@@ -95,6 +95,7 @@ class Artic_sea{
         ParGridFunction *x;
         HypreParVector *X;
         Array<int> ess_bdr;
+        FunctionCoefficient boundary;
         FunctionCoefficient initial_f;
         Conduction_Operator *oper;
 
@@ -108,6 +109,7 @@ class Artic_sea{
 };
 
 extern double initial(const Vector &x);
+extern double d_boundary(const Vector &x);
 
 extern double T_f;
 extern double Rmin, Rmax, Zmin, Zmax;

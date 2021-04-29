@@ -12,6 +12,7 @@ void Artic_sea::assemble_system(){
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
+    x->ProjectBdrCoefficient(boundary, ess_bdr);
     x->ProjectCoefficient(initial_f);
     X = new HypreParVector(fespace);
     x->GetTrueDofs(*X);
@@ -85,7 +86,11 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-  return 0.01*(Rmax-x(0))*(x(0)-Rmin)*(Zmax-x(1))*x(1);
+  return 0.01*(Rmax-x(0))*(x(0)-Rmin)*(Zmax-x(1))*x(1) + 0.5*x(0);
+}
+
+double d_boundary(const Vector &x){
+  return 0.5*x(0);
 }
 
 double rf(const Vector &x){

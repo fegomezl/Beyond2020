@@ -7,6 +7,7 @@ Config::Config(bool master, int nproc):
 
 Artic_sea::Artic_sea(Config config):
     config(config),
+    boundary(d_boundary),
     pmesh(NULL),
     fec(NULL),
     fespace(NULL),
