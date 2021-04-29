@@ -22,9 +22,9 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 all: main.x data/parameters.txt
 	@echo -e 'Reading parameters ... \c'
 	@bash script/parameters_script.sh
-	@echo -e 'Generating mesh ... \n'
-	@gmsh script/mesh_script.geo -format msh2 -o $(MESH) -3
-	@echo -e '\nDone!\n'
+	@echo -e 'Generating mesh ... \c'
+	@gmsh script/mesh_script.geo -format msh2 -o $(MESH) -3 > /dev/null
+	@echo -e 'Done!\n'
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh $(MESH) --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) 
@@ -34,7 +34,8 @@ all: main.x data/parameters.txt
 
 graph:
 	@echo -e 'Moving graphs ... \c'
-	@cp -r graph/ $(SHARE_DIR)
+	@rm -rf $(SHARE_DIR)/step-1
+	@cp -r graph/step-1 $(SHARE_DIR)/step-1
 	@echo -e 'Done!\n'
 
 main.x: $(DEPENDENCIES)
