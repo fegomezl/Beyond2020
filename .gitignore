@@ -1,9 +1,4 @@
 *.x
 *.o
-*.pvd
-*.pvtu
-*.vtu
-*.msh
 *~
-*convergence.txt
 local_config.mk

@@ -1,4 +1,4 @@
-include ../../local_config.mk
+include ../local_config.mk
 
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
