@@ -58,7 +58,7 @@ $(MESH): settings/parameters.txt
 	@echo -e 'Done!\n'
 
 clean:
-	@rm -rf *.x settings/graph/*
+	@rm -rf *.x results/graph/*
 
 oclean:
 	@rm -rf .objects/*.o
