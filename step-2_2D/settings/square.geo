@@ -28,14 +28,6 @@ Curve Loop(1) = {3, 4, 1, 2};
 //+
 Plane Surface(1) = {1};
 //+
-Transfinite Curve {3, 1} = NR Using Progression 1;
-//+
-Transfinite Curve {4, 2} = NZ Using Progression 1;
-//+
-Transfinite Surface {1};
-//+
-Recombine Surface {1};
-//+
 Physical Curve("down", 1) = {1};
 //+
 Physical Curve("top", 2) = {3};

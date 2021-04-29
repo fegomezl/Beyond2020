@@ -5,7 +5,6 @@ void Artic_sea::assemble_system(){
     t = 0;
     dt = config.dt_init;
     last = false;
-    vis_steps = config.vis_steps_max;
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
@@ -64,7 +63,7 @@ void Artic_sea::assemble_system(){
     }
 
      //Open the paraview output and print initial state
-    paraview_out = new ParaViewDataCollection("graph/step-2D", pmesh);
+    paraview_out = new ParaViewDataCollection("results/graph", pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x);
@@ -78,7 +77,6 @@ void Artic_sea::assemble_system(){
              << "--------------------------------------------------\n"
              << left << setw(12)
              << "Step" << setw(12)
-             << "Dt" << setw(12)
              << "Time" << setw(12)
              << "Progress"
              << left << setw(12)
@@ -87,7 +85,7 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-  return -0.01*(Rmax-x(0))*(x(0)-Rmin)*(x(0)-(Rmax+Rmin)/2)*(Zmax-x(1))*x(1);
+  return 0.01*(Rmax-x(0))*(x(0)-Rmin)*(Zmax-x(1))*x(1);
 }
 
 double rf(const Vector &x){

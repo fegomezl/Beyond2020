@@ -24,7 +24,7 @@ void Artic_sea::run(const char *mesh_file){
     //Run the program
     make_grid(mesh_file);
     assemble_system();
-    for (iteration = 1, vis_iteration = 1; !last; iteration++, vis_iteration++)
+    for (iteration = 1; !last; iteration++)
         time_step();
     output_results();
 
