@@ -1,12 +1,15 @@
 //+
 SetFactory("OpenCASCADE");
+Mesh.ElementOrder = 2;
+Mesh.SecondOrderLinear = 0;
+
 Rmin = 2;
-Rmax = 10;
+Rmax= 10;
 Zmin = 0;
 Zmax = 10;
 
-NR = 10;
-NZ = 10;
+NR = 15;
+NZ = 15;
 
 Point(1) = {Rmin, Zmin, 0, 1.0};
 //+
