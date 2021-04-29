@@ -4,4 +4,4 @@
 *.pvtu
 *.vtu
 *.msh
-local_config.mk
+*.mk
