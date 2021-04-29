@@ -39,9 +39,9 @@ void Conduction_Operator::SetParameters(const Vector &X){
   //Create the K coefficient
     for (int ii = 0; ii < aux.Size(); ii++){
         if (aux(ii) > T_f)
-            aux(ii) *= alpha_l;
+            aux(ii) = alpha_l;
         else
-            aux(ii) *= alpha_s;
+            aux(ii) = alpha_s;
     }
     GridFunctionCoefficient alpha(&aux);
     ProductCoefficient coeff1(alpha, r);

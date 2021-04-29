@@ -85,7 +85,7 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-  return -0.01*(Rmax-x(0))*(x(0)-Rmin)*(Zmax-x(1))*x(1);
+  return 0.01*(Rmax-x(0))*(x(0)-Rmin)*(Zmax-x(1))*x(1);
 }
 
 double rf(const Vector &x){

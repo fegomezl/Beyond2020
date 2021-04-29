@@ -1,12 +1,12 @@
 #include "header.h"
 
-double Rmin = 2;
-double Zmin = 0;
-double Rmax = 10;
-double Zmax = 10;
-double T_f = 0;
-double alpha_l = 7.8;
-double alpha_s = 70.8;
+double Rmin;
+double Zmin;
+double Rmax;
+double Zmax;
+double T_f;
+double alpha_l;
+double alpha_s;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -18,15 +18,6 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-
-
-    config.order = 3;
-    config.refinements = 3;
-    config.dt_init = 0.01;
-    config.t_final = 0.5;
-    config.vis_steps = 5;
-    config.ode_solver_type = 12;
-    config.reltol = config.abstol = 0.0001;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -58,10 +49,10 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
                    "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
                    "            11 - Forward Euler, 12 - RK2, 13 - RK3 SSP, 14 - RK4.");
-    args.AddOption(&config.reltol, "-restol", "--tolrelativaSUNDIALS",
-                   "Initial time step.");
-    args.AddOption(&config.abstol, "abstol", "--tolabsolutaSUNDIALS",
-                   "Initial time step.");
+    args.AddOption(&config.reltol, "-reltol", "--tolrelativaSUNDIALS",
+                   "Tolerancia relativa de SUNDIALS solvers");
+    args.AddOption(&config.abstol, "-abstol", "--tolabsolutaSUNDIALS",
+                   "Tolerancia absoluta de S");
 
     //Check if parameters were read correctly
     args.Parse();
