@@ -12,7 +12,7 @@ SCRIPT = scripts/structured_square.geo
 
 all: main.x
 	@echo -e 'Generating mesh ... \n'
-	@gmsh $(SCRIPT) -format msh2 -o $(MESH) -3 > /dev/null
+	#@gmsh $(SCRIPT) -format msh2 -o $(MESH) -3 > /dev/null
 	@echo -e '\nDone!\n'
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh $(MESH)
