@@ -1,14 +1,14 @@
 include ../local_config.mk
 
 #Mesh parameters
-MESH = results/mesh.msh
-HEIGHT = $(shell sed -n 2p settings/parameters.txt | tr -d -c 0-9.)  
-OUTER_RADIUS = $(shell sed -n 3p settings/parameters.txt | tr -d -c 0-9.)
-INNER_RADIUS = $(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.)
+SCRIPT = $(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
+HEIGHT = $(shell sed -n 3p settings/parameters.txt | tr -d -c 0-9.)  
+OUTER_RADIUS = $(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.)
+INNER_RADIUS = $(shell sed -n 5p settings/parameters.txt | tr -d -c 0-9.)
 
 #Program parameters
-REF = $(shell sed -n 10p settings/parameters.txt | tr -d -c 0-9.) 
-ORDER = $(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.)
+REF = $(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.) 
+ORDER = $(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
@@ -19,15 +19,15 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all mesh graph clean oclean
 
-all: main.x $(MESH)
+all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh $(MESH) --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
+	@$(RUN)$< --mesh results/mesh.msh --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) 
 	@echo -e '\n'
 	@cat results/convergence.txt
 	@echo -e '\nDone!'
 
-mesh: $(MESH)
+mesh: results/mesh.msh
 	@echo 'Mesh created.'
 
 graph:
@@ -50,11 +50,11 @@ main.x: $(DEPENDENCIES)
 	@$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
 	@echo -e 'Done!\n'
 
-$(MESH): settings/parameters.txt
+results/mesh.msh: settings/parameters.txt
 	@echo -e 'Reading parameters ... \c'
 	@bash settings/configure_script.sh
 	@echo -e 'Generating mesh ... \c'
-	@gmsh settings/mesh_script.geo -format msh2 -o $(MESH) -3 > /dev/null
+	@gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
 clean:

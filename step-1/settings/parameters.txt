@@ -1,4 +1,5 @@
 Mesh parameters
+settings/mesh_script.geo #Mesh_script
 20  #Height
 10  #Radius
 5   #Radius_Inner
