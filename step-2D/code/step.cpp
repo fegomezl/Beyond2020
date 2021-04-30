@@ -5,6 +5,10 @@ void Artic_sea::time_step(){
     last = (t >= config.t_final - 1e-8*config.dt_init);
     dt = min(dt, config.t_final - t);
 
+    //Update boundary conditions
+    x->ProjectBdrCoefficient(boundary, ess_bdr);
+    x->GetTrueDofs(*X);
+
     //Perform the time_step
     oper->SetParameters(*X);
     ode_solver->Step(*X, t, dt);
@@ -53,7 +57,6 @@ void Conduction_Operator::SetParameters(const Vector &X){
     k->AddDomainIntegrator(new ConvectionIntegrator(coeff2));
     k->Assemble(0);
     k->FormSystemMatrix(ess_tdof_list, K);
-
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{

@@ -1,6 +1,6 @@
 //+
 SetFactory("OpenCASCADE");
-Rmin = 2;
+Rmin = 0.001;
 Rmax= 10;
 Zmin = 0;
 Zmax = 10;
