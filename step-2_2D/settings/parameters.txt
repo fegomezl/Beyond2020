@@ -1,6 +1,6 @@
 Mesh Parameters
 settings/structured_square.geo #Mesh_script
-2 #Rmin
+0 #Rmin
 10 #Rmax
 0 #Zmin
 10 #Zmax
