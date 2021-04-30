@@ -8,7 +8,7 @@ void Artic_sea::assemble_system(){
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 1; 
+    ess_bdr = 1; //ess_bdr[2]= 0; 
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
@@ -79,24 +79,9 @@ void Artic_sea::assemble_system(){
              << "Step" << setw(12)
              << "Time" << setw(12)
              << "Progress"
+             << "Error"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
-
-}
-
-double initial(const Vector &x, double t)
-{
-	int n=1;
-	int m=1;
-	int b=Rmax;
-	int a=Zmax;
-	double alpha=alpha_l;
-	double r=x(0);
-	double z=x(1);
-	if(r<=0)
-		return 0;
-	else
-		return 10*exp(-((n*M_PI/a)+(boost::math::cyl_bessel_j_zero(0.0,m)/b))*alpha*t)*sin(n*M_PI*z/a)*boost::math::cyl_bessel_j(0.0,boost::math::cyl_bessel_j_zero(0.0,m)*r/b);
 
 }
 
@@ -108,6 +93,7 @@ void r_hatf(const Vector &x, Vector &f){
   f(0) = 1.;
   f(1) = 0.;
 }
+
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
   TimeDependentOperator(fespace.GetTrueVSize(), 0.),

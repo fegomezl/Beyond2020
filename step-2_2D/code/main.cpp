@@ -7,6 +7,9 @@ double Zmax;
 double T_f;
 double alpha_l;
 double alpha_s;
+int  Mterms=6;
+int  Nterms=6;
+std::vector<double> Coeficients(Mterms*Nterms ,0.0);
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -62,6 +65,14 @@ int main(int argc, char *argv[]){
         return 1;
     }
     if (config.master) args.PrintOptions(cout);
+
+    //Calculate coeficients of the exact solution
+    if (config.master) {
+      Coe(Zmax, Rmax, Coeficients);
+      //print_exact();
+      //print_initial();
+      //print_coefficients();
+    }
 
     //Run the program for different refinements
     Artic_sea artic_sea(config);
