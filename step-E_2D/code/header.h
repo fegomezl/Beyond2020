@@ -85,7 +85,8 @@ class Artic_sea{
         double dt;
         bool last;
         double actual_error;
-  	double total_error =0;
+  	double total_error=0;
+  	double total_time=0;
 
         int dim;
         int serial_refinements;
@@ -120,7 +121,7 @@ extern std::vector<double> Coeficients;
 extern double alpha_l; //Liquid thermal conduction
 extern double alpha_s; //Solid thermal conduction
 
-extern void Coe(double a, double b, std::vector<double> & Coeficients);
+extern void Calc_Coe(double a, double b, std::vector<double> & Coeficients);
 extern double Aux(double r, double z, double t);
 extern double initial(const Vector &x, double t);
 extern double initial_condition(double r, double z, int m, int n, double a, double b);

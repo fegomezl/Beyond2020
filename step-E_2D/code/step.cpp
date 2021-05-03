@@ -15,7 +15,7 @@ void Artic_sea::time_step(){
       initial_f.SetTime(t);
       x->SetFromTrueDofs(*X);
       actual_error = x->ComputeL2Error(initial_f);
-      int MPI_Barrier(MPI_Comm comm);
+      total_error+=actual_error;
 
       //Graph
       paraview_out->SetCycle(iteration);

@@ -26,6 +26,7 @@ void Artic_sea::run(const char *mesh_file){
     assemble_system();
     for (iteration = 1; !last; iteration++)
         time_step();
+    total_time=toc();
     output_results();
 
 }

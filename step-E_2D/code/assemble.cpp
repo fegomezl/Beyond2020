@@ -79,7 +79,7 @@ void Artic_sea::assemble_system(){
              << "Step" << setw(12)
              << "Time" << setw(12)
              << "Progress"
-             << "Error"
+             << "Absolute Error"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
 

@@ -67,13 +67,14 @@ int main(int argc, char *argv[]){
     if (config.master) args.PrintOptions(cout);
 
     //Calculate coeficients of the exact solution
+    Calc_Coe(Zmax, Rmax, Coeficients);
+    //print solution parameters
     if (config.master) {
-      Coe(Zmax, Rmax, Coeficients);
       //print_exact();
       //print_initial();
       //print_coefficients();
     }
-
+    tic();
     //Run the program for different refinements
     Artic_sea artic_sea(config);
     artic_sea.run(mesh_file);

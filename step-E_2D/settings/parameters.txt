@@ -12,12 +12,17 @@ FE parameters
 5 #Order
 
 Simulation parameters
-0 #Fusion_temperature
+-10 #Fusion_temperature
 7.8 #Liquid_thermal_diffusion_constant
 70.8 #Solid_thermal_diffusion_constant
 0.01 #Dt
+<<<<<<< HEAD
 1 #Final_time
 250 #Visualization_steps
+=======
+1.5 #Final_time
+10 #Visualization_steps
+>>>>>>> 96b7cd382f564db1c82d6671d8959eb97ba84272
 12 #ODE_solver_type
 0.00001 #reltol (tolerancia relativa de SUNDIALS solvers)
 0.00001 #abstol (tolerancia absoluta de SUNDIALS solvers)
