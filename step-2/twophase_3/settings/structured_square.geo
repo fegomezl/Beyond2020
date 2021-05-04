@@ -1,11 +1,11 @@
 //+
 SetFactory("OpenCASCADE");
-Rmin = 0;
-Rmax = 10;
+Rmin = 0.0000001;
+Rmax = 100;
 Zmin = 0;
 Zmax = 10;
 
-NR = 15;
+NR = 100;
 NZ = 15;
 
 Point(1) = {Rmin, Zmin, 0, 1.0};

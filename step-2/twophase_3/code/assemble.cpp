@@ -7,20 +7,23 @@ void Artic_sea::assemble_system(){
     last = false;
     vis_steps = config.vis_steps_max;
     vis_impressions = 0;
-    actual_error = 0;
-    total_error = 0;
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 1; ess_bdr[2]= 0; 
+    ess_bdr = 0; ess_bdr[3] = 1;
+
+    nbc_marker.SetSize(pmesh->bdr_attributes.Max());
+    nbc_marker = 0;  nbc_marker[2] = 1;
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
-    x->ProjectCoefficient(initial_f);
+    ConstantCoefficient zero(0.);
+    x->ProjectCoefficient(zero);
+    x->ProjectBdrCoefficient(zero, ess_bdr);
     X = new HypreParVector(fespace);
     x->GetTrueDofs(*X);
 
-    oper = new Conduction_Operator(*fespace, *X, ess_bdr);
+    oper = new Conduction_Operator(*fespace, *X, ess_bdr, nbc_marker);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -83,21 +86,10 @@ void Artic_sea::assemble_system(){
              << "Step" << setw(12)
              << "Dt" << setw(12)
              << "Time" << setw(12)
-             << "Progress" << setw(9)
-             << "Error"
+             << "Progress" 
              << left << setw(12)
              << "\n--------------------------------------------------\n";
 
-}
-
-double initial(const Vector &x, double t)
-{
-    double alpha = alpha_l;
-    double a = M_PI/(Zmax-Zmin);
-    double b = boost::math::cyl_bessel_j_zero(0.,1)/Rmax;
-    double Q = 1;
-
-    return Q*exp(-alpha*(pow(a,2) + pow(b,2))*t)*boost::math::cyl_bessel_j(0., b*x(0))*sin(a*x(1));
 }
 
 double rf(const Vector &x){
@@ -109,18 +101,19 @@ void r_hatf(const Vector &x, Vector &f){
   f(1) = 0.;
 }
 
-
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, Array<int> nbc_marker):
   TimeDependentOperator(fespace.GetTrueVSize(), 0.),
   fespace(fespace),
   m(NULL),
   k(NULL),
   T(NULL),
+  f(NULL),
   r(rf),
   r_hat(2, r_hatf),
   M_solver(fespace.GetComm()),
   T_solver(fespace.GetComm()),
-  z(&fespace)
+  z(&fespace),
+  F(&fespace)
 {
   const double rel_tol = 1e-8;
 
@@ -131,24 +124,29 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
   m->Assemble(0);
   m->FormSystemMatrix(ess_tdof_list, M);
 
+  f = new ParLinearForm(&fespace);
+  ConstantCoefficient newmann(T_f/(2*Rmin));
+  f->AddBoundaryIntegrator(new BoundaryLFIntegrator(newmann), nbc_marker);
+  f->Assemble();
+  F = *(f->ParallelAssemble());
 
   //Configure M solver
-    M_solver.iterative_mode = false;
-    M_solver.SetRelTol(rel_tol);
-    M_solver.SetAbsTol(0.);
-    M_solver.SetMaxIter(100);
-    M_solver.SetPrintLevel(0);
-    M_solver.SetPreconditioner(M_prec);
-    M_prec.SetType(HypreSmoother::Jacobi);
-    M_solver.SetOperator(M);
+  M_solver.iterative_mode = false;
+  M_solver.SetRelTol(rel_tol);
+  M_solver.SetAbsTol(0.);
+  M_solver.SetMaxIter(100);
+  M_solver.SetPrintLevel(0);
+  M_solver.SetPreconditioner(M_prec);
+  M_prec.SetType(HypreSmoother::Jacobi);
+  M_solver.SetOperator(M);
 
-    //Configure T solver
-    T_solver.iterative_mode = false;
-    T_solver.SetRelTol(rel_tol);
-    T_solver.SetAbsTol(0.);
-    T_solver.SetMaxIter(100);
-    T_solver.SetPrintLevel(0);
-    T_solver.SetPreconditioner(T_prec);
+  //Configure T solver
+  T_solver.iterative_mode = false;
+  T_solver.SetRelTol(rel_tol);
+  T_solver.SetAbsTol(0.);
+  T_solver.SetMaxIter(100);
+  T_solver.SetPrintLevel(0);
+  T_solver.SetPreconditioner(T_prec);
 
-    SetParameters(X);
+  SetParameters(X);
 }
