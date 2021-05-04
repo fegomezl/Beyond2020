@@ -122,14 +122,14 @@ extern double alpha_l; //Liquid thermal conduction
 extern double alpha_s; //Solid thermal conduction
 
 extern void Calc_Coe(double a, double b, std::vector<double> & Coeficients);
-extern double Aux(double r, double z, double t);
 extern double initial(const Vector &x, double t);
 extern double initial_condition(double r, double z, int m, int n, double a, double b);
 extern double integrand(double r,double z,int m,int n, double a, double b);
 extern double integrate(int m, int n,double a,double b);
+extern double Aux( double r, double z, double t);
 extern void print_exact();
 extern void print_initial();
 extern void print_coefficients();
-extern double Aux2( double r, double z, double t);
+
 
 

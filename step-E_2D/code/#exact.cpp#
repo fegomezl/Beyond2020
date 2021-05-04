@@ -29,10 +29,9 @@ double integrate(int m, int n,double a,double b)
     return boost::math::quadrature::trapezoidal(inner_integral,0.0,b,1e-8);
 }
 
-
 double initial(const Vector &x, double t)
 {
-  return Aux(x(0),x(1),t);
+  return Aux(x(),t);
 }
 
 void print_exact()
@@ -43,7 +42,7 @@ void print_exact()
     double r, z;
     for(r=0; r<=Rmax; r+=0.1){
         for(z=0; z<=Zmax; z+=0.1 ){
-        	myfile << r << "\t" << z << "\t" << Aux(r, z, 0) << endl;}}
+        	myfile << r << "\t" << z << "\t" << Aux2(r, z, 0) << endl;}}
      myfile.close();
 }
 void print_initial()
