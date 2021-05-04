@@ -1,10 +1,10 @@
-include ../local_config.mk
+include ../../local_config.mk
 
 #Mesh parameters
 SCRIPT = $(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
-HEIGHT = $(shell sed -n 3p settings/parameters.txt | tr -d -c 0-9.)  
+INNER_RADIUS = $(shell sed -n 3p settings/parameters.txt | tr -d -c 0-9.)
 OUTER_RADIUS = $(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.)
-INNER_RADIUS = $(shell sed -n 5p settings/parameters.txt | tr -d -c 0-9.)
+HEIGHT = $(shell sed -n 6p settings/parameters.txt | tr -d -c 0-9.)  
 
 #Program parameters
 REF = $(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.) 

@@ -6,7 +6,16 @@ Config::Config(bool master, int nproc):
 {}
 
 Artic_sea::Artic_sea(Config config):
-    config(config)
+    config(config),
+    u(exact),
+    r(rf),
+    r_hat(2, r_hatf),
+    pmesh(NULL),
+    fec(NULL),
+    fespace(NULL),
+    a(NULL),
+    b(NULL),
+    x(NULL)
 {}
 
 void Artic_sea::run(const char *mesh_file){
@@ -25,6 +34,5 @@ Artic_sea::~Artic_sea(){
     delete a;
     delete b;
     delete x;
-    delete u;
     if (config.master) cout << "Memory deleted!\n";
 }
