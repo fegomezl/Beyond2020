@@ -9,7 +9,7 @@ void Artic_sea::assemble_system(){
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
     ess_bdr = 1;
-    ess_bdr[0] = ess_bdr[1] = ess_bdr[2] = 0;
+    ess_bdr[2] = 0;
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
@@ -87,12 +87,11 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-  return T_f;
-  //return 0.01*fabs((Rmax-x(0))*(Zmax-x(1))*(Zmin-x(1)));
+  return 0.1*fabs((Rmax-x(0))*(Rmin-x(0))*(Zmax-x(1))*(Zmin-x(1)));
 }
 
-double d_boundary(const Vector &x){
-  return 0.;
+double d_boundary(const Vector &x, double t){
+  return 0;
 }
 
 double rf(const Vector &x){

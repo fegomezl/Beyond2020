@@ -6,6 +6,7 @@ void Artic_sea::time_step(){
     dt = min(dt, config.t_final - t);
 
     //Update boundary conditions
+    boundary.SetTime(t);
     x->ProjectBdrCoefficient(boundary, ess_bdr);
     x->GetTrueDofs(*X);
 

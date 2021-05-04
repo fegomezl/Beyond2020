@@ -109,7 +109,7 @@ class Artic_sea{
 };
 
 extern double initial(const Vector &x);
-extern double d_boundary(const Vector &x);
+extern double d_boundary(const Vector &x, double t);
 
 extern double T_f;
 extern double Rmin, Rmax, Zmin, Zmax;
