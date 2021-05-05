@@ -20,7 +20,7 @@ struct Config{
   int refinements;
   double dt_init;
   double t_final;
-  int vis_steps;
+  int vis_steps_max;
   int ode_solver_type;
   double reltol;
   double abstol;
@@ -84,8 +84,12 @@ class Artic_sea{
         double t;
         double dt;
         bool last;
+        int vis_iteration;
+        int vis_steps;
+        int vis_impressions;
         double actual_error;
-  	double total_error =0;
+  	    double total_error;
+       	double total_time;
 
         int dim;
         int serial_refinements;
@@ -120,15 +124,15 @@ extern std::vector<double> Coeficients;
 extern double alpha_l; //Liquid thermal conduction
 extern double alpha_s; //Solid thermal conduction
 
-extern void Coe(double a, double b, std::vector<double> & Coeficients);
-extern double Aux(double r, double z, double t);
+extern void Calc_Coe(double a, double b, std::vector<double> & Coeficients);
 extern double initial(const Vector &x, double t);
 extern double initial_condition(double r, double z, int m, int n, double a, double b);
 extern double integrand(double r,double z,int m,int n, double a, double b);
 extern double integrate(int m, int n,double a,double b);
+extern double Aux( double r, double z, double t);
 extern void print_exact();
 extern void print_initial();
 extern void print_coefficients();
-extern double Aux2( double r, double z, double t);
+
 
 

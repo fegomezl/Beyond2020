@@ -24,7 +24,7 @@ void Artic_sea::time_step(){
         total_error += actual_error;
 
         //Graph
-        paraview_out->SetCycle(iteration);
+        paraview_out->SetCycle(vis_iteration);
         paraview_out->SetTime(t);
         paraview_out->Save();
     }

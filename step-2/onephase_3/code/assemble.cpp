@@ -5,6 +5,11 @@ void Artic_sea::assemble_system(){
     t = 0;
     dt = config.dt_init;
     last = false;
+    vis_steps = config.vis_steps_max;
+    vis_impressions = 0;
+    actual_error = 0;
+    total_error = 0;
+    total_time = 0;
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
@@ -67,8 +72,8 @@ void Artic_sea::assemble_system(){
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x);
-    paraview_out->SetCycle(0);
-    paraview_out->SetTime(0);
+    paraview_out->SetCycle(vis_impressions);
+    paraview_out->SetTime(t);
     paraview_out->Save();
 
     //Start program check
@@ -77,9 +82,10 @@ void Artic_sea::assemble_system(){
              << "--------------------------------------------------\n"
              << left << setw(12)
              << "Step" << setw(12)
+             << "Dt" << setw(12)
              << "Time" << setw(12)
              << "Progress"
-             << "Error"
+             << "Absolute Error"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
 

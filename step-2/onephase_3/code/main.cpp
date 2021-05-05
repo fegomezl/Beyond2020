@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
                    "Initial time step.");
     args.AddOption(&config.t_final, "-t_f", "--t_final",
                    "Final time.");
-    args.AddOption(&config.vis_steps, "-v_s", "--visualization_steps",
+    args.AddOption(&config.vis_steps_max, "-v_s", "--visualization_steps",
                    "Visualize every n-th timestep.");
     args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
                    "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
@@ -67,13 +67,14 @@ int main(int argc, char *argv[]){
     if (config.master) args.PrintOptions(cout);
 
     //Calculate coeficients of the exact solution
+    Calc_Coe(Zmax, Rmax, Coeficients);
+    //print solution parameters
     if (config.master) {
-      Coe(Zmax, Rmax, Coeficients);
       //print_exact();
       //print_initial();
       //print_coefficients();
     }
-
+    tic();
     //Run the program for different refinements
     Artic_sea artic_sea(config);
     artic_sea.run(mesh_file);

@@ -9,18 +9,23 @@ void Artic_sea::time_step(){
     oper->SetParameters(*X);
     ode_solver->Step(*X, t, dt);
 
-    double actual_error;
-    if (last || (iteration % config.vis_steps) == 0){
-      //Calculate convergence
-      initial_f.SetTime(t);
-      x->SetFromTrueDofs(*X);
-      actual_error = x->ComputeL2Error(initial_f);
-      int MPI_Barrier(MPI_Comm comm);
+    vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
 
-      //Graph
-      paraview_out->SetCycle(iteration);
-      paraview_out->SetTime(t);
-      paraview_out->Save();
+    double actual_error;
+    if (last || vis_steps <= vis_iteration){
+        vis_iteration = 0;
+        vis_impressions++;
+
+        //Calculate convergence
+        initial_f.SetTime(t);
+        x->SetFromTrueDofs(*X);
+        actual_error = x->ComputeL2Error(initial_f);
+        total_error+=actual_error;
+
+        //Graph
+        paraview_out->SetCycle(vis_iteration);
+        paraview_out->SetTime(t);
+        paraview_out->Save();
     }
 
     //Print the system state
@@ -30,6 +35,7 @@ void Artic_sea::time_step(){
         cout.precision(4);
         cout << left << setw(12)
              << iteration << setw(12)
+             << dt << setw(12)
              << t  << setw(12)
              << progress << setw(12)
              << actual_error << "\r";
