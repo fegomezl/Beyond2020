@@ -47,7 +47,7 @@ void Artic_sea::assemble_system(){
     //Define biliniar form
     a = new ParBilinearForm(fespace);
     a->AddDomainIntegrator(new DiffusionIntegrator(r));
-    a->AddDomainIntegrator(new ConvectionIntegrator(r_hat));
+    //a->AddDomainIntegrator(new ConvectionIntegrator(r_hat));
     a->Assemble();
 
     //Create RHS
