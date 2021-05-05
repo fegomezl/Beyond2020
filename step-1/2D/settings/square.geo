@@ -1,9 +1,9 @@
 //+
 SetFactory("OpenCASCADE");
-Rmin = 10;
-Rmax = 100;
+Rmin = 5;
+Rmax = 10;
 Zmin = 0;
-Zmax = 20;
+Zmax = 10;
 
 NR = 15;
 NZ = 15;

@@ -45,7 +45,7 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.t_final, "-t_f", "--t_final",
                    "Final time.");
     args.AddOption(&config.vis_steps_max, "-v_s", "--visualization_steps",
-                   "Visualize every n-th timestep maximum.");
+                   "Visualize every n-th timestep.");
     args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
                    "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
                    "            11 - Forward Euler, 12 - RK2, 13 - RK3 SSP, 14 - RK4.");

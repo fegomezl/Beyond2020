@@ -10,7 +10,6 @@ using namespace std;
 using namespace mfem;
 
 struct Config{
-
     Config(bool master, int nproc);
 
     bool master;
@@ -23,7 +22,6 @@ struct Config{
     int ode_solver_type;
     double reltol;
     double abstol;
-
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -35,7 +33,7 @@ class Conduction_Operator : public TimeDependentOperator{
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &b,
                                      int j_update, int *j_status, double scaled_dt);
-	    virtual int SUNImplicitSolve(const Vector &b, Vector &X,
+	      virtual int SUNImplicitSolve(const Vector &b, Vector &X,
                                      double tol);
 
         void SetParameters(const Vector &X);
@@ -60,7 +58,6 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreSmoother T_prec;
 
         FunctionCoefficient r;
-        VectorFunctionCoefficient r_hat;
 
         mutable HypreParVector z;
 };

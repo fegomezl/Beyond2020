@@ -12,19 +12,18 @@ using namespace std;
 using namespace mfem;
 
 struct Config{
-  Config(bool master, int nproc);
+    Config(bool master, int nproc);
 
-  bool master;
-  int nproc;
-  int order;
-  int refinements;
-  double dt_init;
-  double t_final;
-  int vis_steps_max;
-  int ode_solver_type;
-  double reltol;
-  double abstol;
-
+    bool master;
+    int nproc;
+    int order;
+    int refinements;
+    double dt_init;
+    double t_final;
+    int vis_steps_max;
+    int ode_solver_type;
+    double reltol;
+    double abstol;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -36,7 +35,7 @@ class Conduction_Operator : public TimeDependentOperator{
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &b,
                                      int j_update, int *j_status, double scaled_dt);
-	    virtual int SUNImplicitSolve(const Vector &b, Vector &X,
+   	    virtual int SUNImplicitSolve(const Vector &b, Vector &X,
                                      double tol);
 
         void SetParameters(const Vector &X);
@@ -61,7 +60,6 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreSmoother T_prec;
 
         FunctionCoefficient r;
-        VectorFunctionCoefficient r_hat;
 
         mutable HypreParVector z;
 };
@@ -89,7 +87,7 @@ class Artic_sea{
         int vis_impressions;
         double actual_error;
   	    double total_error;
-       	double total_time;
+        double total_time;
 
         int dim;
         int serial_refinements;
@@ -133,6 +131,3 @@ extern double Aux( double r, double z, double t);
 extern void print_exact();
 extern void print_initial();
 extern void print_coefficients();
-
-
-

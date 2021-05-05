@@ -24,11 +24,6 @@ double rf(const Vector &x){
     return x(0);
 }
 
-void r_hatf(const Vector &x, Vector &f){
-    f(0) = 1;
-    f(1) = 0;
-}
-
 void Artic_sea::assemble_system(){
     //Set the boundary values
     Array<int> ess_tdof_list;
@@ -47,7 +42,6 @@ void Artic_sea::assemble_system(){
     //Define biliniar form
     a = new ParBilinearForm(fespace);
     a->AddDomainIntegrator(new DiffusionIntegrator(r));
-    //a->AddDomainIntegrator(new ConvectionIntegrator(r_hat));
     a->Assemble();
 
     //Create RHS

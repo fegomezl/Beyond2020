@@ -75,6 +75,7 @@ int main(int argc, char *argv[]){
       //print_coefficients();
     }
     tic();
+
     //Run the program for different refinements
     Artic_sea artic_sea(config);
     artic_sea.run(mesh_file);

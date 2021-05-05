@@ -34,29 +34,27 @@ void Artic_sea::time_step(){
              << dt << setw(12)
              << t  << setw(12)
              << progress << "\r";
-        cout.flush();
+          cout.flush();
     }
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
-  ParGridFunction aux(&fespace);
-  aux.SetFromTrueDofs(X);
+    ParGridFunction aux(&fespace);
+    aux.SetFromTrueDofs(X);
 
-  //Create the K coefficient
+    //Create the K coefficient
     for (int ii = 0; ii < aux.Size(); ii++){
-        if (aux(ii) >= T_f)
+        if (aux(ii) > T_f)
             aux(ii) = alpha_l;
         else
             aux(ii) = alpha_s;
     }
     GridFunctionCoefficient alpha(&aux);
-    ProductCoefficient coeff1(alpha, r);
-    ScalarVectorProductCoefficient coeff2(alpha, r_hat);
+    ProductCoefficient coeff(alpha, r);
 
     delete k;
     k = new ParBilinearForm(&fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(coeff1));
-    k->AddDomainIntegrator(new ConvectionIntegrator(coeff2));
+    k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
     k->FormSystemMatrix(ess_tdof_list, K);
 }

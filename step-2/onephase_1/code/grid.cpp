@@ -26,7 +26,7 @@ void Artic_sea::make_grid(const char *mesh_file){
     for (int ii = 0; ii < config.refinements - serial_refinements; ii++)
         pmesh->UniformRefinement();
 
- //Create the FEM space associated with the mesh
+    //Create the FEM space associated with the mesh
     if (config.order > 0)
         fec = new H1_FECollection(config.order, dim);
     else

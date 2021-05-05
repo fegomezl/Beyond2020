@@ -1,12 +1,12 @@
 Mesh Parameters
 settings/square.geo #Mesh_script
-10 #Rmin
-100 #Rmax
+5 #Rmin
+10 #Rmax
 0 #Zmin
-20 #Zmax
+10 #Zmax
 15 #Rcells
 15 #Zcells
 
 FE parameters
 6 #Refinements
-2 #Order
+1 #Order

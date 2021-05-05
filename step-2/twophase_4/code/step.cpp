@@ -34,12 +34,12 @@ void Artic_sea::time_step(){
              << dt << setw(12)
              << t  << setw(12)
              << progress << "\r";
-        cout.flush();
+          cout.flush();
     }
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
-    double DeltaT = 0.00001;
+    double DeltaT = 0.001;
     double k_s = 133.2, k_l = 33.6;
     double c_s = 1.878, c_l = 4.219;
     double scale = pow(10, 5);
@@ -58,13 +58,11 @@ void Conduction_Operator::SetParameters(const Vector &X){
             aux_k(ii) = -((k_s - k_l)/2)*(aux_k(ii)- T_f)/DeltaT + (k_s + k_l)/2;
     }
     GridFunctionCoefficient coeff_k(&aux_k);
-    ProductCoefficient coeff1_k(coeff_k, r);
-    ScalarVectorProductCoefficient coeff2_k(coeff_k, r_hat);
+    ProductCoefficient coeff_kr(coeff_k, r);
 
     delete k;
     k = new ParBilinearForm(&fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(coeff1_k));
-    k->AddDomainIntegrator(new ConvectionIntegrator(coeff2_k));
+    k->AddDomainIntegrator(new DiffusionIntegrator(coeff_kr));
     k->Assemble(0);
     k->FormSystemMatrix(ess_tdof_list, K);
 
@@ -81,11 +79,11 @@ void Conduction_Operator::SetParameters(const Vector &X){
             aux_c(ii) = (L/M_PI)*(scale/DeltaT)/(1 + pow(scale*(aux_c(ii) - T_f)/DeltaT, 2));
     }
     GridFunctionCoefficient coeff_c(&aux_c);
-    ProductCoefficient coeff1_c(coeff_c, r);
+    ProductCoefficient coeff_cr(coeff_c, r);
 
     delete m;
     m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator(coeff1_c));
+    m->AddDomainIntegrator(new MassIntegrator(coeff_cr));
     m->Assemble(0);
     m->FormSystemMatrix(ess_tdof_list, M);
     M_solver.SetOperator(M);

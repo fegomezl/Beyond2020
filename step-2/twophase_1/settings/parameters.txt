@@ -1,6 +1,6 @@
 Mesh Parameters
 settings/structured_square.geo #Mesh_script
-2 #Rmin
+0 #Rmin
 10 #Rmax
 0 #Zmin
 10 #Zmax
@@ -16,7 +16,7 @@ Simulation parameters
 7.8 #Liquid_thermal_diffusion_constant
 70.8 #Solid_thermal_diffusion_constant
 0.001 #Dt
-0.2 #Final_time
+0.5 #Final_time
 2 #Visualization_steps
 12 #ODE_solver_type
 0.00001 #reltol (tolerancia relativa de SUNDIALS solvers)

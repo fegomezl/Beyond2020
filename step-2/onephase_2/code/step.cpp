@@ -21,10 +21,11 @@ void Artic_sea::time_step(){
         initial_f.SetTime(t);
         x->SetFromTrueDofs(*X);
         actual_error = x->ComputeL2Error(initial_f);
+        actual_error /= (Zmax - Zmin)*(Rmax - Rmin);
         total_error += actual_error;
 
         //Graph
-        paraview_out->SetCycle(vis_iteration);
+        paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);
         paraview_out->Save();
     }
@@ -40,15 +41,15 @@ void Artic_sea::time_step(){
              << t  << setw(12)
              << progress << setw(9)
              << actual_error << "\r";
-          cout.flush();
+        cout.flush();
     }
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
-  ParGridFunction aux(&fespace);
-  aux.SetFromTrueDofs(X);
+    ParGridFunction aux(&fespace);
+    aux.SetFromTrueDofs(X);
 
-  //Create the K coefficient
+    //Create the K coefficient
     for (int ii = 0; ii < aux.Size(); ii++){
         if (aux(ii) > T_f)
             aux(ii) = alpha_l;
@@ -56,13 +57,11 @@ void Conduction_Operator::SetParameters(const Vector &X){
             aux(ii) = alpha_s;
     }
     GridFunctionCoefficient alpha(&aux);
-    ProductCoefficient coeff1(alpha, r);
-    ScalarVectorProductCoefficient coeff2(alpha, r_hat);
+    ProductCoefficient coeff(alpha, r);
 
     delete k;
     k = new ParBilinearForm(&fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(coeff1));
-    k->AddDomainIntegrator(new ConvectionIntegrator(coeff2));
+    k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
     k->FormSystemMatrix(ess_tdof_list, K);
 }

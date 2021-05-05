@@ -40,10 +40,10 @@ void Artic_sea::assemble_system(){
         case 11: arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::EXPLICIT); break;
         case 12: arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT); break;
         default:
-          cout << "Unknown ODE solver type: " << config.ode_solver_type << "\n"
-               << "Setting ODE to BackwardEulerSolver.\n";
-          config.ode_solver_type = 1;
-          ode_solver = new BackwardEulerSolver; break;
+                 cout << "Unknown ODE solver type: " << config.ode_solver_type << "\n"
+                      << "Setting ODE to BackwardEulerSolver.\n";
+                 config.ode_solver_type = 1;
+                 ode_solver = new BackwardEulerSolver; break;
     }
 
     // Initialize ODE solver
@@ -89,41 +89,34 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-  return 0.01*abs((x(0)-Rmin)*(x(0)-Rmax)*(x(1)-Zmin)*(x(1)-Zmax));
+    return 0.01*abs((x(0)-Rmin)*(x(0)-Rmax)*(x(1)-Zmin)*(x(1)-Zmax));
 }
 
 double rf(const Vector &x){
-  return x(0);
-}
-
-void r_hatf(const Vector &x, Vector &f){
-  f(0) = 1.;
-  f(1) = 0.;
+    return x(0);
 }
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
-  TimeDependentOperator(fespace.GetTrueVSize(), 0.),
-  fespace(fespace),
-  m(NULL),
-  k(NULL),
-  T(NULL),
-  r(rf),
-  r_hat(2, r_hatf),
-  M_solver(fespace.GetComm()),
-  T_solver(fespace.GetComm()),
-  z(&fespace)
+    TimeDependentOperator(fespace.GetTrueVSize(), 0.),
+    fespace(fespace),
+    m(NULL),
+    k(NULL),
+    T(NULL),
+    r(rf),
+    M_solver(fespace.GetComm()),
+    T_solver(fespace.GetComm()),
+    z(&fespace)
 {
-  const double rel_tol = 1e-8;
+    const double rel_tol = 1e-8;
 
-  fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+    fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
-  m = new ParBilinearForm(&fespace);
-  m->AddDomainIntegrator(new MassIntegrator(r));
-  m->Assemble(0);
-  m->FormSystemMatrix(ess_tdof_list, M);
+    m = new ParBilinearForm(&fespace);
+    m->AddDomainIntegrator(new MassIntegrator(r));
+    m->Assemble(0);
+    m->FormSystemMatrix(ess_tdof_list, M);
 
-
-  //Configure M solver
+    //Configure M solver
     M_solver.iterative_mode = false;
     M_solver.SetRelTol(rel_tol);
     M_solver.SetAbsTol(0.);

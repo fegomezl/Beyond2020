@@ -10,7 +10,6 @@ using namespace std;
 using namespace mfem;
 
 struct Config{
-
     Config(bool master, int nproc);
 
     bool master;
@@ -23,7 +22,6 @@ struct Config{
     int ode_solver_type;
     double reltol;
     double abstol;
-
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -35,7 +33,6 @@ class Conduction_Operator : public TimeDependentOperator{
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &b,
                                      int j_update, int *j_status, double scaled_dt);
-
 	      virtual int SUNImplicitSolve(const Vector &b, Vector &X,
                                      double tol);
 
@@ -50,7 +47,7 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
-        ParLinearForm *f;    //RHS
+        ParLinearForm *f;
 
         HypreParMatrix M;
         HypreParMatrix K;
@@ -63,7 +60,6 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreSmoother T_prec;
 
         FunctionCoefficient r;
-        VectorFunctionCoefficient r_hat;
 
         mutable HypreParVector z;
 };
@@ -103,6 +99,7 @@ class Artic_sea{
         HypreParVector *X;
         Array<int> ess_bdr;
         Array<int> nbc_marker;
+        FunctionCoefficient initial_f;
         Conduction_Operator *oper;
 
         //Solver objects
@@ -113,6 +110,8 @@ class Artic_sea{
         ParaViewDataCollection *paraview_out;
 
 };
+
+extern double initial(const Vector &x);
 
 extern double T_f;
 extern double Rmin, Rmax, Zmin, Zmax;

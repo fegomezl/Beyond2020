@@ -10,6 +10,7 @@ Artic_sea::Artic_sea(Config config):
     pmesh(NULL),
     fec(NULL),
     fespace(NULL),
+    initial_f(initial),
     x(NULL),
     X(NULL),
     oper(NULL),
@@ -34,17 +35,16 @@ Conduction_Operator::~Conduction_Operator(){
     delete m;
     delete k;
     delete T;
-    delete f;
 }
 
 Artic_sea::~Artic_sea(){
-  delete pmesh;
-  delete fec;
-  delete fespace;
-  delete x;
-  delete X;
-  delete oper;
-  delete ode_solver;
-  delete paraview_out;
-  if (config.master) cout << "Memory deleted \n";
+    delete pmesh;
+    delete fec;
+    delete fespace;
+    delete x;
+    delete X;
+    delete oper;
+    delete ode_solver;
+    delete paraview_out;
+    if (config.master) cout << "Memory deleted \n";
 }

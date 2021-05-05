@@ -9,11 +9,10 @@ void Artic_sea::assemble_system(){
     vis_impressions = 0;
     actual_error = 0;
     total_error = 0;
-    total_time = 0;
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 1; //ess_bdr[2]= 0; 
+    ess_bdr = 1; ess_bdr[2]= 0; 
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
@@ -79,27 +78,20 @@ void Artic_sea::assemble_system(){
     //Start program check
     if (config.master)
         cout << left << setw(12)
-             << "--------------------------------------------------\n"
+             << "----------------------------------------------------------------\n"
              << left << setw(12)
              << "Step" << setw(12)
              << "Dt" << setw(12)
              << "Time" << setw(12)
-             << "Progress"
+             << "Progress" << setw(9)
              << "Absolute Error"
              << left << setw(12)
-             << "\n--------------------------------------------------\n";
-
+             << "\n----------------------------------------------------------------\n";
 }
 
 double rf(const Vector &x){
-  return x(0);
+    return x(0);
 }
-
-void r_hatf(const Vector &x, Vector &f){
-  f(0) = 1.;
-  f(1) = 0.;
-}
-
 
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
   TimeDependentOperator(fespace.GetTrueVSize(), 0.),
@@ -108,7 +100,6 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
   k(NULL),
   T(NULL),
   r(rf),
-  r_hat(2, r_hatf),
   M_solver(fespace.GetComm()),
   T_solver(fespace.GetComm()),
   z(&fespace)
@@ -122,24 +113,23 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
   m->Assemble(0);
   m->FormSystemMatrix(ess_tdof_list, M);
 
-
   //Configure M solver
-    M_solver.iterative_mode = false;
-    M_solver.SetRelTol(rel_tol);
-    M_solver.SetAbsTol(0.);
-    M_solver.SetMaxIter(100);
-    M_solver.SetPrintLevel(0);
-    M_solver.SetPreconditioner(M_prec);
-    M_prec.SetType(HypreSmoother::Jacobi);
-    M_solver.SetOperator(M);
+  M_solver.iterative_mode = false;
+  M_solver.SetRelTol(rel_tol);
+  M_solver.SetAbsTol(0.);
+  M_solver.SetMaxIter(100);
+  M_solver.SetPrintLevel(0);
+  M_solver.SetPreconditioner(M_prec);
+  M_prec.SetType(HypreSmoother::Jacobi);
+  M_solver.SetOperator(M);
 
-    //Configure T solver
-    T_solver.iterative_mode = false;
-    T_solver.SetRelTol(rel_tol);
-    T_solver.SetAbsTol(0.);
-    T_solver.SetMaxIter(100);
-    T_solver.SetPrintLevel(0);
-    T_solver.SetPreconditioner(T_prec);
+  //Configure T solver
+  T_solver.iterative_mode = false;
+  T_solver.SetRelTol(rel_tol);
+  T_solver.SetAbsTol(0.);
+  T_solver.SetMaxIter(100);
+  T_solver.SetPrintLevel(0);
+  T_solver.SetPreconditioner(T_prec);
 
-    SetParameters(X);
+  SetParameters(X);
 }
