@@ -12,9 +12,9 @@ void Artic_sea::output_results(){
         ofstream output;
         output.precision(4);
         if (config.refinements != 0)
-            output.open("data/convergence.txt", std::ios::app);
+            output.open("results/convergence.txt", std::ios::app);
         else{
-            output.open("data/convergence.txt", std::ios::trunc);
+            output.open("results/convergence.txt", std::ios::trunc);
             output << left << setw(16) 
                    << "DOFs" << setw(16) 
                    << "h" << setw(16) 
@@ -29,7 +29,7 @@ void Artic_sea::output_results(){
 
     //Print visual results to Paraview
     if (config.last){
-        ParaViewDataCollection paraview_out("graph", pmesh);
+        ParaViewDataCollection paraview_out("results/graph", pmesh);
         paraview_out.SetDataFormat(VTKFormat::BINARY);
         paraview_out.SetCycle(0);
         paraview_out.SetTime(0.);

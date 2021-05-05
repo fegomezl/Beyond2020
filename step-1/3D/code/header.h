@@ -49,13 +49,15 @@ class Artic_sea{
         ParBilinearForm *a;
         ParLinearForm *b;
         ParGridFunction *x;
-        FunctionCoefficient *u;
+        FunctionCoefficient u;
 
         //Solver objects
         HypreParMatrix A;
         Vector B;
         Vector X;
 };
+
+extern double exact(const Vector &x);
 
 extern double height;
 extern double int_rad;
