@@ -1,12 +1,12 @@
 //+
 SetFactory("OpenCASCADE");
-Rmin = 0.00001;
-Rmax = 100;
+Rmin = 2;
+Rmax = 10;
 Zmin = 0;
 Zmax = 10;
 
-NR = 100;
-NZ = 15;
+NR = 10;
+NZ = 10;
 
 Point(1) = {Rmin, Zmin, 0, 1.0};
 //+
@@ -27,14 +27,6 @@ Line(4) = {4, 1};
 Curve Loop(1) = {3, 4, 1, 2};
 //+
 Plane Surface(1) = {1};
-//+
-Transfinite Curve {3, 1} = NR Using Progression 1;
-//+
-Transfinite Curve {4, 2} = NZ Using Progression 1;
-//+
-Transfinite Surface {1};
-//+
-Recombine Surface {1};
 //+
 Physical Curve("down", 1) = {1};
 //+

@@ -39,26 +39,56 @@ void Artic_sea::time_step(){
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
-  ParGridFunction aux(&fespace);
-  aux.SetFromTrueDofs(X);
+    double DeltaT = 0.00001;
+    double k_s = 133.2, k_l = 33.6;
+    double c_s = 1.878, c_l = 4.219;
+    double scale = pow(10, 5);
+    double L = 302.3;
 
-  //Create the K coefficient
-    for (int ii = 0; ii < aux.Size(); ii++){
-        if (aux(ii) >= T_f)
-            aux(ii) = alpha_l;
+    ParGridFunction aux_k(&fespace);
+    aux_k.SetFromTrueDofs(X);
+
+    //Create the K coefficient
+    for (int ii = 0; ii < aux_k.Size(); ii++){
+        if (aux_k(ii) >= T_f + DeltaT)
+            aux_k(ii) = k_l;
+        else if (aux_k(ii) <= T_f - DeltaT)
+            aux_k(ii) = k_s;
         else
-            aux(ii) = alpha_s;
+            aux_k(ii) = -((k_s - k_l)/2)*(aux_k(ii)- T_f)/DeltaT + (k_s + k_l)/2;
     }
-    GridFunctionCoefficient alpha(&aux);
-    ProductCoefficient coeff1(alpha, r);
-    ScalarVectorProductCoefficient coeff2(alpha, r_hat);
+    GridFunctionCoefficient coeff_k(&aux_k);
+    ProductCoefficient coeff1_k(coeff_k, r);
+    ScalarVectorProductCoefficient coeff2_k(coeff_k, r_hat);
 
     delete k;
     k = new ParBilinearForm(&fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(coeff1));
-    k->AddDomainIntegrator(new ConvectionIntegrator(coeff2));
+    k->AddDomainIntegrator(new DiffusionIntegrator(coeff1_k));
+    k->AddDomainIntegrator(new ConvectionIntegrator(coeff2_k));
     k->Assemble(0);
     k->FormSystemMatrix(ess_tdof_list, K);
+
+    ParGridFunction aux_c(&fespace);
+    aux_c.SetFromTrueDofs(X);
+
+    //Create the M coefficient
+    for (int ii = 0; ii < aux_c.Size(); ii++){
+        if (aux_c(ii) >= T_f + DeltaT)
+            aux_c(ii) = c_l;
+        else if (aux_c(ii) <= T_f - DeltaT)
+            aux_c(ii) = c_s;
+        else
+            aux_c(ii) = (L/M_PI)*(scale/DeltaT)/(1 + pow(scale*(aux_c(ii) - T_f)/DeltaT, 2));
+    }
+    GridFunctionCoefficient coeff_c(&aux_c);
+    ProductCoefficient coeff1_c(coeff_c, r);
+
+    delete m;
+    m = new ParBilinearForm(&fespace);
+    m->AddDomainIntegrator(new MassIntegrator(coeff1_c));
+    m->Assemble(0);
+    m->FormSystemMatrix(ess_tdof_list, M);
+    M_solver.SetOperator(M);
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
