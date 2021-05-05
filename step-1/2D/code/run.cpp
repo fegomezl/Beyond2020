@@ -9,7 +9,6 @@ Artic_sea::Artic_sea(Config config):
     config(config),
     u(exact),
     r(rf),
-    r_hat(2, r_hatf),
     pmesh(NULL),
     fec(NULL),
     fespace(NULL),

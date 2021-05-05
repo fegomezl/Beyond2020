@@ -51,7 +51,6 @@ class Artic_sea{
         ParGridFunction *x;
         FunctionCoefficient u;
         FunctionCoefficient r;
-        VectorFunctionCoefficient r_hat;
 
         //Solver objects
         HypreParMatrix A;
@@ -60,7 +59,6 @@ class Artic_sea{
 };
 
 extern double rf(const Vector &x);
-extern void r_hatf(const Vector &x, Vector &f);
 
 extern double exact(const Vector &x);
 

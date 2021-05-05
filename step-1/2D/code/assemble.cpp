@@ -4,13 +4,13 @@
 double rhs(const Vector &x){                 
     double r_2 = pow(x(0),2);
     double z_2 = pow(x(1),2);
-    return (pow(10,-4)/7)*(2*(pow(height,2) - z_2) + pow(out_rad,2) - r_2);
+    return x(0)*(pow(10,-4)/7)*(2*(pow(height,2) - z_2) + pow(out_rad,2) - r_2);
 }
 
 //for Neumann condition
 double boundary(const Vector &x){            
-    double z_2 = pow(x(2),2);
-    return (pow(10,-4)/7)*int_rad*(pow(height,2) - z_2);
+    double z_2 = pow(x(1),2);
+    return x(0)*(pow(10,-4)/7)*int_rad*(pow(height,2) - z_2);
 }
 
 //Exact solution for the equation
@@ -22,11 +22,6 @@ double exact(const Vector &x){
 
 double rf(const Vector &x){
     return x(0);
-}
-
-void r_hatf(const Vector &x, Vector &f){
-    f(0) = 1.;
-    f(1) = 0.;
 }
 
 void Artic_sea::assemble_system(){
@@ -47,17 +42,14 @@ void Artic_sea::assemble_system(){
     //Define biliniar form
     a = new ParBilinearForm(fespace);
     a->AddDomainIntegrator(new DiffusionIntegrator(r));
-    a->AddDomainIntegrator(new ConvectionIntegrator(r_hat));
     a->Assemble();
 
     //Create RHS
     b = new ParLinearForm(fespace);
     FunctionCoefficient boundarycoeff(boundary);
-    ProductCoefficient boundarycoeffr(boundarycoeff, r);
-    b->AddBoundaryIntegrator(new BoundaryLFIntegrator(boundarycoeffr), nbc_marker);
+    b->AddBoundaryIntegrator(new BoundaryLFIntegrator(boundarycoeff), nbc_marker);
     FunctionCoefficient f(rhs);
-    ProductCoefficient fr(f, r);
-    b->AddDomainIntegrator(new DomainLFIntegrator(fr));
+    b->AddDomainIntegrator(new DomainLFIntegrator(f));
     b->Assemble();
 
     //Define solution x
@@ -65,5 +57,5 @@ void Artic_sea::assemble_system(){
     x->ProjectCoefficient(u);
 
     //Create the linear system Ax=B
-    a->FormLinearSystem(ess_tdof_list, *x, *b, A, X, B, 1);
+    a->FormLinearSystem(ess_tdof_list, *x, *b, A, X, B);
 }

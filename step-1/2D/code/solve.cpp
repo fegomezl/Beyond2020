@@ -17,7 +17,8 @@ void Artic_sea::solve_system(){
     a->RecoverFEMSolution(X, *b, *x);
 
     //Calculate error
-    l2_error = x->ComputeLpError(2, u, &r);
+    l2_error = x->ComputeL2Error(u);
+    l2_error /= height*(out_rad - int_rad);
 
     //Delete used memory
     delete amg;
