@@ -26,7 +26,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, Array<int> nbc_marker);
+        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt,
@@ -47,12 +47,10 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
-        ParLinearForm *f;
 
         HypreParMatrix M;
         HypreParMatrix K;
         HypreParMatrix *T;    //T = M + dt K
-        HypreParVector F;
 
         CGSolver M_solver;
         CGSolver T_solver;
@@ -98,7 +96,6 @@ class Artic_sea{
         ParGridFunction *x;
         HypreParVector *X;
         Array<int> ess_bdr;
-        Array<int> nbc_marker;
         FunctionCoefficient initial_f;
         Conduction_Operator *oper;
 

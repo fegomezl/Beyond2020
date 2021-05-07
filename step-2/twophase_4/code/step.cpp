@@ -39,10 +39,10 @@ void Artic_sea::time_step(){
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
-    double DeltaT = 0.001;
-    double k_s = 133.2, k_l = 33.6;
+    double DeltaT = 0.0001;
+    double k_s = 3996, k_l = 1008;
     double c_s = 1.878, c_l = 4.219;
-    double scale = pow(10, 5);
+    double scale = pow(10, -5);
     double L = 302.3;
 
     ParGridFunction aux_k(&fespace);
@@ -76,7 +76,7 @@ void Conduction_Operator::SetParameters(const Vector &X){
         else if (aux_c(ii) <= T_f - DeltaT)
             aux_c(ii) = c_s;
         else
-            aux_c(ii) = (L/M_PI)*(scale/DeltaT)/(1 + pow(scale*(aux_c(ii) - T_f)/DeltaT, 2));
+            aux_c(ii) = (L/M_PI)*(DeltaT*scale)/(pow(DeltaT*scale, 2) + pow(aux_c(ii) - T_f, 2));
     }
     GridFunctionCoefficient coeff_c(&aux_c);
     ProductCoefficient coeff_cr(coeff_c, r);
@@ -93,7 +93,6 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //Solve M(dX_dt) = -K(X) for dX_dt
     K.Mult(X,z);
     z.Neg();
-    z += F;
     M_solver.Mult(z, dX_dt);
 }
 
@@ -105,7 +104,6 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
 
     K.Mult(X, z);
     z.Neg();
-    z += F;
     T_solver.Mult(z, dX_dt);
 }
 
@@ -123,7 +121,6 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &b, Vector &X,
                              double tol){
     //Solve the system Ax = z -> (M - gamma*K)x = Mb
     M.Mult(b,z);
-    z += F;
     T_solver.Mult(z,X);
     return 0;
 }

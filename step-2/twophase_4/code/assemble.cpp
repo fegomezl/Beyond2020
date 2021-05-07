@@ -12,19 +12,13 @@ void Artic_sea::assemble_system(){
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
     ess_bdr = 0;  ess_bdr[3] = 1;
 
-    nbc_marker.SetSize(pmesh->bdr_attributes.Max());
-    nbc_marker = 0;  nbc_marker[2] = 1;
-
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
-    ConstantCoefficient zero(0.);
-    ConstantCoefficient boundary(T_f);
-    x->ProjectCoefficient(zero);
-    x->ProjectBdrCoefficient(boundary, nbc_marker);
+    x->ProjectCoefficient(initial_f);
     X = new HypreParVector(fespace);
     x->GetTrueDofs(*X);
 
-    oper = new Conduction_Operator(*fespace, *X, ess_bdr, nbc_marker);
+    oper = new Conduction_Operator(*fespace, *X, ess_bdr);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -94,35 +88,27 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-    return T_f;
+    return 2*T_f*(1 - x(0)/Rmax);
 }
 
 double rf(const Vector &x){
     return x(0);
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr, Array<int> nbc_marker):
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
     m(NULL),
     k(NULL),
     T(NULL),
-    f(NULL),
     r(rf),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
-    F(&fespace),
     z(&fespace)
 {
     const double rel_tol = 1e-8;
 
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
-
-    f = new ParLinearForm(&fespace);
-    ConstantCoefficient newmann(T_f/(2*Rmin));
-    f->AddBoundaryIntegrator(new BoundaryLFIntegrator(newmann), nbc_marker);
-    f->Assemble();
-    F = *(f->ParallelAssemble());
 
     //Configure M solver
     M_solver.iterative_mode = false;

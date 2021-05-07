@@ -2,7 +2,7 @@
 
 double initial_condition(double r, double z, int m, int n, double a, double b)
 {
-  return r*sin(n*M_PI*z/a)*boost::math::cyl_bessel_j(0,boost::math::cyl_bessel_j_zero(0.0,m)*r/b);
+  return pow(r,2)*sin(n*M_PI*z/a)*boost::math::cyl_bessel_j(0,boost::math::cyl_bessel_j_zero(0.0,m)*r/b);
 }
 
 void Calc_Coe(double a, double b, std::vector<double> & Coeficients)
@@ -69,9 +69,8 @@ double Aux( double r, double z, double t)
     for(int n=1; n<=Nterms; n++)
     {
       Q=Coeficients[(m-1)+Nterms*(n-1)];
-      sum +=Q*exp(-((n*M_PI/a)+(boost::math::cyl_bessel_j_zero(0.0,m)/b))*alpha*t)*sin(n*M_PI*z/a)*boost::math::cyl_bessel_j(0.0,boost::math::cyl_bessel_j_zero(0.0,m)*r/b);
+      sum +=Q*exp(-(pow(n*M_PI/a,2)+pow(boost::math::cyl_bessel_j_zero(0.0,m)/b,2))*alpha*t)*sin(n*M_PI*z/a)*boost::math::cyl_bessel_j(0.0,boost::math::cyl_bessel_j_zero(0.0,m)*r/b);
     }
 
   return sum;
 }
-
