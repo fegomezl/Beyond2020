@@ -4,7 +4,6 @@ void Artic_sea::make_grid(const char *mesh_file){
     //Read mesh (serial)
     Mesh *mesh = new Mesh(mesh_file, 1, 1);
     dim = mesh->Dimension();
-    sdim = mesh->SpaceDimension();
 
     //Calculate how many serial refinements are needed
     //More than 1000 cells per processor
@@ -14,24 +13,7 @@ void Artic_sea::make_grid(const char *mesh_file){
         serial_refinements = min(config.refinements, (int)floor(log(min_elements/elements)/(dim*log(2.))));
     else
         serial_refinements = 0;
-    
-    //*********************************************************************
-    int reorder_mesh=1;
-    if (reorder_mesh)
-      {
-	Array<int> ordering;
-	switch (1)
-	  {
-	  case 1: mesh -> GetHilbertElementOrdering(ordering); break;
-	  case 2: mesh -> GetGeckoElementOrdering(ordering); break;
-	  default: MFEM_ABORT("Unknown mesh reodering type " << reorder_mesh);
-	  }
-	mesh -> ReorderElements(ordering);
-      }
-    bool nc_simplices = true;
-    mesh -> EnsureNCMesh(nc_simplices);
-    //*********************************************************************
-    
+
     //Refine mesh (serial)
     for (int ii = 0; ii < serial_refinements; ii++)
         mesh->UniformRefinement();

@@ -26,8 +26,8 @@ void Artic_sea::run(const char *mesh_file){
     assemble_system();
     for (iteration = 1, vis_iteration = 1; !last; iteration++, vis_iteration++)
         time_step();
-    total_time=toc();
     output_results();
+
 }
 
 Conduction_Operator::~Conduction_Operator(){
@@ -46,6 +46,5 @@ Artic_sea::~Artic_sea(){
     delete oper;
     delete ode_solver;
     delete paraview_out;
-    delete estimator;
     if (config.master) cout << "Memory deleted \n";
 }

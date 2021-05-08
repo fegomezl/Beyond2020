@@ -5,8 +5,6 @@
 #include <string>
 #include <cmath>
 #include "mfem.hpp"
-#include <boost/math/special_functions/bessel.hpp>
-#include <boost/math/quadrature/trapezoidal.hpp>
 
 using namespace std;
 using namespace mfem;
@@ -35,13 +33,10 @@ class Conduction_Operator : public TimeDependentOperator{
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &b,
                                      int j_update, int *j_status, double scaled_dt);
-   	    virtual int SUNImplicitSolve(const Vector &b, Vector &X,
+	      virtual int SUNImplicitSolve(const Vector &b, Vector &X,
                                      double tol);
 
         void SetParameters(const Vector &X);
-        void UpdateAndRebalance(ParMesh &pmesh, ParFiniteElementSpace &fespace,
-                        ParGridFunction &x, ParBilinearForm &a,
-                        ParLinearForm &b);
 
         virtual ~Conduction_Operator();
 
@@ -88,12 +83,8 @@ class Artic_sea{
         int vis_iteration;
         int vis_steps;
         int vis_impressions;
-        double actual_error;
-  	    double total_error;
-        double total_time;
 
         int dim;
-        int sdim;
         int serial_refinements;
         HYPRE_Int size;
 
@@ -117,21 +108,10 @@ class Artic_sea{
 
 };
 
+extern double initial(const Vector &x);
+
 extern double T_f;
 extern double Rmin, Rmax, Zmin, Zmax;
-extern int  Mterms;
-extern int Nterms;
-extern std::vector<double> Coeficients;
 
 extern double alpha_l; //Liquid thermal conduction
 extern double alpha_s; //Solid thermal conduction
-
-extern void Calc_Coe(double a, double b, std::vector<double> & Coeficients);
-extern double initial(const Vector &x, double t);
-extern double initial_condition(double r, double z, int m, int n, double a, double b);
-extern double integrand(double r,double z,int m,int n, double a, double b);
-extern double integrate(int m, int n,double a,double b);
-extern double Aux( double r, double z, double t);
-extern void print_exact();
-extern void print_initial();
-extern void print_coefficients();

@@ -1,75 +1,88 @@
 #include "header.h"
 
 void Artic_sea::time_step(){
-    //Check for last iteration
-    last = (t >= (config.t_final + config.t_init) - 1e-8*config.dt_init);
-    dt = min(dt, (config.t_final + config.t_init) - t);
 
-    //Update boundary conditions
-    boundary.SetTime(t);
-    x->ProjectBdrCoefficient(boundary, ess_bdr);
-    x->GetTrueDofs(X);
-
-    //Perform the time_step
-    oper->SetParameters(X, ess_bdr);
-    ode_solver->Step(X, t, dt);
-
-    //Output from the solution
-    if (last || (iteration % config.vis_steps) == 0){
+  //adaptative mesh***************************************************************************
+  refiner.Reset();
+  derefiner.Reset();
+  refiner.Apply(pmesh);
+  // 21. Quit the AMR loop if the termination criterion has been met
+  if (refiner.Stop())
+    {
+      a.Update(); // Free the assembled data
+      break;
+    }
+  UpdateAndRebalance(pmesh, fespace, x, a, b);
+  if (derefiner.Apply(pmesh))
+    {
+      // 24. Update the space and the solution, rebalance the mesh.
+      UpdateAndRebalance(pmesh, fespace, x, a, b);
+    }
+  //*******************************************************************************************
+  
+  //Check for last iteration
+  last = (t >= config.t_final - 1e-8*config.dt_init);
+  dt = min(dt, config.t_final - t);
+  
+  //Perform the time_step
+  oper->SetParameters(*X);
+  ode_solver->Step(*X, t, dt);
+  
+  //Update visualization steps
+  vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
+  
+  if (last || vis_steps <= vis_iteration){
+    //Update parameters
+        vis_iteration = 0;
+        vis_impressions++;
+	
         //Calculate convergence
-        x->SetFromTrueDofs(X);
-        actual_error = x->ComputeL2Error(boundary);
+        initial_f.SetTime(t);
+        x->SetFromTrueDofs(*X);
+        actual_error = x->ComputeL2Error(initial_f);
+        actual_error /= (Zmax - Zmin)*(Rmax - Rmin);
         total_error += actual_error;
-        iterations_error += 1;
 
         //Graph
-        paraview_out->SetCycle(iteration);
-        paraview_out->SetTime(t - config.t_init);
+        paraview_out->SetCycle(vis_impressions);
+        paraview_out->SetTime(t);
         paraview_out->Save();
-    }
-    
-    //Print the system state 
-    double percentage = 100*(t - config.t_init)/config.t_final;
-    string progress = to_string((int)percentage)+"%";
-    if (config.master){    
-        cout.precision(4);
+  }
+  
+  //Print the system state
+  double percentage = 100*t/config.t_final;
+  string progress = to_string((int)percentage)+"%";
+  if (config.master){
+    cout.precision(4);
         cout << left << setw(12)
              << iteration << setw(12)
-             << t - config.t_init << setw(12)
-             << progress << setw(12)
+             << dt << setw(12)
+             << t  << setw(12)
+             << progress << setw(9)
              << actual_error << "\r";
         cout.flush();
-    }
+  }
 }
 
-void Conduction_Operator::SetParameters(const Vector &X, Array<int> ess_bdr){
-    //Read the solution X
-    ParGridFunction x(&fespace);
-    x.SetFromTrueDofs(X);
-
-    //Create the K coefficient
-    for (int ii = 0; ii < x.Size(); ii++){
-        if (x(ii) > T_f) 
-            x(ii) *= alpha_l;
-        else  
-            x(ii) *= alpha_s;
+void Conduction_Operator::SetParameters(const Vector &X){
+  ParGridFunction aux(&fespace);
+  aux.SetFromTrueDofs(X);
+  
+  //Create the K coefficient
+    for (int ii = 0; ii < aux.Size(); ii++){
+      if (aux(ii) > T_f)
+	aux(ii) = alpha_l;
+      else
+	aux(ii) = alpha_s;
     }
-    GridFunctionCoefficient coeff(&x);
-
-    //Construct M
-    delete m;
-    m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator());
-    m->Assemble(0);
-    m->FormLinearSystem(ess_tdof_list, x, *f, M, Z, F, 1);
-    M_solver.SetOperator(M);
-
-    //Create the new K
+    GridFunctionCoefficient alpha(&aux);
+    ProductCoefficient coeff(alpha, r);
+    
     delete k;
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
-    m->FormLinearSystem(ess_tdof_list, x, *f, K, Z, F, 1);
+    k->FormSystemMatrix(ess_tdof_list, K);
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
@@ -90,7 +103,7 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
     T_solver.Mult(z, dX_dt);
 }
 
-int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &b, 
+int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &b,
                              int j_update, int *j_status, double scaled_dt){
     //Setup the ODE Jacobian T = M + gamma*K
     if (T) delete T;
@@ -100,10 +113,42 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &b,
     return 0;
 }
 
-int Conduction_Operator::SUNImplicitSolve(const Vector &b, Vector &X, 
+int Conduction_Operator::SUNImplicitSolve(const Vector &b, Vector &X,
                              double tol){
     //Solve the system Ax = z -> (M - gamma*K)x = Mb
     M.Mult(b,z);
     T_solver.Mult(z,X);
     return 0;
+}
+//*******************************************************************************
+void UpdateAndRebalance(ParMesh &pmesh, ParFiniteElementSpace &fespace,
+                        ParGridFunction &x, ParBilinearForm &a,
+                        ParLinearForm &b)
+{
+   // Update the space: recalculate the number of DOFs and construct a matrix
+   // that will adjust any GridFunctions to the new mesh state.
+   fespace.Update();
+
+   // Interpolate the solution on the new mesh by applying the transformation
+   // matrix computed in the finite element space. Multiple GridFunctions could
+   // be updated here.
+   x.Update();
+
+   if (pmesh.Nonconforming())
+   {
+      // Load balance the mesh.
+      pmesh.Rebalance();
+
+      // Update the space again, this time a GridFunction redistribution matrix
+      // is created. Apply it to the solution.
+      fespace.Update();
+      x.Update();
+   }
+
+   // Inform the linear and bilinear forms that the space has changed.
+   a.Update();
+   b.Update();
+
+   // Free any transformation matrices to save memory.
+   fespace.UpdatesFinished();
 }

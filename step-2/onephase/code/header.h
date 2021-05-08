@@ -39,9 +39,6 @@ class Conduction_Operator : public TimeDependentOperator{
                                      double tol);
 
         void SetParameters(const Vector &X);
-        void UpdateAndRebalance(ParMesh &pmesh, ParFiniteElementSpace &fespace,
-                        ParGridFunction &x, ParBilinearForm &a,
-                        ParLinearForm &b);
 
         virtual ~Conduction_Operator();
 
@@ -93,7 +90,6 @@ class Artic_sea{
         double total_time;
 
         int dim;
-        int sdim;
         int serial_refinements;
         HYPRE_Int size;
 

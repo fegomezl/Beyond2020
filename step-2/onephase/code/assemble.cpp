@@ -65,50 +65,8 @@ void Artic_sea::assemble_system(){
         if (config.ode_solver_type == 11) arkode->SetERKTableNum(FEHLBERG_13_7_8);
         ode_solver = arkode;
     }
-    //**********************************************************************
-    int which_estimator=0;
-    L2_FECollection flux_fec(order, dim);
-    RT_FECollection smooth_flux_fec(order-1, dim);
-    ErrorEstimator* estimator;
-    switch (which_estimator)
-      {
-      case 1:
-	{
-	  auto flux_fes = new ParFiniteElementSpace(&pmesh, &flux_fec, sdim);
-	  estimator = new KellyErrorEstimator(*integ, x, flux_fes);
-	  break;
-	}
-      case 2:
-	{
-	  auto flux_fes = new ParFiniteElementSpace(&pmesh, &fec, sdim);
-	  estimator = new ZienkiewiczZhuEstimator(*integ, x, flux_fes);
-	  break;
-	}
-      default:
-	if (config.master)
-	  {
-            std::cout << "Unkown estimator. Falling back to L2ZZ." << std::endl;
-	  }
-      case 0:
-	{
-	  auto flux_fes = new ParFiniteElementSpace(&pmesh, &flux_fec, sdim);
-	  auto smooth_flux_fes = new ParFiniteElementSpace(&pmesh, &smooth_flux_fec);
-	  estimator = new L2ZienkiewiczZhuEstimator(*oper, x, flux_fes, smooth_flux_fes);
-	  break;
-	}
-      }
-    ThresholdRefiner refiner(*estimator);
-    refiner.SetTotalErrorFraction(0.0); // use purely local threshold
-    refiner.SetLocalErrorGoal(max_elem_error);
-    refiner.PreferConformingRefinement();
-    refiner.SetNCLimit(nc_limit);
-    
-    ThresholdDerefiner derefiner(*estimator);
-    derefiner.SetThreshold(hysteresis * max_elem_error);
-    derefiner.SetNCLimit(nc_limit);
-    //*********************************************************************************
-    
-    //Open the paraview output and print initial state
+
+     //Open the paraview output and print initial state
     paraview_out = new ParaViewDataCollection("results/graph", pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
