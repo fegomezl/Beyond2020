@@ -6,6 +6,9 @@ void Artic_sea::time_step(){
     dt = min(dt, config.t_final - t);
 
     //Perform the time_step
+    boundary.SetTime(t);
+    x->ProjectBdrCoefficient(boundary, ess_bdr);
+
     oper->SetParameters(*X);
     ode_solver->Step(*X, t, dt);
 
@@ -56,25 +59,47 @@ void Conduction_Operator::SetParameters(const Vector &X){
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
     k->Assemble(0);
-    k->FormSystemMatrix(ess_tdof_list, K);
+    k->Finalize();
+    //k->FormSystemMatrix(ess_tdof_list, K);
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //Solve M(dX_dt) = -K(X) for dX_dt
-    K.Mult(X,z);
-    z.Neg();
-    M_solver.Mult(z, dX_dt);
+    ParGridFunction tmp_X(&fespace);
+    ParLinearForm tmp_z(&fespace);
+    tmp_X.SetFromTrueDofs(X);
+    k->Mult(tmp_X,tmp_z);
+    tmp_z.Neg();
+
+    OperatorHandle A;
+    Vector B;
+    ParGridFunction tmp_dX_dt(&fespace);
+    tmp_dX_dt = 0.0;
+
+    m->FormLinearSystem(ess_tdof_list, tmp_dX_dt, tmp_z, A, dX_dt, B);
+    M_solver.Mult(B, dX_dt);
 }
 
 void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt){
     //Solve M(dX_dt) = -K(X + dt*dX_dt)] for dX_dt
     if (T) delete T;
+    ParGridFunction tmp_X(&fespace);
+    ParLinearForm tmp_z(&fespace);
+    tmp_X.SetFromTrueDofs(X);
     T = Add(1., M, dt, K);
     T_solver.SetOperator(*T);
 
-    K.Mult(X, z);
-    z.Neg();
-    T_solver.Mult(z, dX_dt);
+    k->Mult(tmp_X, tmp_z);
+    tmp_z.Neg();
+
+    OperatorHandle A;
+    Vector B;
+    ParGridFunction tmp_dX_dt(&fespace);
+    tmp_dX_dt = 0.0;
+
+    m->FormLinearSystem(ess_tdof_list, tmp_dX_dt, tmp_z, A, dX_dt, B);
+
+    T_solver.Mult(B, dX_dt);
 }
 
 int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &b,

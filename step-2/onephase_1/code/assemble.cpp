@@ -16,6 +16,7 @@ void Artic_sea::assemble_system(){
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
     x->ProjectCoefficient(initial_f);
+    x->ProjectBdrCoefficient(boundary, ess_bdr);
     X = new HypreParVector(fespace);
     x->GetTrueDofs(*X);
 
@@ -89,7 +90,11 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-    return 0.01*abs((x(0)-Rmin)*(x(0)-Rmax)*(x(1)-Zmin)*(x(1)-Zmax));
+    return 0.01*abs((x(0)-Rmin)*(x(0)-Rmax)*(x(1)-Zmin)*(x(1)-Zmax))+6;
+}
+
+double dirichlet(const Vector &x, double t){
+    return 6;
 }
 
 double rf(const Vector &x){
@@ -114,6 +119,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator(r));
     m->Assemble(0);
+    //m->Finalize();
     m->FormSystemMatrix(ess_tdof_list, M);
 
     //Configure M solver
