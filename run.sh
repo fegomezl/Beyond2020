@@ -1,6 +1,7 @@
 ##aca eestamos asumiendo wue el directorio de trabajo es ~/
 ##para trabajar en otro directorio hay que editar la direccion de los ejecutables, el mesh
 ## la bandera -cwd quiere decir, trabajar en el directorio donde esta el script
+##la ejecucion desde la linea de comandos es -> qsub -v order=1,refinements=1,solver=12 run.sh
 #!/bin/bash
 #$ -pe mpi 16
 #$ -q normal.q
