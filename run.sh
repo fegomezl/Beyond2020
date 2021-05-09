@@ -1,3 +1,6 @@
+##aca eestamos asumiendo wue el directorio de trabajo es ~/
+##para trabajar en otro directorio hay que editar la direccion de los ejecutables, el mesh
+## la bandera -cwd quiere decir, trabajar en el directorio donde esta el script
 #!/bin/bash
 #$ -pe mpi 16
 #$ -q normal.q
