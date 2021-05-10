@@ -35,8 +35,7 @@ Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete m;
     delete k;
-    delete r_alpha_dt;
-    //delete T;
+    delete aux;
     delete T_prec;
 }
 

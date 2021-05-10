@@ -42,27 +42,26 @@ void Artic_sea::time_step(){
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
-    ParGridFunction aux(&fespace);
-    aux.SetFromTrueDofs(X);
+
+    if (aux) delete aux;
+    aux = new ParGridFunction(&fespace);
+    aux->SetFromTrueDofs(X);
 
     //Create the K coefficient
-    for (int ii = 0; ii < aux.Size(); ii++){
-        if (aux(ii) > T_f)
-            aux(ii) = alpha_l;
+    for (int ii = 0; ii < aux->Size(); ii++){
+        if ((*aux)(ii) > T_f)
+            (*aux)(ii) = alpha_l;
         else
-            aux(ii) = alpha_s;
+            (*aux)(ii) = alpha_s;
     }
-    GridFunctionCoefficient alpha(&aux);
-    ProductCoefficient r_alpha(alpha, r);
-    if(r_alpha_dt) delete r_alpha_dt;
-    r_alpha_dt = new ProductCoefficient(1.,r_alpha);
+    GridFunctionCoefficient alpha(aux);
+    ProductCoefficient r_alpha(r, alpha);
 
     delete k;
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(r_alpha));
     k->Assemble();
     k->Finalize();
-    //k->FormSystemMatrix(ess_tdof_list, K);
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
@@ -91,13 +90,15 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
     HypreParMatrix T_op;
     tmp_X.SetFromTrueDofs(X);
     t.AddDomainIntegrator(new MassIntegrator(r));
-    r_alpha_dt->SetAConst(dt);
-    //ProductCoefficient coeff(dt, *r_alpha_dt);
-    t.AddDomainIntegrator(new DiffusionIntegrator(*r_alpha_dt));
+    GridFunctionCoefficient alpha(aux);
+    ProductCoefficient r_alpha(r, alpha);
+    ProductCoefficient dt_r_alpha(dt, r_alpha);
+    t.AddDomainIntegrator(new DiffusionIntegrator(dt_r_alpha));
     t.Assemble();
-    MPI_Barrier(MPI_COMM_WORLD);
+    /*MPI_Barrier(MPI_COMM_WORLD);
     cout << "aja..." << endl;
     MPI_Barrier(MPI_COMM_WORLD);
+    */
     t.FormSystemMatrix(ess_tdof_list, T_op);
 
     if(T_prec) delete T_prec;
@@ -117,7 +118,7 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
 
     T_solver.Mult(B, dX_dt);
 }
-
+/*
 int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &b,
                              int j_update, int *j_status, double scaled_dt){
     //Setup the ODE Jacobian T = M + gamma*K
@@ -134,4 +135,4 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &b, Vector &X,
     M.Mult(b,z);
     T_solver.Mult(z,X);
     return 0;
-}
+}*/

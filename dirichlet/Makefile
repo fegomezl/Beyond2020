@@ -1,4 +1,4 @@
-include ../../local_config.mk
+include ../local_config.mk
 
 #Mesh parmeters
 SCRIPT=$(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
