@@ -50,16 +50,17 @@ class Conduction_Operator : public TimeDependentOperator{
 
         HypreParMatrix M;
         HypreParMatrix K;
-        HypreParMatrix *T;    //T = M + dt K
+        //HypreParMatrix *T;    //T = M + dt K
 
         CGSolver M_solver;
         CGSolver T_solver;
         HypreSmoother M_prec;
-        HypreSmoother T_prec;
+        HypreSmoother *T_prec;
 
         FunctionCoefficient r;
+        ProductCoefficient *r_alpha_dt;
 
-        mutable HypreParVector z;
+        HypreParVector z;
 };
 
 class Artic_sea{
@@ -97,6 +98,7 @@ class Artic_sea{
         HypreParVector *X;
         Array<int> ess_bdr;
         FunctionCoefficient initial_f;
+        FunctionCoefficient boundary;
         Conduction_Operator *oper;
 
         //Solver objects
@@ -109,6 +111,7 @@ class Artic_sea{
 };
 
 extern double initial(const Vector &x);
+extern double dirichlet(const Vector &x, double t);
 
 extern double T_f;
 extern double Rmin, Rmax, Zmin, Zmax;

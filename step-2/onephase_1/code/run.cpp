@@ -11,6 +11,7 @@ Artic_sea::Artic_sea(Config config):
     fec(NULL),
     fespace(NULL),
     initial_f(initial),
+    boundary(dirichlet),
     x(NULL),
     X(NULL),
     oper(NULL),
@@ -34,7 +35,9 @@ Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete m;
     delete k;
-    delete T;
+    delete r_alpha_dt;
+    //delete T;
+    delete T_prec;
 }
 
 Artic_sea::~Artic_sea(){

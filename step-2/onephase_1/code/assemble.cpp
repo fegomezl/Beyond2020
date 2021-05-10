@@ -106,10 +106,12 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     fespace(fespace),
     m(NULL),
     k(NULL),
-    T(NULL),
+    //T(NULL),
     r(rf),
+    r_alpha_dt(NULL),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
+    T_prec(NULL),
     z(&fespace)
 {
     const double rel_tol = 1e-8;
@@ -118,7 +120,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
 
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator(r));
-    m->Assemble(0);
+    m->Assemble();
     //m->Finalize();
     m->FormSystemMatrix(ess_tdof_list, M);
 
@@ -138,7 +140,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T_solver.SetAbsTol(0.);
     T_solver.SetMaxIter(100);
     T_solver.SetPrintLevel(0);
-    T_solver.SetPreconditioner(T_prec);
+    //T_solver.SetPreconditioner(T_prec);
 
     SetParameters(X);
 }
