@@ -90,11 +90,11 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-    return 0.01*abs((x(0)-Rmin)*(x(0)-Rmax)*(x(1)-Zmin)*(x(1)-Zmax))+6;
+    return 0.01*abs((x(0)-Rmin)*(x(0)-Rmax)*(x(1)-Zmin)*(x(1)-Zmax));
 }
 
 double dirichlet(const Vector &x, double t){
-    return 6;
+    return 5*t + 1;
 }
 
 double rf(const Vector &x){
@@ -106,13 +106,19 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     fespace(fespace),
     m(NULL),
     k(NULL),
+    t(NULL),
+    aux(&fespace),
     //T(NULL),
     r(rf),
-    r_alpha_dt(NULL),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm()),
     T_prec(NULL),
-    z(&fespace)
+    alpha(&aux),
+    r_alpha(r, alpha),
+    dt_r_alpha(1., r_alpha),
+    z(&fespace),
+    SUN_tmp_X(&fespace),
+    SUN_tmp_z(&fespace)
 {
     const double rel_tol = 1e-8;
 
@@ -140,7 +146,8 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     T_solver.SetAbsTol(0.);
     T_solver.SetMaxIter(100);
     T_solver.SetPrintLevel(0);
-    //T_solver.SetPreconditioner(T_prec);
+    T_prec = new HypreSmoother;
+    T_solver.SetPreconditioner(*T_prec);
 
     SetParameters(X);
 }

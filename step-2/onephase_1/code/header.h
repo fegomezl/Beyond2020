@@ -46,21 +46,30 @@ class Conduction_Operator : public TimeDependentOperator{
 
         //System objects
         ParBilinearForm *m;  //Mass operator
-        ParBilinearForm *k;  //Difussion operator
+        ParBilinearForm *k;
+        ParBilinearForm *t;
 
         HypreParMatrix M;
         HypreParMatrix K;
-        //HypreParMatrix *T;    //T = M + dt K
 
         CGSolver M_solver;
         CGSolver T_solver;
         HypreSmoother M_prec;
         HypreSmoother *T_prec;
+        HypreParMatrix T_op;
 
+        ParGridFunction aux;
         FunctionCoefficient r;
-        ProductCoefficient *r_alpha_dt;
+
+        GridFunctionCoefficient alpha;
+        ProductCoefficient r_alpha;
+        ProductCoefficient dt_r_alpha;
 
         HypreParVector z;
+
+        ParGridFunction SUN_tmp_X;
+        ParLinearForm SUN_tmp_z;
+        Vector SUN_B;
 };
 
 class Artic_sea{
