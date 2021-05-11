@@ -110,11 +110,6 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
 
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
-    k = new ParBilinearForm(&fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(r));
-    k->Assemble(0);
-    k->FormSystemMatrix(ess_tdof_list, K);
-
     //Configure M solver
     M_solver.iterative_mode = false;
     M_solver.SetRelTol(rel_tol);
