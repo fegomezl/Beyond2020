@@ -28,31 +28,27 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr);
+        Conduction_Operator(ParFiniteElementSpace &fespace, Array<int> ess_bdr);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt,
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &b,
-                                     int j_update, int *j_status, double scaled_dt);
-   	    virtual int SUNImplicitSolve(const Vector &b, Vector &X,
-                                     double tol);
-
-        void SetParameters(const Vector &X);
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
+   	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
         virtual ~Conduction_Operator();
 
- protected:
+    protected:
         ParFiniteElementSpace &fespace;
         Array<int> ess_tdof_list;
 
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
+        ParBilinearForm *t;  //m + dt*k
 
         HypreParMatrix M;
-        HypreParMatrix K;
-        HypreParMatrix *T;    //T = M + dt K
+        HypreParMatrix T;
 
         CGSolver M_solver;
         CGSolver T_solver;
@@ -60,13 +56,13 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreSmoother T_prec;
 
         FunctionCoefficient r;
-
-        mutable HypreParVector z;
+        ProductCoefficient r_alpha;
+        ProductCoefficient dt_r_alpha;
 };
 
 class Artic_sea{
-  public:
-   Artic_sea(Config config);
+    public:
+        Artic_sea(Config config);
         void run(const char *mesh_file);
         ~Artic_sea();
     private:
@@ -110,17 +106,14 @@ class Artic_sea{
         ARKStepSolver *arkode;
 
         ParaViewDataCollection *paraview_out;
-
 };
 
-extern double T_f;
 extern double Rmin, Rmax, Zmin, Zmax;
 extern int  Mterms;
 extern int Nterms;
 extern std::vector<double> Coeficients;
 
-extern double alpha_l; //Liquid thermal conduction
-extern double alpha_s; //Solid thermal conduction
+extern double alpha;
 
 extern void Calc_Coe(double a, double b, std::vector<double> & Coeficients);
 extern double initial(const Vector &x, double t);
@@ -130,4 +123,3 @@ extern double integrate(int m, int n,double a,double b);
 extern double Aux( double r, double z, double t);
 extern void print_exact();
 extern void print_initial();
-extern void print_coefficients();

@@ -34,7 +34,7 @@ Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete m;
     delete k;
-    delete T;
+    delete t;
 }
 
 Artic_sea::~Artic_sea(){

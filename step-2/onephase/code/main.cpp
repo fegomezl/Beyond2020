@@ -4,9 +4,7 @@ double Rmin;
 double Zmin;
 double Rmax;
 double Zmax;
-double T_f;
-double alpha_l;
-double alpha_s;
+double alpha;
 int  Mterms=6;
 int  Nterms=6;
 std::vector<double> Coeficients(Mterms*Nterms ,0.0);
@@ -30,19 +28,15 @@ int main(int argc, char *argv[]){
     args.AddOption(&Rmax, "-Rmax", "--Rmax",
                    "Maximum R border");
     args.AddOption(&Zmin, "-Zmin", "--Zmin",
-                   "Minimum Z border");
+                   "Minimum Z boder");
     args.AddOption(&Zmax, "-Zmax", "--Zmax",
                    "Maximum Z boder");
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
     args.AddOption(&config.refinements, "-r", "--refinements",
                   "Number of total uniform refinements.");
-    args.AddOption(&T_f, "-T_f", "--temperature_fusion",
-                   "Fusion Temperature of the material.");
-    args.AddOption(&alpha_l, "-a_l", "--alpha_liquid",
-                   "Alpha coefficient for liquid phase.");
-    args.AddOption(&alpha_s, "-a_s", "--alpha_solid",
-                   "Alpha coefficient for solid phase.");
+    args.AddOption(&alpha, "-a", "--alpha",
+                   "Alpha coefficient for the material.");
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
     args.AddOption(&config.t_final, "-t_f", "--t_final",
@@ -70,9 +64,8 @@ int main(int argc, char *argv[]){
     Calc_Coe(Zmax, Rmax, Coeficients);
     //print solution parameters
     if (config.master) {
-      //print_exact();
-      //print_initial();
-      //print_coefficients();
+      print_exact();
+      print_initial();
     }
     tic();
 

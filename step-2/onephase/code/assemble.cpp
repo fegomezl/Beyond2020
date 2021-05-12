@@ -17,10 +17,11 @@ void Artic_sea::assemble_system(){
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
     x->ProjectCoefficient(initial_f);
+    x->ProjectBdrCoefficient(initial_f, ess_bdr);
     X = new HypreParVector(fespace);
     x->GetTrueDofs(*X);
 
-    oper = new Conduction_Operator(*fespace, *X, ess_bdr);
+    oper = new Conduction_Operator(*fespace, ess_bdr);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -40,11 +41,11 @@ void Artic_sea::assemble_system(){
         case 10: arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::EXPLICIT); break;
         case 11: arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::EXPLICIT); break;
         case 12: arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT); break;
-        default:
-          cout << "Unknown ODE solver type: " << config.ode_solver_type << "\n"
-               << "Setting ODE to BackwardEulerSolver.\n";
-          config.ode_solver_type = 1;
-          ode_solver = new BackwardEulerSolver; break;
+        default: 
+                 cout << "Unknown ODE solver type: " << config.ode_solver_type << "\n"
+                      << "Setting ODE to BackwardEulerSolver.\n";
+                 config.ode_solver_type = 1;
+                 ode_solver = new BackwardEulerSolver; break;
     }
 
     // Initialize ODE solver
@@ -56,8 +57,7 @@ void Artic_sea::assemble_system(){
         cvode->SetMaxStep(dt);
         cvode->SetStepMode(CV_ONE_STEP);
         ode_solver = cvode;
-    }
-    else if (arkode){
+    } else if (arkode){
         arkode->Init(*oper);
         arkode->SetSStolerances(config.reltol, config.abstol);
         arkode->SetMaxStep(dt);
@@ -66,7 +66,7 @@ void Artic_sea::assemble_system(){
         ode_solver = arkode;
     }
 
-     //Open the paraview output and print initial state
+    //Open the paraview output and print initial state
     paraview_out = new ParaViewDataCollection("results/graph", pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
@@ -93,16 +93,17 @@ double rf(const Vector &x){
     return x(0);
 }
 
-Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
-  TimeDependentOperator(fespace.GetTrueVSize(), 0.),
-  fespace(fespace),
-  m(NULL),
-  k(NULL),
-  T(NULL),
-  r(rf),
-  M_solver(fespace.GetComm()),
-  T_solver(fespace.GetComm()),
-  z(&fespace)
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Array<int> ess_bdr):
+    TimeDependentOperator(fespace.GetTrueVSize(), 0.),
+    fespace(fespace),
+    m(NULL),
+    k(NULL),
+    t(NULL),
+    r(rf),
+    M_solver(fespace.GetComm()),
+    T_solver(fespace.GetComm()),
+    r_alpha(alpha, r),
+    dt_r_alpha(1., r_alpha)
 {
   const double rel_tol = 1e-8;
 
@@ -110,8 +111,13 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
 
   m = new ParBilinearForm(&fespace);
   m->AddDomainIntegrator(new MassIntegrator(r));
-  m->Assemble(0);
+  m->Assemble();
   m->FormSystemMatrix(ess_tdof_list, M);
+
+  k = new ParBilinearForm(&fespace);
+  k->AddDomainIntegrator(new DiffusionIntegrator(r_alpha));
+  k->Assemble();
+  k->Finalize();
 
   //Configure M solver
   M_solver.iterative_mode = false;
@@ -130,6 +136,4 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
   T_solver.SetMaxIter(100);
   T_solver.SetPrintLevel(0);
   T_solver.SetPreconditioner(T_prec);
-
-  SetParameters(X);
 }
