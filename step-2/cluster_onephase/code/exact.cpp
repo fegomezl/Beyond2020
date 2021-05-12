@@ -39,7 +39,6 @@ double Aux( double r, double z, double t)
 {
   int b=Rmax;
   int a=Zmax;
-  double alpha=alpha_l;
   double sum=0;
   double Q;
 
