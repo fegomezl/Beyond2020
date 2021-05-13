@@ -19,7 +19,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all mesh graph clean oclean
 
-all: main.x
+all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) 
@@ -52,7 +52,7 @@ results/mesh.msh: settings/parameters.txt
 	@echo -e 'Reading parameters ... \c'
 	@bash settings/configure_script.sh
 	@echo -e 'Generating mesh ... \c'
-	@gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
+	@~/gmsh/gmsh-4.8.4-Linux64/bin/gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
 clean:
