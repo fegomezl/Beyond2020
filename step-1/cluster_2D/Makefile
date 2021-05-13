@@ -1,4 +1,4 @@
-include ../../local_config.mk
+include ../../local_config_cluster.mk
 
 #Mesh parameters
 SCRIPT = $(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
@@ -19,7 +19,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all mesh graph clean oclean
 
-all: main.x results/mesh.msh
+all: main.x
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) 
