@@ -8,5 +8,5 @@ settings/mesh_script.geo #Mesh_script
 5   #Vertical_cells
 
 FE parameters
-5  #Refinements
-2  #Order
+2  #Refinements
+1  #Order
