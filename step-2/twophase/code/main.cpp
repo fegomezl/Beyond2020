@@ -9,7 +9,7 @@ double c_s = 0.308, c_l = 0.692;
 double k_s = 7.98, k_l = 2.02;
 double L = 1000;
 
-double DeltaT = 0.0000001;
+double DeltaT = 0.00000001;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
