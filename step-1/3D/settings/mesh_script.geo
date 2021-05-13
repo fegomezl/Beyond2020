@@ -2,9 +2,9 @@
 
 Mesh.ElementOrder = 2;
 Mesh.SecondOrderLinear = 0;
-Height = 40;
-Radius = 20;
-Radius_Inner = 1;
+Height = 10;
+Radius = 10;
+Radius_Inner = 5;
 
 Nb = 4+1;
 Rb = 1.00;
