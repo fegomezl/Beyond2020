@@ -1,22 +1,22 @@
 Mesh Parameters
 settings/square.geo #Mesh_script
-0 #Rmin
-10 #Rmax
+5 #Rmin
+20 #Rmax
 0 #Zmin
 10 #Zmax
-15 #Rcells
-15 #Zcells
+4 #Rcells
+2 #Zcells
 
 FE parameters
-1 #Refinements
-2 #Order
+5 #Refinements
+1 #Order
 
 Simulation parameters
-1000 #Fusion_temperature
+0 #Fusion_temperature
 7.8 #Liquid_thermal_diffusion_constant
 70.8 #Solid_thermal_diffusion_constant
-0.001 #Dt
-0.15 #Final_time
+0.0001 #Dt
+0.2 #Final_time
 2 #Visualization_steps
 12 #ODE_solver_type
 0.00001 #reltol (tolerancia relativa de SUNDIALS solvers)

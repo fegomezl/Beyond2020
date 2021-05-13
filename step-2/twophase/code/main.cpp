@@ -5,8 +5,11 @@ double Zmin;
 double Rmax;
 double Zmax;
 double T_f;
-double alpha_l;
-double alpha_s;
+double c_s = 1.878, c_l = 4.219;
+double k_s = 133.2, k_l = 33.6;
+double L = 302.3;
+
+double DeltaT = 0.0001;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -36,10 +39,6 @@ int main(int argc, char *argv[]){
                   "Number of total uniform refinements.");
     args.AddOption(&T_f, "-T_f", "--temperature_fusion",
                    "Fusion Temperature of the material.");
-    args.AddOption(&alpha_l, "-a_l", "--alpha_liquid",
-                   "Alpha coefficient for liquid phase.");
-    args.AddOption(&alpha_s, "-a_s", "--alpha_solid",
-                   "Alpha coefficient for solid phase.");
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
     args.AddOption(&config.t_final, "-t_f", "--t_final",

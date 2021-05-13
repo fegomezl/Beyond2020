@@ -39,58 +39,115 @@ void Artic_sea::time_step(){
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
-    ParGridFunction aux(&fespace);
-    aux.SetFromTrueDofs(X);
+    Vector Aux(X);
+    if (T_f != 0)
+        Aux -= T_f;
 
-    //Create the K coefficient
+    //Create the auxiliar grid functions
+    aux.SetFromTrueDofs(Aux);
+
+    //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux.Size(); ii++){
-        if (aux(ii) > T_f)
-            aux(ii) = alpha_l;
-        else
-            aux(ii) = alpha_s;
+        if (aux(ii) > 0){
+            aux_C(ii) = c_l;
+            aux_K(ii) = k_l;
+        } else {
+            aux_C(ii) = c_s;
+            aux_K(ii) = k_s;
+        }
+
+        aux(ii) = (L/(DeltaT*sqrt(2*M_PI)))*exp(-pow(aux(ii)/DeltaT, 2)/2);
     }
-    GridFunctionCoefficient alpha(&aux);
-    ProductCoefficient coeff(alpha, r);
+
+    //Set the associated coefficients
+    coeff_C.SetGridFunction(&aux_C);
+    coeff_K.SetGridFunction(&aux_K);
+    coeff_L.SetGridFunction(&aux);
+
+    coeff_rC.SetBCoef(coeff_C);
+    coeff_rK.SetBCoef(coeff_K); 
+    coeff_rL.SetBCoef(coeff_L);
+
+    //Create corresponding bilinear forms
+    delete m;
+    m = new ParBilinearForm(&fespace);
+    m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
+    m->AddDomainIntegrator(new MassIntegrator(coeff_rL));
+    m->Assemble();
+    m->FormSystemMatrix(ess_tdof_list, M);
+    M_solver.SetOperator(M);
 
     delete k;
     k = new ParBilinearForm(&fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(coeff));
-    k->Assemble(0);
-    k->FormSystemMatrix(ess_tdof_list, K);
+    k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
+    k->Assemble();
+    k->Finalize();
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //Solve M(dX_dt) = -K(X) for dX_dt
-    K.Mult(X,z);
+    ParGridFunction x(&fespace);
+    ParLinearForm z(&fespace);
+    x.SetFromTrueDofs(X);
+    k->Mult(x, z);
     z.Neg();
-    M_solver.Mult(z, dX_dt);
+
+    OperatorHandle A;
+    HypreParVector Z(&fespace);
+    ParGridFunction dx_dt(&fespace);
+    dx_dt = 0.;
+
+    m->FormLinearSystem(ess_tdof_list, dx_dt, z, A, dX_dt, Z);
+    M_solver.Mult(Z, dX_dt);
 }
 
 void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt){
     //Solve M(dX_dt) = -K(X + dt*dX_dt)] for dX_dt
-    if (T) delete T;
-    T = Add(1., M, dt, K);
-    T_solver.SetOperator(*T);
+    if (t) delete t;
+    t = new ParBilinearForm(&fespace);
+    dt_coeff_rK.SetAConst(dt); dt_coeff_rK.SetBCoef(coeff_rK);
+    t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
+    t->AddDomainIntegrator(new MassIntegrator(coeff_rL));
+    t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
+    t->Assemble();
+    t->FormSystemMatrix(ess_tdof_list, T);
+    T_solver.SetOperator(T);
 
-    K.Mult(X, z);
+    ParGridFunction x(&fespace);
+    ParLinearForm z(&fespace);
+    x.SetFromTrueDofs(X);
+    k->Mult(x, z);
     z.Neg();
-    T_solver.Mult(z, dX_dt);
+
+    OperatorHandle A;
+    HypreParVector Z(&fespace);
+    ParGridFunction dx_dt(&fespace);
+    dx_dt = 0.;
+
+    t->FormLinearSystem(ess_tdof_list, dx_dt, z, A, dX_dt, Z);
+    T_solver.Mult(Z, dX_dt);
 }
 
-int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &b,
-                             int j_update, int *j_status, double scaled_dt){
+int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
     //Setup the ODE Jacobian T = M + gamma*K
-    if (T) delete T;
-    T = Add(1., M, scaled_dt, K);
-    T_solver.SetOperator(*T);
+    if (t) delete t;
+    t = new ParBilinearForm(&fespace);
+    dt_coeff_rK.SetAConst(scaled_dt); dt_coeff_rK.SetBCoef(coeff_rK);
+    t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
+    t->AddDomainIntegrator(new MassIntegrator(coeff_rL));
+    t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
+    t->Assemble();
+    t->FormSystemMatrix(ess_tdof_list, T);
+    T_solver.SetOperator(T);
+
     *j_status = 1;
     return 0;
 }
 
-int Conduction_Operator::SUNImplicitSolve(const Vector &b, Vector &X,
-                             double tol){
+int Conduction_Operator::SUNImplicitSolve(const Vector &B, Vector &X, double tol){
     //Solve the system Ax = z -> (M - gamma*K)x = Mb
-    M.Mult(b,z);
-    T_solver.Mult(z,X);
+    HypreParVector Z(&fespace);
+    M.Mult(B,Z);
+    T_solver.Mult(Z,X);
     return 0;
 }
