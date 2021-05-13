@@ -5,11 +5,11 @@ double Zmin;
 double Rmax;
 double Zmax;
 double T_f;
-double c_s = 1.878, c_l = 4.219;
-double k_s = 133.2, k_l = 33.6;
-double L = 302.3;
+double c_s = 0.308, c_l = 0.692;
+double k_s = 7.98, k_l = 2.02;
+double L = 1000;
 
-double DeltaT = 0.0001;
+double DeltaT = 0.0000001;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
