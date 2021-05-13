@@ -1,0 +1,32 @@
+-catch_rsh /var/spool/gridengine/hercules6/active_jobs/26858.1/pe_hostfile
+hercules6
+hercules6
+hercules1
+hercules1
+hercules5
+hercules4
+hercules3
+hercules2
+Options used:
+   --mesh /homes/orionsan/cdelv/brinicle/step-1/cluster_3D/results/mesh.msh
+   --height 10
+   --outer-radius 10
+   --internal-radius 5
+   --order 2
+   --refinements 1
+-catch_rsh /var/spool/gridengine/hercules6/active_jobs/26860.1/pe_hostfile
+hercules6
+hercules6
+hercules1
+hercules1
+hercules5
+hercules4
+hercules3
+hercules2
+Options used:
+   --mesh ../results/mesh.msh
+   --height 10
+   --outer-radius 10
+   --internal-radius 5
+   --order 2
+   --refinements 1
