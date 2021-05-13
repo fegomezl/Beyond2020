@@ -5,8 +5,8 @@ Rmax = 10;
 Zmin = 0;
 Zmax = 10;
 
-NR = 15;
-NZ = 15;
+NR = 8;
+NZ = 8;
 
 Point(1) = {Rmin, Zmin, 0, 1.0};
 //+
