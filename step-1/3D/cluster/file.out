@@ -1,0 +1,34 @@
+-catch_rsh /var/spool/gridengine/hercules6/active_jobs/26854.1/pe_hostfile
+hercules6
+hercules6
+hercules1
+hercules1
+hercules5
+hercules4
+hercules3
+hercules2
+Options used:
+   --mesh /homes/orionsan/cdelv/brinicle/step-1/3D/results/mesh.msh
+   --height 10
+   --outer-radius 10
+   --internal-radius 5
+   --order 2
+   --refinements 3
+
+Size: 5040
+Serial refinements: 0
+Parallel refinements: 0
+Total refinements: 0
+Memory deleted!
+
+Size: 35360
+Serial refinements: 1
+Parallel refinements: 0
+Total refinements: 1
+Memory deleted!
+
+Size: 264000
+Serial refinements: 1
+Parallel refinements: 1
+Total refinements: 2
+Memory deleted!
