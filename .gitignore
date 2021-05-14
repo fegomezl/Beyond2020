@@ -1,7 +1,4 @@
 *.x
 *.o
-*.pvd
-*.pvtu
-*.vtu
-*.msh
-*.mk
+*~
+local_config.mk
