@@ -17,9 +17,9 @@ fit f2(x) 'metrics/2D_unstructured_1.txt' u 1:2 via A2, B2
 fit f3(x) '../cluster_3D/metrics/3D_1.txt' u 1:2 via A3, B3
 
 set o "metrics/time_step1-order1.pdf"
-plot 'metrics/2D_structured_1.txt' u 1:2 t '2D structured' pt 1 lc rgb "blue", f1(x) lc rgb "blue" notitle,\
-'metrics/2D_unstructured_1.txt' u 1:2 t '2D unstructured' pt 2 lc rgb "red", f2(x) lc "red" notitle,\
-'../cluster_3D/metrics/3D_1.txt' u 1:2 t '3D' pt 6 lc rgb "black", f3(x) lc rgb "black" notitle
+plot 'metrics/2D_structured_1.txt' u 1:2 t '2D structured' pt 1 lc rgb "blue",\
+'metrics/2D_unstructured_1.txt' u 1:2 t '2D unstructured' pt 2 lc rgb "red",\
+'../cluster_3D/metrics/3D_1.txt' u 1:2 t '3D' pt 6 lc rgb "black"
 
 set title 'time vs h_{min} for order 1 (log scale)'
 set log

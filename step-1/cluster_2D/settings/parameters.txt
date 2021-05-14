@@ -8,5 +8,5 @@ settings/structured_square.geo #Mesh_script
 10 #Zcells
 
 FE parameters
-8 #Refinements
+5 #Refinements
 1 #Order
