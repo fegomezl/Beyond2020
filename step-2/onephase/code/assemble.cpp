@@ -109,6 +109,7 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, Array<i
 
   fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
+  //Initialize the bilinear forms
   m = new ParBilinearForm(&fespace);
   m->AddDomainIntegrator(new MassIntegrator(r));
   m->Assemble();

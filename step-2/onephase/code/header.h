@@ -30,14 +30,15 @@ class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(ParFiniteElementSpace &fespace, Array<int> ess_bdr);
 
-        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual void ImplicitSolve(const double dt,
-                                   const Vector &X, Vector &dX_dt); //Solver for implicit methods
+        //Solver for explicit methods
+        virtual void Mult(const Vector &X, Vector &dX_dt) const;           
+
+        //Solver for implicit methods
+        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); 
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
    	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
         virtual ~Conduction_Operator();
-
     protected:
         ParFiniteElementSpace &fespace;
         Array<int> ess_tdof_list;
@@ -50,6 +51,7 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreParMatrix M;
         HypreParMatrix T;
 
+        //Solver objects
         CGSolver M_solver;
         CGSolver T_solver;
         HypreSmoother M_prec;
@@ -74,6 +76,7 @@ class Artic_sea{
         //Global parameters
         Config config;
 
+        //Simulation parameters
         int iteration;
         double t;
         double dt;
@@ -89,6 +92,7 @@ class Artic_sea{
         int serial_refinements;
         HYPRE_Int size;
 
+        //Mesh objects
         ParMesh *pmesh;
         FiniteElementCollection *fec;
         ParFiniteElementSpace *fespace;
@@ -109,8 +113,7 @@ class Artic_sea{
 };
 
 extern double Rmin, Rmax, Zmin, Zmax;
-extern int  Mterms;
-extern int Nterms;
+extern int Mterms, Nterms;
 extern std::vector<double> Coeficients;
 
 extern double alpha;

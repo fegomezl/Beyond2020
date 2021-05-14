@@ -8,6 +8,7 @@
 struct Config{
     //Constructor
     Config(bool master, int nproc);
+
     //Passing parameters
     bool master;
     int nproc;

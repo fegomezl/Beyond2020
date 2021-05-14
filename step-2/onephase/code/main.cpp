@@ -1,12 +1,15 @@
 #include "header.h"
 
+//Dimensions of the mesh
 double Rmin;
 double Zmin;
 double Rmax;
 double Zmax;
+
+//Parameters of the simulation
 double alpha;
-int  Mterms=6;
-int  Nterms=6;
+int  Mterms = 6;
+int  Nterms = 6;
 std::vector<double> Coeficients(Mterms*Nterms ,0.0);
 
 int main(int argc, char *argv[]){
@@ -62,14 +65,15 @@ int main(int argc, char *argv[]){
 
     //Calculate coeficients of the exact solution
     Calc_Coe(Zmax, Rmax, Coeficients);
-    //print solution parameters
+
+    //Print solution parameters
     if (config.master) {
       print_exact();
       print_initial();
     }
-    tic();
 
     //Run the program for different refinements
+    tic();
     Artic_sea artic_sea(config);
     artic_sea.run(mesh_file);
 

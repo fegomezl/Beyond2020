@@ -1,5 +1,6 @@
 #include "header.h"
 
+//Dimensions of the mesh
 double height;
 double out_rad;
 double int_rad;
