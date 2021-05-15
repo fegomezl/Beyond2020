@@ -55,7 +55,8 @@ void Conduction_Operator::SetParameters(const Vector &X){
             aux_C(ii) = c_s;
             aux_K(ii) = k_s;
         }
-
+ 
+        //aux(ii) = (L*DeltaT/M_PI)/(pow(DeltaT, 2) + pow(aux(ii), 2));
         aux(ii) = (L/(DeltaT*sqrt(2*M_PI)))*exp(-pow(aux(ii)/DeltaT, 2)/2);
     }
 

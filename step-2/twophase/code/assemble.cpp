@@ -89,13 +89,11 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-    double c = k_s*Zmax/(k_l + k_s);
+    double c = Zmax/2;
     if (x(1) <= c)
         return -10*(1 - x(1)/c);
     else
         return 10*(x(1) - c)/(Zmax - c);
-
-    //return (20*x(1)/Zmax - 10);
 }
 
 double rf(const Vector &x){
