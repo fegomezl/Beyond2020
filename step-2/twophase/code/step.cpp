@@ -39,12 +39,26 @@ void Artic_sea::time_step(){
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
+    //Create the auxiliar grid functions
     Vector Aux(X);
     if (T_f != 0)
         Aux -= T_f;
-
-    //Create the auxiliar grid functions
     aux.SetFromTrueDofs(Aux);
+
+    ParGridFunction enthalpy(&fespace);
+    enthalpy.SetFromTrueDofs(Aux);
+    for (int ii = 0; ii < enthalpy.Size(); ii++)
+        enthalpy(ii) = (L/2)*tanh(2*enthalpy(ii)/DeltaT);
+
+    ParGridFunction grad_enthalpy_mag(&fespace);
+    GradientGridFunctionCoefficient grad_enthalpy(&enthalpy);
+    InnerProductCoefficient enthalpy_2(grad_enthalpy, grad_enthalpy);
+    grad_enthalpy_mag.ProjectDiscCoefficient(enthalpy_2, GridFunction::ARITHMETIC);
+
+    ParGridFunction grad_aux_mag(&fespace);
+    GradientGridFunctionCoefficient grad_aux(&aux);
+    InnerProductCoefficient aux_2(grad_aux, grad_aux);
+    grad_aux_mag.ProjectDiscCoefficient(aux_2, GridFunction::ARITHMETIC);
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux.Size(); ii++){
@@ -55,9 +69,15 @@ void Conduction_Operator::SetParameters(const Vector &X){
             aux_C(ii) = c_s;
             aux_K(ii) = k_s;
         }
- 
-        //aux(ii) = (L*DeltaT/M_PI)/(pow(DeltaT, 2) + pow(aux(ii), 2));
-        aux(ii) = (L/(DeltaT*sqrt(2*M_PI)))*exp(-pow(aux(ii)/DeltaT, 2)/2);
+
+        if (abs(aux(ii)) > DeltaT)
+            aux(ii) = 0.;
+        else
+            aux(ii) = pow(abs(grad_enthalpy_mag(ii)/grad_aux_mag(ii)), 0.5);
+
+        //aux(ii) = L*DeltaT/(pow(DeltaT, 2) + pow(M_PI*aux(ii), 2));
+        //aux(ii) = (L/DeltaT)*exp(-M_PI*pow(aux(ii)/DeltaT, 2));
+        //aux(ii) = (L/DeltaT)*(1 - pow(tanh(2*aux(ii)/DeltaT) , 2));
     }
 
     //Set the associated coefficients
