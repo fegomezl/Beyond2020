@@ -3,7 +3,7 @@
 ## la bandera -cwd quiere decir, trabajar en el directorio donde esta el script
 ##la ejecucion desde la linea de comandos es -> qsub -v order=1,refinements=1,solver=12 run.sh
 #!/bin/bash
-#$ -pe mpi 10
+#$ -pe mpi 8
 #$ -q normal.q
 #$ -cwd
 #$ -S /bin/bash

@@ -1,0 +1,44 @@
+Host key verification failed.
+--------------------------------------------------------------------------
+ORTE was unable to reliably start one or more daemons.
+This usually is caused by:
+
+* not finding the required libraries and/or binaries on
+  one or more nodes. Please check your PATH and LD_LIBRARY_PATH
+  settings, or configure OMPI with --enable-orterun-prefix-by-default
+
+* lack of authority to execute on one or more specified nodes.
+  Please verify your allocation and authorities.
+
+* the inability to write startup files into /tmp (--tmpdir/orte_tmpdir_base).
+  Please check with your sys admin to determine the correct location to use.
+
+*  compilation of the orted with dynamic libraries when static are required
+  (e.g., on Cray). Please check your configure cmd line and consider using
+  one of the contrib/platform definitions for your system type.
+
+* an inability to create a connection back to mpirun due to a
+  lack of common network interfaces and/or no route found between
+  them. Please check network connectivity (including firewalls
+  and network routing requirements).
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+ORTE does not know how to route a message to the specified daemon
+located on the indicated node:
+
+  my node:   hercules6
+  target node:  hercules3
+
+This is usually an internal programming error that should be
+reported to the developers. In the meantime, a workaround may
+be to set the MCA param routed=direct on the command line or
+in your environment. We apologize for the problem.
+--------------------------------------------------------------------------
+[hercules6.biocomputo.unal.edu.co:29908] 1 more process has sent help message help-errmgr-base.txt / no-path
+[hercules6.biocomputo.unal.edu.co:29908] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+Permission denied, please try again.
+Permission denied, please try again.
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
+Permission denied, please try again.
+Permission denied, please try again.
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
