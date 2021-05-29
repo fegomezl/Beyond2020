@@ -127,4 +127,4 @@ extern double c_s, c_l;
 extern double k_s, k_l;
 extern double L;
 
-extern double DeltaT;
+extern double InvDeltaT;

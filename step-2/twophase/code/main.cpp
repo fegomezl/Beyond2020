@@ -11,7 +11,7 @@ double T_f;
 double c_s, c_l;
 double k_s, k_l;
 double L;
-double DeltaT;
+double InvDeltaT;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -23,6 +23,7 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
+    int n = 0;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -51,8 +52,8 @@ int main(int argc, char *argv[]){
                    "Liquid thermal conductivity.");
     args.AddOption(&L, "-L", "--L",
                    "Volumetric latent heat.");
-    args.AddOption(&DeltaT, "-DeltaT", "--DeltaT",
-                   "Temperature interface interval.");
+    args.AddOption(&n, "-DeltaT", "--DeltaT",
+                   "Temperature interface interval (10^(-n)).");
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
     args.AddOption(&config.t_final, "-t_f", "--t_final",
@@ -75,6 +76,8 @@ int main(int argc, char *argv[]){
         return 1;
     }
     if (config.master) args.PrintOptions(cout);
+
+    InvDeltaT = pow(10, n);
 
     //Run the program for different refinements
     Artic_sea artic_sea(config);
