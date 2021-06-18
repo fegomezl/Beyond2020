@@ -80,5 +80,4 @@ extern double height;
 extern double int_rad;
 extern double out_rad;
 
-extern double k1;
-extern double k2;
+extern double k;

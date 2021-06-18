@@ -32,10 +32,11 @@ void Artic_sea::make_grid(const char *mesh_file){
 
     //Create the FEM space associated with the mesh
     fec_rt = new RT_FECollection(config.order, dim);
-    fec_l2 = new L2_FECollection(config.order, dim);
     fespace_rt = new ParFiniteElementSpace(pmesh, fec_rt);
-    fespace_l2 = new ParFiniteElementSpace(pmesh, fec_l2);
     size_rt = fespace_rt->GlobalTrueVSize();
+
+    fec_l2 = new L2_FECollection(config.order, dim);
+    fespace_l2 = new ParFiniteElementSpace(pmesh, fec_l2);
     size_l2 = fespace_l2->GlobalTrueVSize();
     
     //Create the block offsets
