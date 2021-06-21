@@ -8,16 +8,20 @@ settings/square.geo #Mesh_script
 15 #Zcells
 
 FE parameters
-2 #Refinements
-4 #Order
+1 #Refinements
+3 #Order
 
 Simulation parameters
-1000 #Fusion_temperature
-7.8 #Liquid_thermal_diffusion_constant
-70.8 #Solid_thermal_diffusion_constant
+0 #Fusion_temperature
+4.22   #Liquid_volumetric_heat_capacity
+1.88   #Solid_volumetric_heat_capacity
+33.7   #Liquid_thermal_conductivity
+133.1  #Solid_thermal_conductivity
+302.3  #Volumetric_latent_heat
+0.6 #DeltaT
 0.01 #Dt
 1.0 #Final_time
-1000 #Visualization_steps
+100 #Visualization_steps
 12 #ODE_solver_type
 0.00001 #reltol (tolerancia relativa de SUNDIALS solvers)
 0.00001 #abstol (tolerancia absoluta de SUNDIALS solvers)

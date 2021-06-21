@@ -27,14 +27,13 @@ void Artic_sea::run(const char *mesh_file){
     for (iteration = 1, vis_iteration = 1; !last; iteration++, vis_iteration++)
         time_step();
     output_results();
-
 }
 
 Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete m;
     delete k;
-    delete T;
+    delete t;
 }
 
 Artic_sea::~Artic_sea(){

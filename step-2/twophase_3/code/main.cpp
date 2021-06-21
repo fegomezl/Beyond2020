@@ -1,13 +1,5 @@
 #include "header.h"
 
-double Rmin;
-double Zmin;
-double Rmax;
-double Zmax;
-double T_f;
-double alpha_l;
-double alpha_s;
-
 int main(int argc, char *argv[]){
     //Define MPI parameters
     int nproc = 0, pid = 0;

@@ -10,11 +10,12 @@ void Artic_sea::assemble_system(){
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 0;   ess_bdr[0] = 1; ess_bdr[1] = 1;
+    ess_bdr = 0;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
     x->ProjectCoefficient(initial_f);
+    x->ProjectBdrCoefficient(initial_f, ess_bdr);
     X = new HypreParVector(fespace);
     x->GetTrueDofs(*X);
 
@@ -88,7 +89,13 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-    return x(1)*(Zmax - x(1))*(x(1) - Zmax/2)*x(0);
+    double c = k_s*Zmax/(k_l + k_s);
+    if (x(1) <= c)
+        return -10*(1 - x(1)/c);
+    else
+        return 10*(x(1) - c)/(Zmax - c);
+
+    //return (20*x(1)/Zmax - 10);
 }
 
 double rf(const Vector &x){
@@ -100,20 +107,20 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     fespace(fespace),
     m(NULL),
     k(NULL),
-    T(NULL),
+    t(NULL),
+    aux(&fespace),
+    aux_C(&fespace),
+    aux_K(&fespace),
     r(rf),
+    coeff_C(&aux_C), coeff_rC(r, coeff_C),
+    coeff_K(&aux_K), coeff_rK(r, coeff_K), dt_coeff_rK(1., coeff_rK),
+    coeff_L(&aux), coeff_rL(r, coeff_L),
     M_solver(fespace.GetComm()),
-    T_solver(fespace.GetComm()),
-    z(&fespace)
+    T_solver(fespace.GetComm())
 {
     const double rel_tol = 1e-8;
 
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
-
-    m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator(r));
-    m->Assemble(0);
-    m->FormSystemMatrix(ess_tdof_list, M);
 
     //Configure M solver
     M_solver.iterative_mode = false;
@@ -123,7 +130,6 @@ Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const V
     M_solver.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
     M_prec.SetType(HypreSmoother::Jacobi);
-    M_solver.SetOperator(M);
 
     //Configure T solver
     T_solver.iterative_mode = false;

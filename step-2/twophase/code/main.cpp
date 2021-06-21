@@ -1,12 +1,17 @@
 #include "header.h"
 
+//Dimensions of the mesh
 double Rmin;
 double Zmin;
 double Rmax;
 double Zmax;
+
+//Parameters of the system
 double T_f;
-double alpha_l;
-double alpha_s;
+double c_s, c_l;
+double k_s, k_l;
+double L;
+double DeltaT;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -35,11 +40,19 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.refinements, "-r", "--refinements",
                   "Number of total uniform refinements.");
     args.AddOption(&T_f, "-T_f", "--temperature_fusion",
-                   "Fusion Temperature of the material.");
-    args.AddOption(&alpha_l, "-a_l", "--alpha_liquid",
-                   "Alpha coefficient for liquid phase.");
-    args.AddOption(&alpha_s, "-a_s", "--alpha_solid",
-                   "Alpha coefficient for solid phase.");
+                   "Fusion temperature of the material.");
+    args.AddOption(&c_s, "-c_s", "--c_s",
+                   "Solid volumetric heat capacity.");
+    args.AddOption(&c_l, "-c_l", "--c_l",
+                   "Liquid volumetric heat capacity.");
+    args.AddOption(&k_s, "-k_s", "--k_s",
+                   "Solid thermal conductivity.");
+    args.AddOption(&k_l, "-k_l", "--k_l",
+                   "Liquid thermal conductivity.");
+    args.AddOption(&L, "-L", "--L",
+                   "Volumetric latent heat.");
+    args.AddOption(&DeltaT, "-DeltaT", "--DeltaT",
+                   "Temperature interface interval.");
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
     args.AddOption(&config.t_final, "-t_f", "--t_final",

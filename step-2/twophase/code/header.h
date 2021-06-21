@@ -31,10 +31,8 @@ class Conduction_Operator : public TimeDependentOperator{
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt,
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &b,
-                                     int j_update, int *j_status, double scaled_dt);
-	      virtual int SUNImplicitSolve(const Vector &b, Vector &X,
-                                     double tol);
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
+	      virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
         void SetParameters(const Vector &X);
 
@@ -47,19 +45,31 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
+        ParBilinearForm *t;  //m + dt*k
 
         HypreParMatrix M;
         HypreParMatrix K;
-        HypreParMatrix *T;    //T = M + dt K
+        HypreParMatrix T;   
 
         CGSolver M_solver;
         CGSolver T_solver;
         HypreSmoother M_prec;
         HypreSmoother T_prec;
 
+        ParGridFunction aux;
+        ParGridFunction aux_C;
+        ParGridFunction aux_K;
+
         FunctionCoefficient r;
 
-        mutable HypreParVector z;
+        GridFunctionCoefficient coeff_C;
+        ProductCoefficient coeff_rC;
+
+        GridFunctionCoefficient coeff_K;
+        ProductCoefficient coeff_rK; ProductCoefficient dt_coeff_rK;
+
+        GridFunctionCoefficient coeff_L;
+        ProductCoefficient coeff_rL;
 };
 
 class Artic_sea{
@@ -113,5 +123,8 @@ extern double initial(const Vector &x);
 extern double T_f;
 extern double Rmin, Rmax, Zmin, Zmax;
 
-extern double alpha_l; //Liquid thermal conduction
-extern double alpha_s; //Solid thermal conduction
+extern double c_s, c_l;
+extern double k_s, k_l;
+extern double L;
+
+extern double DeltaT;
