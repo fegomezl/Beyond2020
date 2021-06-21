@@ -31,29 +31,21 @@ void Artic_sea::make_grid(const char *mesh_file){
     pmesh->GetCharacteristics(h_min, null, null, null);
 
     //Create the FEM space associated with the mesh
-    fec_rt = new RT_FECollection(config.order, dim);
-    fespace_rt = new ParFiniteElementSpace(pmesh, fec_rt);
-    size_rt = fespace_rt->GlobalTrueVSize();
+    if (config.order > 0){
+        fec_w = new H1_FECollection(config.order, dim);
+        fec_psi = new H1_FECollection(config.order, dim);
+        fec_v = new RT_FECollection(config.order, dim);
+    } else {
+        fec_w = new H1_FECollection(config.order = 1, dim);
+        fec_psi = new H1_FECollection(config.order = 1, dim);
+        fec_v = new RT_FECollection(config.order = 1, dim);
+    }
 
-    fec_l2 = new L2_FECollection(config.order, dim);
-    fespace_l2 = new ParFiniteElementSpace(pmesh, fec_l2);
-    size_l2 = fespace_l2->GlobalTrueVSize();
-    
-    //Create the block offsets
-    block_offsets[0] = 0;
-    block_offsets[1] = fespace_rt->GetVSize();
-    block_offsets[2] = fespace_l2->GetVSize();
-    block_offsets.PartialSum();
+    fespace_w = new ParFiniteElementSpace(pmesh, fec_w);
+    fespace_psi = new ParFiniteElementSpace(pmesh, fec_psi);
+    fespace_v = new ParFiniteElementSpace(pmesh, fec_v);
 
-    block_true_offsets[0] = 0;
-    block_true_offsets[1] = fespace_rt->TrueVSize();
-    block_true_offsets[2] = fespace_l2->TrueVSize();
-    block_true_offsets.PartialSum();
-
-    //Initialize the corresponding vectors
-    const char *device_config = "cpu";
-    Device device(device_config);
-    MemoryType mt = device.GetMemoryType();
-    x.Update(block_offsets, mt); X.Update(block_true_offsets, mt);
-    b.Update(block_offsets, mt); B.Update(block_true_offsets, mt);
+    size_w = fespace_w->GlobalTrueVSize();
+    size_psi = fespace_psi->GlobalTrueVSize();
+    size_v = fespace_v->GlobalTrueVSize();
 }

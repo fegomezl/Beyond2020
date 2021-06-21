@@ -4,7 +4,6 @@
 double height;
 double out_rad;
 double int_rad;
-double k = 1e-3;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -42,8 +41,9 @@ int main(int argc, char *argv[]){
     if (config.master) args.PrintOptions(cout);
 
     //Run the program for different refinements
+    int initial = config.refinements;
     int total_refinements = config.refinements;
-    for (int ii = 0; ii <= total_refinements; ii++){
+    for (int ii = initial; ii <= total_refinements; ii++){
         config.last = ((config.refinements = ii) == total_refinements);
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
