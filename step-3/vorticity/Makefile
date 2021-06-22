@@ -24,7 +24,6 @@ all: main.x results/mesh.msh
 	@$(RUN)$< --mesh results/mesh.msh --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) 
 	@echo -e '\n'
-	@cat results/convergence.txt
 	@echo -e '\nDone!'
 
 mesh: results/mesh.msh
