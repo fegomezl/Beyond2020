@@ -34,28 +34,28 @@ void Artic_sea::time_step(){
              << dt << setw(12)
              << t  << setw(12)
              << progress << "\r";
-          cout.flush();
+        cout.flush();
     }
 }
 
 void Conduction_Operator::SetParameters(const Vector &X){
     //Create the auxiliar grid functions
     Vector Aux(X);
-    if (T_f != 0)
-        Aux -= T_f;
+    if (config.T_f != 0)
+        Aux -= config.T_f;
     aux.SetFromTrueDofs(Aux);
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux.Size(); ii++){
         if (aux(ii) > 0){
-            aux_C(ii) = c_l;
-            aux_K(ii) = k_l;
+            aux_C(ii) = config.c_l;
+            aux_K(ii) = config.k_l;
         } else {
-            aux_C(ii) = c_s;
-            aux_K(ii) = k_s;
+            aux_C(ii) = config.c_s;
+            aux_K(ii) = config.k_s;
         }
 
-        aux(ii) = L*InvDeltaT*exp(-M_PI*pow(InvDeltaT*aux(ii), 2));
+        aux(ii) = config.L*config.invDeltaT*exp(-M_PI*pow(config.invDeltaT*aux(ii), 2));
     }
 
     //Set the associated coefficients
