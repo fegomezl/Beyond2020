@@ -28,4 +28,4 @@ Simulation parameters
 12      #ODE_solver_type
 0.00001 #reltol (tolerancia relativa de SUNDIALS solvers)
 0.00001 #abstol (tolerancia absoluta de SUNDIALS solvers)
-1       #State of the simulation
+3       #State of the simulation
