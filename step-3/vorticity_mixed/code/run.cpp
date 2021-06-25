@@ -12,7 +12,7 @@ Artic_sea::Artic_sea(Config config):
     fespace_psi(NULL), fespace_w(NULL), fespace_v(NULL),
     block_offsets(3), block_true_offsets(3),
     f(NULL), g(NULL),
-    m(NULL), d(NULL), c(NULL),
+    m(NULL), d(NULL), c(NULL), ct(NULL),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
     A(NULL),
     w(NULL), psi(NULL), v(NULL)
@@ -32,7 +32,7 @@ Artic_sea::~Artic_sea(){
     delete fec_psi, fec_w, fec_v;
     delete fespace_psi, fespace_w, fespace_v;
     delete f, g;
-    delete m, c;
+    delete m, c, ct;
     delete M, C, Ct;  
     delete A;
     delete w, psi, v;

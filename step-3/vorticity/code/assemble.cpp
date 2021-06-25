@@ -28,19 +28,20 @@ double eta(const Vector &x){
     //double m = 0.00000001;
     //return pow(1 - frac(x), 2)/(pow(frac(x), 3) + m);
 
-    double mag = 1000;
+    /*double mag = 1e+6;
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    //if (r_2 < pow(sigma, 2))
-    //    return mag;
-    //else
-        return 0;
+    if (r_2 < pow(sigma, 2))
+        return mag;
+    else
+        return 0.1;*/
+    return 0;
 }
 
 //Right hand side of the equation
 double rhs(const Vector &x){                 
     double b_g = 2.06;
 
-    return 0;
+    return x(0)*(out_rad - int_rad)/2;
 }
 
 //Boundary for stream function
@@ -61,7 +62,7 @@ void Artic_sea::assemble_system(){
 
     ess_bdr_psi.SetSize(pmesh->bdr_attributes.Max());
     ess_bdr_psi = 0;
-    ess_bdr_psi[0] = ess_bdr_psi[1] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
+    ess_bdr_psi[1] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
     fespace_psi->GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
 
     //Define coefficients

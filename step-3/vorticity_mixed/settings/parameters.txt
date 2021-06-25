@@ -1,5 +1,5 @@
 Mesh Parameters
-settings/square.geo #Mesh_script
+settings/structured_square.geo #Mesh_script
 0 #Rmin
 10 #Rmax
 0 #Zmin
@@ -9,4 +9,4 @@ settings/square.geo #Mesh_script
 
 FE parameters
 5 #Refinements
-1 #Order
+2 #Order

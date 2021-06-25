@@ -66,6 +66,7 @@ class Artic_sea{
         ParBilinearForm *m;
         ParBilinearForm *d;
         ParMixedBilinearForm *c;
+        ParMixedBilinearForm *ct;
 
         //Solver objects
         BlockVector X;
@@ -73,7 +74,8 @@ class Artic_sea{
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
-        TransposeOperator *Ct;
+        //TransposeOperator *Ct;
+        HypreParMatrix *Ct;
         BlockOperator *A;
         ParGridFunction *w;
         ParGridFunction *psi;
