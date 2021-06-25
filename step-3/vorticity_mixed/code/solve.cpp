@@ -40,10 +40,10 @@ void Artic_sea::solve_system(){
     MINRESSolver solver(MPI_COMM_WORLD);
     solver.SetPreconditioner(*Prec);
     solver.SetOperator(*A);
-    solver.SetPrintLevel(0);
+    solver.SetPrintLevel(1);
     solver.SetAbsTol(1e-10);
     solver.SetRelTol(1e-6);
-    solver.SetMaxIter(500);
+    solver.SetMaxIter(1000);
     X = 0.;
     solver.Mult(B, X);
 
