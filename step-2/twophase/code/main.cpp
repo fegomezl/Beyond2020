@@ -45,9 +45,9 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
     args.AddOption(&refinements_init, "-r_i", "--refinements_init",
-                  "Number of total initial uniform refinements.");
+                   "Number of total initial uniform refinements.");
     args.AddOption(&refinements_last, "-r_l", "--refinements_last",
-                  "Number of total last uniform refinements.");
+                   "Number of total last uniform refinements.");
     args.AddOption(&DeltaT_init, "-DT_i", "--DeltaT_init",
                    "Initial temperature interface interval (10^(-n)).");
     args.AddOption(&DeltaT_jumpsize, "-DT_js", "--DeltaT_jumpsize",
