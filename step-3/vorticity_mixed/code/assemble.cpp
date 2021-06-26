@@ -13,8 +13,8 @@ void Artic_sea::assemble_system(){
     //Define local coefficients
     FunctionCoefficient boundary_psi_coeff(boundary_psi);
     FunctionCoefficient f_coeff(f_rhs);
-    ConstantCoefficient g_coeff(0.);
-    ConstantCoefficient viscosity(1.);
+    ConstantCoefficient g_coeff(0.0);
+    ConstantCoefficient viscosity(1.0);
     FunctionCoefficient eta_coeff(porous_constant);
 
     //Define grid functions and apply essential boundary conditions(?)
