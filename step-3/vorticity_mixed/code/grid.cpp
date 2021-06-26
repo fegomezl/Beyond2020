@@ -31,13 +31,13 @@ void Artic_sea::make_grid(const char *mesh_file){
     pmesh->GetCharacteristics(h_min, null, null, null);
 
     //Create the FEM space associated with the mesh
-    fec_psi = new H1_FECollection(config.order, dim);
-    fespace_psi = new ParFiniteElementSpace(pmesh, fec_psi);
-    size_psi = fespace_psi->GlobalTrueVSize();
-
     fec_w = new H1_FECollection(config.order, dim);
     fespace_w = new ParFiniteElementSpace(pmesh, fec_w);
     size_w = fespace_w->GlobalTrueVSize();
+
+    fec_psi = new H1_FECollection(config.order, dim);
+    fespace_psi = new ParFiniteElementSpace(pmesh, fec_psi);
+    size_psi = fespace_psi->GlobalTrueVSize();
 
     fec_v = new RT_FECollection(config.order, dim);
     fespace_v = new ParFiniteElementSpace(pmesh, fec_v);
@@ -45,13 +45,13 @@ void Artic_sea::make_grid(const char *mesh_file){
     
     //Create the block offsets
     block_offsets[0] = 0;
-    block_offsets[1] = fespace_psi->GetVSize();
-    block_offsets[2] = fespace_w->GetVSize();
+    block_offsets[1] = fespace_w->GetVSize();
+    block_offsets[2] = fespace_psi->GetVSize();
     block_offsets.PartialSum();
 
     block_true_offsets[0] = 0;
-    block_true_offsets[1] = fespace_psi->TrueVSize();
-    block_true_offsets[2] = fespace_w->TrueVSize();
+    block_true_offsets[1] = fespace_w->TrueVSize();
+    block_true_offsets[2] = fespace_psi->TrueVSize();
     block_true_offsets.PartialSum();
 
     //Initialize the corresponding vectors

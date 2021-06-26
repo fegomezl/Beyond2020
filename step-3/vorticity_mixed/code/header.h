@@ -37,8 +37,8 @@ class Artic_sea{
         //Output parameters
         int dim;
         int serial_refinements;
-        HYPRE_BigInt size_psi;
         HYPRE_BigInt size_w;
+        HYPRE_BigInt size_psi;
         HYPRE_BigInt size_v;
         double h_min;
         double v_error;
@@ -47,12 +47,12 @@ class Artic_sea{
         //Mesh objects
         ParMesh *pmesh;
 
-        FiniteElementCollection *fec_psi;
         FiniteElementCollection *fec_w;
+        FiniteElementCollection *fec_psi;
         FiniteElementCollection *fec_v;
 
-        ParFiniteElementSpace *fespace_psi;
         ParFiniteElementSpace *fespace_w;
+        ParFiniteElementSpace *fespace_psi;
         ParFiniteElementSpace *fespace_v;
 
         Array<int> block_offsets;
@@ -61,8 +61,8 @@ class Artic_sea{
         //System objects
         BlockVector x;
         BlockVector b;
-        ParLinearForm *f;
         ParLinearForm *g;
+        ParLinearForm *f;
         ParBilinearForm *m;
         ParBilinearForm *d;
         ParMixedBilinearForm *c;
@@ -74,7 +74,6 @@ class Artic_sea{
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
-        //TransposeOperator *Ct;
         HypreParMatrix *Ct;
         BlockOperator *A;
         ParGridFunction *w;
