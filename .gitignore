@@ -1,0 +1,4 @@
+*.x
+*.o
+*~
+local_config.mk
