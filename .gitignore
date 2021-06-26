@@ -1,4 +1,6 @@
 *.x
 *.o
 *~
+*.pvd
+*.vtu
 local_config.mk
