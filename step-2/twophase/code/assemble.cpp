@@ -19,7 +19,7 @@ void Artic_sea::assemble_system(){
     X = new HypreParVector(fespace);
     x->GetTrueDofs(*X);
 
-    oper = new Conduction_Operator(config, *fespace, *X, ess_bdr);
+    oper = new Conduction_Operator(*fespace, *X, ess_bdr);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -65,9 +65,8 @@ void Artic_sea::assemble_system(){
         ode_solver = arkode;
     }
 
-    //Open the paraview output and print initial state
-    string folder = "results/" + to_string(config.refinements) + "_" + to_string(config.nDeltaT); 
-    paraview_out = new ParaViewDataCollection(folder, pmesh);
+     //Open the paraview output and print initial state
+    paraview_out = new ParaViewDataCollection("results/graph", pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x);
@@ -90,19 +89,21 @@ void Artic_sea::assemble_system(){
 }
 
 double initial(const Vector &x){
-    if (x(1) <= mid)
-        return -10*(1 - x(1)/mid);
+    double c = k_s*Zmax/(k_l + k_s);
+    if (x(1) <= c)
+        return -10*(1 - x(1)/c);
     else
-        return 10*(x(1) - mid)/(Zmax - mid);
+        return 10*(x(1) - c)/(Zmax - c);
+
+    //return (20*x(1)/Zmax - 10);
 }
 
 double rf(const Vector &x){
     return x(0);
 }
 
-Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
+Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
-    config(config),
     fespace(fespace),
     m(NULL),
     k(NULL),

@@ -22,17 +22,11 @@ struct Config{
     int ode_solver_type;
     double reltol;
     double abstol;
-    double T_f;
-    double c_s, c_l;
-    double k_s, k_l;
-    double L;
-    int nDeltaT;
-    double invDeltaT;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr);
+        Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt,
@@ -45,9 +39,6 @@ class Conduction_Operator : public TimeDependentOperator{
         virtual ~Conduction_Operator();
 
  protected:
-        //Global parameters
-        Config config;
-
         ParFiniteElementSpace &fespace;
         Array<int> ess_tdof_list;
 
@@ -124,9 +115,16 @@ class Artic_sea{
         ARKStepSolver *arkode;
 
         ParaViewDataCollection *paraview_out;
+
 };
 
 extern double initial(const Vector &x);
 
+extern double T_f;
 extern double Rmin, Rmax, Zmin, Zmax;
-extern double mid;
+
+extern double c_s, c_l;
+extern double k_s, k_l;
+extern double L;
+
+extern double DeltaT;
