@@ -22,10 +22,10 @@ Simulation parameters
 9       #n_DeltaT_init
 3       #n_DeltaT_jumpsize
 0       #n_DeltaT_jumps
-0.0001   #Dt
-0.1     #Final_time
+0.001   #Dt
+1     #Final_time
 10       #Visualization_steps
-12      #ODE_solver_type
+8      #ODE_solver_type
 0.00001 #reltol (tolerancia relativa de SUNDIALS solvers)
 0.00001 #abstol (tolerancia absoluta de SUNDIALS solvers)
 2       #State of the simulation
