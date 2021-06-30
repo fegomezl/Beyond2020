@@ -37,7 +37,7 @@ class Conduction_Operator : public TimeDependentOperator{
         virtual void ImplicitSolve(const double dt,
                                    const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
-	      virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
+	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
         void SetParameters(const Vector &X);
 
@@ -125,6 +125,7 @@ class Artic_sea{
         ParaViewDataCollection *paraview_out;
 };
 
+extern double rf(const Vector &x);
 extern double initial(const Vector &x);
 
 extern double Rmin, Rmax, Zmin, Zmax;

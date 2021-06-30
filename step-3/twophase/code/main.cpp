@@ -61,10 +61,6 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << "a\n";
-    MPI_Barrier(MPI_COMM_WORLD);
-
     //Check if parameters were read correctly
     args.Parse();
     if (!args.Good()){
