@@ -126,6 +126,10 @@ class Artic_sea{
         ParFiniteElementSpace *fespace_w;
         ParFiniteElementSpace *fespace_v;
 
+        ParGridFunction *w;
+        ParGridFunction *psi;
+        ParGridFunction *v;
+
 
 };
 
@@ -137,7 +141,6 @@ class Flow_Operator{
   protected:
 
         //Mesh objects
-
         ParFiniteElementSpace &fespace_psi;
         ParFiniteElementSpace &fespace_w;
         ParFiniteElementSpace &fespace_v;
@@ -146,7 +149,7 @@ class Flow_Operator{
         Array<int> block_true_offsets;
 
         //System objects
-        BlockVector x;
+        BlockVector y;
         BlockVector b;
         ParLinearForm *f;
         ParLinearForm *g;
@@ -156,7 +159,7 @@ class Flow_Operator{
         ParMixedBilinearForm *ct;
 
         //Solver objects
-        BlockVector X;
+        BlockVector Y;
         BlockVector B;
         HypreParMatrix *M;
         HypreParMatrix *D;
@@ -164,10 +167,6 @@ class Flow_Operator{
         //TransposeOperator *Ct;
         HypreParMatrix *Ct;
         BlockOperator *A;
-        ParGridFunction *w;
-        ParGridFunction *psi;
-        ParGridFunction *v;
-
 
 };
 
@@ -181,3 +180,12 @@ extern double k_s, k_l;
 extern double L;
 
 extern double DeltaT;
+
+//Boundary values for psi
+extern double boundary_psi(const Vector &x);
+
+//Right hand side of the equation
+extern double f_rhs(const Vector &x);
+
+//Constant to the brinkman term
+extern double porous_constant(const Vector &x);

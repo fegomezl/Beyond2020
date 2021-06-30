@@ -102,6 +102,29 @@ double rf(const Vector &x){
     return x(0);
 }
 
+
+double boundary_psi(const Vector &x){
+    return x(0);
+}
+
+double f_rhs(const Vector &x){
+    return (Rmax - Rmin)/2 - x(0);
+}
+
+double porous_constant(const Vector &x){
+    double height = Zmax - Zmin;
+    double mid_x = (Rmax + Rmin)/2;
+    double mid_y = height/2;
+    double sigma = (Rmax - Rmin)/5;
+
+    double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
+    if (r_2 < pow(sigma, 2))
+        return 1e+6;
+    else
+        return 0.1;
+}
+
+
 Conduction_Operator::Conduction_Operator(ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     fespace(fespace),
@@ -148,6 +171,23 @@ Flow_Operator::Flow_Operator(ParFiniteElementSpace &fespace_psi, ParFiniteElemen
     f(NULL), g(NULL),
     m(NULL), d(NULL), c(NULL), ct(NULL),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
-    A(NULL),
-    w(NULL), psi(NULL), v(NULL)
-{}
+    A(NULL)
+{
+    //Create the block offsets
+    block_offsets[0] = 0;
+    block_offsets[1] = fespace_psi.GetVSize();
+    block_offsets[2] = fespace_w.GetVSize();
+    block_offsets.PartialSum();
+
+    block_true_offsets[0] = 0;
+    block_true_offsets[1] = fespace_psi.TrueVSize();
+    block_true_offsets[2] = fespace_w.TrueVSize();
+    block_true_offsets.PartialSum();
+
+    //Initialize the corresponding vectors
+    const char *device_config = "cpu";
+    Device device(device_config);
+    MemoryType mt = device.GetMemoryType();
+    y.Update(block_offsets, mt); Y.Update(block_true_offsets, mt);
+    b.Update(block_offsets, mt); B.Update(block_true_offsets, mt);
+}
