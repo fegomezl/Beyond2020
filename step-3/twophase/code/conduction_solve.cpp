@@ -21,9 +21,8 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
     //Solve M(dX_dt) = -K(X + dt*dX_dt)] for dX_dt
     if (t) delete t;
     t = new ParBilinearForm(&fespace);
-    dt_coeff_rK.SetAConst(dt); dt_coeff_rK.SetBCoef(coeff_rK);
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rL));
+    dt_coeff_rK.SetAConst(dt);
+    t->AddDomainIntegrator(new MassIntegrator(coeff_rCL));
     t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
     t->Assemble();
     t->FormSystemMatrix(ess_tdof_list, T);
@@ -48,9 +47,8 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
     //Setup the ODE Jacobian T = M + gamma*K
     if (t) delete t;
     t = new ParBilinearForm(&fespace);
-    dt_coeff_rK.SetAConst(scaled_dt); dt_coeff_rK.SetBCoef(coeff_rK);
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rL));
+    dt_coeff_rK.SetAConst(scaled_dt);
+    t->AddDomainIntegrator(new MassIntegrator(coeff_rCL));
     t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
     t->Assemble();
     t->FormSystemMatrix(ess_tdof_list, T);

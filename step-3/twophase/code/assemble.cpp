@@ -11,11 +11,11 @@ void Artic_sea::assemble_system(){
     vis_impressions = 0;
 
     //Define solution x
-    x = new ParGridFunction(fespace);
-    X = new HypreParVector(fespace);
+    x_T = new ParGridFunction(fespace_T);
+    X_T = new HypreParVector(fespace_T);
 
-    oper = new Conduction_Operator(config, *fespace, pmesh->bdr_attributes.Max(), *X);
-    x->SetFromTrueDofs(*X);
+    oper_T = new Conduction_Operator(config, *fespace_T, pmesh->bdr_attributes.Max(), *X_T);
+    x_T->SetFromTrueDofs(*X_T);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -44,17 +44,17 @@ void Artic_sea::assemble_system(){
 
     // Initialize ODE solver
     if (config.ode_solver_type < 8)
-        ode_solver->Init(*oper);
+        ode_solver->Init(*oper_T);
     else if (cvode){
-        cvode->Init(*oper);
-        cvode->SetSStolerances(config.reltol, config.abstol);
+        cvode->Init(*oper_T);
+        cvode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         cvode->SetMaxStep(dt);
         cvode->SetStepMode(CV_ONE_STEP);
         ode_solver = cvode;
     }
     else if (arkode){
-        arkode->Init(*oper);
-        arkode->SetSStolerances(config.reltol, config.abstol);
+        arkode->Init(*oper_T);
+        arkode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         arkode->SetMaxStep(dt);
         arkode->SetStepMode(ARK_ONE_STEP);
         if (config.ode_solver_type == 11) arkode->SetERKTableNum(FEHLBERG_13_7_8);
@@ -66,7 +66,7 @@ void Artic_sea::assemble_system(){
     paraview_out = new ParaViewDataCollection(folder, pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
-    paraview_out->RegisterField("Temperature", x);
+    paraview_out->RegisterField("Temperature", x_T);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();

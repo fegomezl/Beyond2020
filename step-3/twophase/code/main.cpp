@@ -29,12 +29,14 @@ int main(int argc, char *argv[]){
                    "Minimum Z border.");
     args.AddOption(&Zmax, "-Zmax", "--Zmax",
                    "Maximum Z border.");
+
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
     args.AddOption(&config.t_final, "-t_f", "--t_final",
                    "Final time.");
     args.AddOption(&config.vis_steps_max, "-v_s", "--visualization_steps",
                    "Visualize every n-th timestep.");
+
     args.AddOption(&config.refinements, "-r", "--refinements",
                    "Number of total uniform refinements.");
     args.AddOption(&config.order, "-o", "--order",
@@ -42,10 +44,17 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
                    "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
                    "            11 - Forward Euler, 12 - RK2, 13 - RK3 SSP, 14 - RK4.");
-    args.AddOption(&config.reltol, "-reltol", "--tolrelativaSUNDIALS",
-                   "Tolerancia relativa de SUNDIALS solvers");
-    args.AddOption(&config.abstol, "-abstol", "--tolabsolutaSUNDIALS",
-                   "Tolerancia absoluta de S");
+    args.AddOption(&config.abstol_conduction, "-abstol_c", "--tolabsoluteConduction",
+                   "Absolute tolerance of Conduction.");
+    args.AddOption(&config.reltol_conduction, "-reltol_c", "--tolrelativeConduction",
+                   "Relative tolerance of Conduction.");
+    args.AddOption(&config.iter_conduction, "-iter_c", "--iterationsConduction",
+                   "Iterations of Conduction.");
+    args.AddOption(&config.abstol_sundials, "-abstol_s", "--tolabsoluteSUNDIALS",
+                   "Absolute tolerance of SUNDIALS.");
+    args.AddOption(&config.reltol_sundials, "-reltol_s", "--tolrelativeSUNDIALS",
+                   "Relative tolerance of SUNDIALS.");
+
     args.AddOption(&config.T_f, "-T_f", "--temperature_fusion",
                    "Fusion temperature of the material.");
     args.AddOption(&nDeltaT, "-DT", "--DeltaT",

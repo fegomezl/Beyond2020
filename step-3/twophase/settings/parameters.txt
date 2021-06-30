@@ -13,11 +13,14 @@ Simulation parameters
 10      #Visualization_steps
 
 FE parameters
-2       #Refinements
-1       #Order
-12      #ODE_solver_type
-0.00001 #reltol(SUNDIALS)
-0.00001 #abstol(SUNDIALS)
+2          #Refinements
+1          #Order
+12         #ODE_solver_type
+0          #abstol(Conduction)
+0.00000001 #reltol(Conduction)
+100        #iter(Conduction)
+0.00001    #abstol(SUNDIALS)
+0.00001    #reltol(SUNDIALS)
 
 Physical parameters
 0       #Fusion_temperature

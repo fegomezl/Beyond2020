@@ -8,11 +8,11 @@ Config::Config(bool master, int nproc):
 Artic_sea::Artic_sea(Config config):
     config(config),
     pmesh(NULL),
-    fec(NULL),
-    fespace(NULL),
-    x(NULL),
-    X(NULL),
-    oper(NULL),
+    fec_T(NULL),
+    fespace_T(NULL),
+    x_T(NULL),
+    X_T(NULL),
+    oper_T(NULL),
     ode_solver(NULL),
     cvode(NULL),
     arkode(NULL),
@@ -37,11 +37,11 @@ Conduction_Operator::~Conduction_Operator(){
 
 Artic_sea::~Artic_sea(){
     delete pmesh;
-    delete fec;
-    delete fespace;
-    delete x;
-    delete X;
-    delete oper;
+    delete fec_T;
+    delete fespace_T;
+    delete x_T;
+    delete X_T;
+    delete oper_T;
     delete ode_solver;
     delete paraview_out;
     if (config.master) cout << "Memory deleted \n";

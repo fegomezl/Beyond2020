@@ -6,8 +6,8 @@ void Artic_sea::time_step(){
     dt = min(dt, config.t_final - t);
 
     //Perform the time_step
-    oper->SetParameters(*X);
-    ode_solver->Step(*X, t, dt);
+    oper_T->SetParameters(*X_T);
+    ode_solver->Step(*X_T, t, dt);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
@@ -18,7 +18,7 @@ void Artic_sea::time_step(){
         vis_impressions++;
 
         //Graph
-        x->SetFromTrueDofs(*X);
+        x_T->SetFromTrueDofs(*X_T);
         paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);
         paraview_out->Save();
@@ -59,19 +59,21 @@ void Conduction_Operator::SetParameters(const Vector &X){
     }
 
     //Set the associated coefficients
-    coeff_C.SetGridFunction(&aux_C);
-    coeff_K.SetGridFunction(&aux_K);
-    coeff_L.SetGridFunction(&aux);
+    GridFunctionCoefficient coeff_C(&aux_C);
+    GridFunctionCoefficient coeff_K(&aux_K);
+    GridFunctionCoefficient coeff_L(&aux);
 
-    coeff_rC.SetBCoef(coeff_C);
-    coeff_rK.SetBCoef(coeff_K); 
-    coeff_rL.SetBCoef(coeff_L);
+    SumCoefficient coeff_CL(coeff_C, coeff_L);
+
+    coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK); 
+    coeff_rCL.SetBCoef(coeff_CL);
 
     //Create corresponding bilinear forms
     delete m;
     m = new ParBilinearForm(&fespace);
-    m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    m->AddDomainIntegrator(new MassIntegrator(coeff_rL));
+    //m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
+    //m->AddDomainIntegrator(new MassIntegrator(coeff_rL));
+    m->AddDomainIntegrator(new MassIntegrator(coeff_rCL));
     m->Assemble();
     m->FormSystemMatrix(ess_tdof_list, M);
     M_solver.SetOperator(M);

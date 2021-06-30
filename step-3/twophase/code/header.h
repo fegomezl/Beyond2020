@@ -14,19 +14,25 @@ struct Config{
 
     bool master;
     int nproc;
-    int order;
-    int refinements;
+
     double dt_init;
     double t_final;
     int vis_steps_max;
+
+    int refinements;
+    int order;
     int ode_solver_type;
-    double reltol;
-    double abstol;
+    double reltol_conduction;
+    double abstol_conduction;
+    int iter_conduction;
+    double reltol_sundials;
+    double abstol_sundials;
+
     double T_f;
-    double c_s, c_l;
-    double k_s, k_l;
-    double L;
     double invDeltaT;
+    double c_l, c_s;
+    double k_l, k_s;
+    double L;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -54,7 +60,6 @@ class Conduction_Operator : public TimeDependentOperator{
         ParBilinearForm *t;  //m + dt*k
 
         HypreParMatrix M;
-        HypreParMatrix K;
         HypreParMatrix T;   
 
         CGSolver M_solver;
@@ -68,14 +73,10 @@ class Conduction_Operator : public TimeDependentOperator{
 
         FunctionCoefficient r;
 
-        GridFunctionCoefficient coeff_C;
-        ProductCoefficient coeff_rC;
+        ProductCoefficient coeff_rCL;
 
-        GridFunctionCoefficient coeff_K;
-        ProductCoefficient coeff_rK; ProductCoefficient dt_coeff_rK;
-
-        GridFunctionCoefficient coeff_L;
-        ProductCoefficient coeff_rL;
+        ProductCoefficient coeff_rK; 
+        ProductCoefficient dt_coeff_rK;
 };
 
 class Artic_sea{
@@ -102,16 +103,16 @@ class Artic_sea{
 
         int dim;
         int serial_refinements;
-        HYPRE_Int size;
+        HYPRE_Int size_T;
 
         ParMesh *pmesh;
-        FiniteElementCollection *fec;
-        ParFiniteElementSpace *fespace;
+        FiniteElementCollection *fec_T;
+        ParFiniteElementSpace *fespace_T;
 
         //System objects
-        ParGridFunction *x;
-        HypreParVector *X;
-        Conduction_Operator *oper;
+        ParGridFunction *x_T;
+        HypreParVector *X_T;
+        Conduction_Operator *oper_T;
 
         //Solver objects
         ODESolver *ode_solver;
