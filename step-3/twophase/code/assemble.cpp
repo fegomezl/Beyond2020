@@ -1,7 +1,5 @@
 #include "header.h"
 
-double initial(const Vector &x);
-
 double rf(const Vector &x);
 
 void Artic_sea::assemble_system(){
@@ -12,18 +10,12 @@ void Artic_sea::assemble_system(){
     vis_steps = config.vis_steps_max;
     vis_impressions = 0;
 
-    //Set boundary conditions
-    ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 0;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
-
-    //Define solution x and apply initial conditions
+    //Define solution x
     x = new ParGridFunction(fespace);
-    x->ProjectCoefficient(initial_f);
-    x->ProjectBdrCoefficient(initial_f, ess_bdr);
     X = new HypreParVector(fespace);
-    x->GetTrueDofs(*X);
 
-    oper = new Conduction_Operator(config, *fespace, *X, ess_bdr);
+    oper = new Conduction_Operator(config, *fespace, pmesh->bdr_attributes.Max(), *X);
+    x->SetFromTrueDofs(*X);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -91,14 +83,6 @@ void Artic_sea::assemble_system(){
              << left << setw(12)
              << "\n--------------------------------------------------\n";
 
-}
-
-double initial(const Vector &x){
-    double mid = 0.6*Zmax;
-    if (x(1) <= mid)
-        return -10*(1 - x(1)/mid);
-    else
-        return 10*(x(1) - mid)/(Zmax - mid);
 }
 
 double rf(const Vector &x){

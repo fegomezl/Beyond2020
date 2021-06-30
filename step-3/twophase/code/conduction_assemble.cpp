@@ -1,6 +1,8 @@
 #include "header.h"
 
-Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
+double initial_f(const Vector &x);
+
+Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, Vector &X):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     config(config),
     fespace(fespace),
@@ -19,7 +21,17 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 {
     const double rel_tol = 1e-8;
 
+    //Set boundary conditions
+    Array<int> ess_bdr(attributes);
+    ess_bdr = 0;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+    FunctionCoefficient initial(initial_f);
+
+    //Define solution x and apply initial conditions
+    ParGridFunction x(&fespace);
+    x.ProjectCoefficient(initial);
+    x.ProjectBdrCoefficient(initial, ess_bdr);
+    x.GetTrueDofs(X);
 
     //Configure M solver
     M_solver.iterative_mode = false;
@@ -39,4 +51,12 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     T_solver.SetPreconditioner(T_prec);
 
     SetParameters(X);
+}
+
+double initial_f(const Vector &x){
+    double mid = 0.6*Zmax;
+    if (x(1) <= mid)
+        return -10*(1 - x(1)/mid);
+    else
+        return 10*(x(1) - mid)/(Zmax - mid);
 }
