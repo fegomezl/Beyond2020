@@ -36,5 +36,6 @@ Artic_sea::~Artic_sea(){
     delete M, C, Ct;  
     delete A;
     delete w, psi, v;
+    delete d, D;
     if (config.master) cout << "Memory deleted!\n";
 }
