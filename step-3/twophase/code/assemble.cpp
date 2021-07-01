@@ -1,6 +1,8 @@
 #include "header.h"
 
-double rf(const Vector &x);
+double r_f(const Vector &x);
+void rot_f(const Vector &x, DenseMatrix &f);
+void zero_f(const Vector &x, Vector &f);
 
 void Artic_sea::assemble_system(){
     //Initialize the system
@@ -11,10 +13,10 @@ void Artic_sea::assemble_system(){
     vis_impressions = 0;
 
     //Define solution x
-    x_T = new ParGridFunction(fespace_T);
-    X_T = new HypreParVector(fespace_T);
+    x_T = new ParGridFunction(fespace);
+    X_T = new HypreParVector(fespace);
 
-    oper_T = new Conduction_Operator(config, *fespace_T, pmesh->bdr_attributes.Max(), *X_T);
+    oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *X_T);
     x_T->SetFromTrueDofs(*X_T);
 
     //Set the ODE solver type
@@ -85,6 +87,16 @@ void Artic_sea::assemble_system(){
 
 }
 
-double rf(const Vector &x){
+double r_f(const Vector &x){
     return x(0);
+}
+
+void rot_f(const Vector &x, DenseMatrix &f){
+    f(0,0) = 0.; f(0,1) = -1.;
+    f(1,0) = 1.; f(1,1) = 0.;
+}
+
+void zero_f(const Vector &x, Vector &f){
+    f(0) = 0.;
+    f(1) = 0.;
 }

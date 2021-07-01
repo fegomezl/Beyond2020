@@ -7,15 +7,10 @@ Config::Config(bool master, int nproc):
 
 Artic_sea::Artic_sea(Config config):
     config(config),
-    pmesh(NULL),
-    fec_T(NULL),
-    fespace_T(NULL),
-    x_T(NULL),
-    X_T(NULL),
+    pmesh(NULL), fec(NULL), fespace(NULL),
+    x_T(NULL), X_T(NULL),
     oper_T(NULL),
-    ode_solver(NULL),
-    cvode(NULL),
-    arkode(NULL),
+    ode_solver(NULL), cvode(NULL), arkode(NULL),
     paraview_out(NULL)
 {}
 
@@ -30,17 +25,12 @@ void Artic_sea::run(const char *mesh_file){
 
 Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
-    delete m;
-    delete k;
-    delete t;
+    delete m, k, t;
 }
 
 Artic_sea::~Artic_sea(){
-    delete pmesh;
-    delete fec_T;
-    delete fespace_T;
-    delete x_T;
-    delete X_T;
+    delete pmesh, fec, fespace;
+    delete x_T, X_T;
     delete oper_T;
     delete ode_solver;
     delete paraview_out;

@@ -67,12 +67,12 @@ void Conduction_Operator::SetParameters(const Vector &X){
 
     coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK); 
     coeff_rCL.SetBCoef(coeff_CL);
+    coeff_rCLV.SetACoef(coeff_CL);
+    dt_coeff_rCLV.SetBCoef(coeff_rCLV);
 
     //Create corresponding bilinear forms
     delete m;
     m = new ParBilinearForm(&fespace);
-    //m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    //m->AddDomainIntegrator(new MassIntegrator(coeff_rL));
     m->AddDomainIntegrator(new MassIntegrator(coeff_rCL));
     m->Assemble();
     m->FormSystemMatrix(ess_tdof_list, M);
@@ -81,6 +81,14 @@ void Conduction_Operator::SetParameters(const Vector &X){
     delete k;
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
+    k->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCLV));
     k->Assemble();
     k->Finalize();
+}
+
+void Conduction_Operator::UpdateVelocity(const Vector &Psi){
+    psi.SetFromTrueDofs(Psi);
+    gradpsi.SetGridFunction(&psi);
+    rV.SetBCoef(gradpsi);
+    coeff_rCLV.SetBCoef(rV);
 }

@@ -2,15 +2,18 @@
 
 double initial_f(const Vector &x);
 
-Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, Vector &X):
+Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     config(config),
     fespace(fespace),
     m(NULL), k(NULL), t(NULL),
     aux(&fespace), aux_C(&fespace), aux_K(&fespace),
-    r(rf),
+    psi(&fespace),
+    r(r_f), zero(dim, zero_f),
     coeff_rCL(r, r),
-    coeff_rK(r, r), dt_coeff_rK(1., coeff_rK),
+    coeff_rK(r, r), dt_coeff_rK(0., coeff_rK),
+    rot(dim, rot_f), gradpsi(&psi), rV(rot, zero),
+    coeff_rCLV(r, zero), dt_coeff_rCLV(0., zero),
     M_solver(fespace.GetComm()), T_solver(fespace.GetComm())
 {
     //Set boundary conditions

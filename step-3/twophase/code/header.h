@@ -37,9 +37,10 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, Vector &X);
+        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
         void SetParameters(const Vector &X);
+        void UpdateVelocity(const Vector &psi);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
@@ -71,12 +72,22 @@ class Conduction_Operator : public TimeDependentOperator{
         ParGridFunction aux_C;
         ParGridFunction aux_K;
 
+        ParGridFunction psi;
+
         FunctionCoefficient r;
+        VectorFunctionCoefficient zero;
 
         ProductCoefficient coeff_rCL;
 
         ProductCoefficient coeff_rK; 
         ProductCoefficient dt_coeff_rK;
+
+        //GradientGridFunctionCoefficient rV;
+        MatrixFunctionCoefficient rot;
+        GradientGridFunctionCoefficient gradpsi;
+        MatrixVectorProductCoefficient rV;
+        ScalarVectorProductCoefficient coeff_rCLV;
+        ScalarVectorProductCoefficient dt_coeff_rCLV;
 };
 
 class Artic_sea{
@@ -103,11 +114,11 @@ class Artic_sea{
 
         int dim;
         int serial_refinements;
-        HYPRE_Int size_T;
+        HYPRE_Int size;
 
         ParMesh *pmesh;
-        FiniteElementCollection *fec_T;
-        ParFiniteElementSpace *fespace_T;
+        FiniteElementCollection *fec;
+        ParFiniteElementSpace *fespace;
 
         //System objects
         ParGridFunction *x_T;
@@ -122,6 +133,8 @@ class Artic_sea{
         ParaViewDataCollection *paraview_out;
 };
 
-extern double rf(const Vector &x);
+extern double r_f(const Vector &x);
+extern void rot_f(const Vector &x, DenseMatrix &f);
+extern void zero_f(const Vector &x, Vector &f);
 
 extern double Rmin, Rmax, Zmin, Zmax;

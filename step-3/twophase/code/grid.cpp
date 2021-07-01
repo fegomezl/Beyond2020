@@ -27,7 +27,7 @@ void Artic_sea::make_grid(const char *mesh_file){
         pmesh->UniformRefinement();
 
     //Create the FEM space associated with the mesh
-    fec_T = new H1_FECollection(config.order, dim);
-    fespace_T = new ParFiniteElementSpace(pmesh, fec_T);
-    size_T = fespace_T->GlobalTrueVSize();
+    fec = new H1_FECollection(config.order, dim);
+    fespace = new ParFiniteElementSpace(pmesh, fec);
+    size = fespace->GlobalTrueVSize();
 }
