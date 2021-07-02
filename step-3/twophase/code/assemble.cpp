@@ -19,6 +19,8 @@ void Artic_sea::assemble_system(){
     oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *X_T);
     x_T->SetFromTrueDofs(*X_T);
 
+    //flow_oper = new Flow_Operator(config, *fespace, pmesh->bdr_attributes.Max());
+
     //Set the ODE solver type
     switch (config.ode_solver_type){
         // MFEM explicit methods
@@ -84,7 +86,6 @@ void Artic_sea::assemble_system(){
              << "Progress"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
-
 }
 
 double r_f(const Vector &x){

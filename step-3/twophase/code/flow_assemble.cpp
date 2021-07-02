@@ -9,7 +9,7 @@ double f_rhs(const Vector &x);
 //Constant to the brinkman term
 double porous_constant(const Vector &x);
 
-Flow_Operator::Flow_Operator(ParFiniteElementSpace &fespace, int attributes):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes):
   fespace(fespace),
   block_offsets(3), block_true_offsets(3),
   f(NULL), g(NULL),
@@ -34,7 +34,6 @@ Flow_Operator::Flow_Operator(ParFiniteElementSpace &fespace, int attributes):
   MemoryType mt = device.GetMemoryType();
   y.Update(block_offsets, mt); Y.Update(block_true_offsets, mt);
   b.Update(block_offsets, mt); B.Update(block_true_offsets, mt);
-
 
   FunctionCoefficient boundary_psi_coeff(boundary_psi);
   FunctionCoefficient f_coeff(f_rhs);
@@ -111,6 +110,7 @@ Flow_Operator::Flow_Operator(ParFiniteElementSpace &fespace, int attributes):
   //
   //   A = [ D  C^t]
   //       [ C  M ]
+
   A = new BlockOperator(block_true_offsets);
   A->SetBlock(0, 0, D);
   A->SetBlock(0, 1, Ct);

@@ -92,7 +92,7 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
   public:
-        Flow_Operator(ParFiniteElementSpace &fespace, int attributes);
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes);
         ~Flow_Operator();
 
   protected:
@@ -172,6 +172,7 @@ class Artic_sea{
         ParaViewDataCollection *paraview_out;
 
         //Flow_Operator objects
+        Flow_Operator *flow_oper;
         ParGridFunction *psi;
 };
 

@@ -42,6 +42,7 @@ Artic_sea::~Artic_sea(){
     delete oper_T;
     delete ode_solver;
     delete paraview_out;
+    delete flow_oper;
     delete psi;
     if (config.master) cout << "Memory deleted \n";
 }
