@@ -28,11 +28,20 @@ Conduction_Operator::~Conduction_Operator(){
     delete m, k, t;
 }
 
+Flow_Operator::~Flow_Operator(){
+    delete f, g;
+    delete m, d, c, ct;
+    delete M, D, C, Ct;
+    delete A;
+    delete psi, w;
+}
+
 Artic_sea::~Artic_sea(){
     delete pmesh, fec, fespace;
     delete x_T, X_T;
     delete oper_T;
     delete ode_solver;
     delete paraview_out;
+    delete psi;
     if (config.master) cout << "Memory deleted \n";
 }

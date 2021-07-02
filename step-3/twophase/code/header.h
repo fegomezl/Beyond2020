@@ -90,6 +90,45 @@ class Conduction_Operator : public TimeDependentOperator{
         ScalarVectorProductCoefficient dt_coeff_rCLV;
 };
 
+class Flow_Operator{
+  public:
+        Flow_Operator(ParFiniteElementSpace &fespace, int attributes);
+        ~Flow_Operator();
+
+  protected:
+
+        //Mesh objects
+        ParFiniteElementSpace &fespace;
+
+        Array<int> block_offsets;
+        Array<int> block_true_offsets;
+
+        //System objects
+        BlockVector y;
+        BlockVector b;
+        ParLinearForm *f;
+        ParLinearForm *g;
+        ParBilinearForm *m;
+        ParBilinearForm *d;
+        ParMixedBilinearForm *c;
+        ParMixedBilinearForm *ct;
+
+        //Solver objects
+        BlockVector Y;
+        BlockVector B;
+        HypreParMatrix *M;
+        HypreParMatrix *D;
+        HypreParMatrix *C;
+
+        //TransposeOperator *Ct;
+        HypreParMatrix *Ct;
+        BlockOperator *A;
+
+        ParGridFunction *psi;
+        ParGridFunction *w;
+
+};
+
 class Artic_sea{
     public:
         Artic_sea(Config config);
@@ -131,6 +170,9 @@ class Artic_sea{
         ARKStepSolver *arkode;
 
         ParaViewDataCollection *paraview_out;
+
+        //Flow_Operator objects
+        ParGridFunction *psi;
 };
 
 extern double r_f(const Vector &x);
