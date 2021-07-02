@@ -92,8 +92,9 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
   public:
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes);
-        ~Flow_Operator();
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes);
+    void Solve(Config config, const ParGridFunction &X_T, ParGridFunction &X_Psi);
+    ~Flow_Operator();
 
   protected:
 
