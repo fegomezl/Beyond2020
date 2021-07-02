@@ -9,13 +9,16 @@ double f_rhs(const Vector &x);
 //Constant to the brinkman term
 double porous_constant(const Vector &x);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes):
+//r as a vector function
+void r_vec(const Vector &x, Vector &y);
+
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, const ParGridFunction *x_T):
   fespace(fespace),
   block_offsets(3), block_true_offsets(3),
   f(NULL), g(NULL),
   m(NULL), d(NULL), c(NULL), ct(NULL),
   M(NULL), D(NULL), C(NULL), Ct(NULL),
-  A(NULL), psi(NULL), w(NULL)
+  A(NULL), psi(NULL), w(NULL), bg(0.002)
 {
   //Create the block offsets
   block_offsets[0] = 0;
@@ -41,6 +44,13 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   ConstantCoefficient viscosity(1.);
   FunctionCoefficient eta_coeff(porous_constant);
 
+  GradientGridFunctionCoefficient delta_T(x_T);
+  VectorFunctionCoefficient rcap(2, r_vec);
+  InnerProductCoefficient r_deltaT(rcap, delta_T);
+  ProductCoefficient bg_deltaT(bg, r_deltaT);
+  FunctionCoefficient r(r_f);
+  ProductCoefficient rF(bg_deltaT, r);
+
   //Define grid functions and apply essential boundary conditions(?)
   psi = new ParGridFunction(&fespace);
   Array<int> ess_bdr_psi(attributes);
@@ -59,7 +69,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
     //Define the RHS
   f = new ParLinearForm;
   f->Update(&fespace, b.GetBlock(0), 0);
-  f->AddDomainIntegrator(new DomainLFIntegrator(f_coeff));
+  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
   f->Assemble();
   f->SyncAliasMemory(b);
   f->ParallelAssemble(B.GetBlock(0));
@@ -137,4 +147,9 @@ double porous_constant(const Vector &x){
         return 1e+6;
     else
         return 0.1;
+}
+
+void r_vec(const Vector &x, Vector &y){
+  y(0)=1;
+  y(1)=0;
 }
