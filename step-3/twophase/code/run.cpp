@@ -11,7 +11,7 @@ Artic_sea::Artic_sea(Config config):
     x_T(NULL), X_T(NULL),
     oper_T(NULL),
     ode_solver(NULL), cvode(NULL), arkode(NULL),
-    paraview_out(NULL)
+    paraview_out(NULL), flow_oper(NULL), psi(NULL)
 {}
 
 void Artic_sea::run(const char *mesh_file){
