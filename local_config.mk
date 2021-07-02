@@ -1,11 +1,9 @@
 #Computer parameters
-#MFEM_INSTALL_DIR = ~/Library/spack/opt/spack/linux-pop20-excavator/gcc-10.2.0/mfem-4.2.0-linjgmwmtphlcfh4ow6hopjpq4aw47oz
+MFEM_INSTALL_DIR = /opt/spack/opt/spack/linux-pop21-icelake/gcc-10.3.0/mfem-4.2.0-t6yk4fljvrvgg5gh6x45sr7i3ceq7trl
 
-MFEM_INSTALL_DIR =/home/wind/Library/MFEM/mfem/build/config
 SHARE_DIR = 
 PROCCESORS = 4
 
 #Add variables from MFEM
-#CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
-CONFIG_MK = $(MFEM_INSTALL_DIR)/config.mk
+CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
 include $(CONFIG_MK)
