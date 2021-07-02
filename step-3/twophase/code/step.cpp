@@ -9,7 +9,7 @@ void Artic_sea::time_step(){
     oper_T->SetParameters(*X_T);
     ode_solver->Step(*X_T, t, dt);
 
-    flow_oper->Solve(config, *x_T, psi);
+    //flow_oper->Solve(config, *x_T, X_Psi, x_psi);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
@@ -89,14 +89,14 @@ void Conduction_Operator::SetParameters(const Vector &X){
     k->Finalize();
 }
 
-void Conduction_Operator::UpdateVelocity(const Vector &Psi){
+void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi){
     psi.SetFromTrueDofs(Psi);
     gradpsi.SetGridFunction(&psi);
     rV.SetBCoef(gradpsi);
     coeff_rCLV.SetBCoef(rV);
 }
 
-void Flow_Operator::Solve(Config config, const ParGridFunction &x_T, ParGridFunction *X_Psi){
+void Flow_Operator::Solve(Config config, const ParGridFunction &x_T, HypreParVector *X_Psi, ParGridFunction *x_psi){
     //Create preconditioner objects
     HypreParVector *Dd = new HypreParVector(MPI_COMM_WORLD, D->GetGlobalNumRows(),
                                             D->GetRowStarts());
@@ -152,8 +152,8 @@ void Flow_Operator::Solve(Config config, const ParGridFunction &x_T, ParGridFunc
 
     GradientGridFunctionCoefficient psi_grad(psi);
 
-    if (X_Psi) delete X_Psi;
-    X_Psi = new ParGridFunction(*psi);
+    X_Psi = psi->GetTrueDofs();
+    x_psi->SetFromTrueDofs(*X_Psi);
 
     //Delete used memory
     delete Dd, Mplus, Dd_inv_Ct, C_Dd_inv_Ct, S;

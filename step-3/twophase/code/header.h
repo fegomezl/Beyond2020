@@ -40,7 +40,7 @@ class Conduction_Operator : public TimeDependentOperator{
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
         void SetParameters(const Vector &X);
-        void UpdateVelocity(const Vector &psi);
+        void UpdateVelocity(const HypreParVector &psi);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
@@ -93,7 +93,7 @@ class Conduction_Operator : public TimeDependentOperator{
 class Flow_Operator{
   public:
     Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, const ParGridFunction *x_T);
-    void Solve(Config config, const ParGridFunction &x_T, ParGridFunction *X_Psi);
+    void Solve(Config config, const ParGridFunction &x_T, HypreParVector *X_Psi, ParGridFunction *x_psi);
     ~Flow_Operator();
 
   protected:
@@ -177,7 +177,8 @@ class Artic_sea{
 
         //Flow_Operator objects
         Flow_Operator *flow_oper;
-        ParGridFunction *psi;
+        ParGridFunction *x_psi;
+        HypreParVector *X_Psi;
 };
 
 extern double r_f(const Vector &x);
