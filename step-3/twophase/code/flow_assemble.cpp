@@ -32,11 +32,11 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   block_true_offsets.PartialSum();
 
   //Initialize the corresponding vectors
-  const char *device_config = "cpu";
+  /*const char *device_config = "cpu";
   Device device(device_config);
-  MemoryType mt = device.GetMemoryType();
-  y.Update(block_offsets, mt); Y.Update(block_true_offsets, mt);
-  b.Update(block_offsets, mt); B.Update(block_true_offsets, mt);
+  MemoryType mt = device.GetMemoryType();*/
+  y.Update(block_offsets); Y.Update(block_true_offsets);
+  b.Update(block_offsets); B.Update(block_true_offsets);
 
   FunctionCoefficient boundary_psi_coeff(boundary_psi);
   FunctionCoefficient f_coeff(f_rhs);
