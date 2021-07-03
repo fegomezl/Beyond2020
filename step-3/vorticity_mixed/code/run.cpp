@@ -15,7 +15,9 @@ Artic_sea::Artic_sea(Config config):
     m(NULL), d(NULL), c(NULL), ct(NULL),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
     A(NULL),
-    w(NULL), psi(NULL), v(NULL)
+    w(NULL), w_boundary(NULL), 
+    psi(NULL), psi_boundary(NULL),
+    v(NULL)
 {}
 
 void Artic_sea::run(const char *mesh_file){
@@ -35,6 +37,8 @@ Artic_sea::~Artic_sea(){
     delete m, c, ct;
     delete M, C, Ct;  
     delete A;
-    delete w, psi, v;
+    delete w, w_boundary;
+    delete psi, psi_boundary;
+    delete v;
     if (config.master) cout << "Memory deleted!\n";
 }
