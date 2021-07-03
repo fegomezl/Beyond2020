@@ -96,7 +96,7 @@ void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi){
     coeff_rCLV.SetBCoef(rV);
 }
 
-void Flow_Operator::Solve(Config config, const ParGridFunction &x_T, HypreParVector *X_Psi, ParGridFunction *x_psi){
+void Flow_Operator::Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi){
     //Create preconditioner objects
     HypreParVector *Dd = new HypreParVector(MPI_COMM_WORLD, D->GetGlobalNumRows(),
                                             D->GetRowStarts());

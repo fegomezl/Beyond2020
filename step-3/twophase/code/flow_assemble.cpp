@@ -55,14 +55,14 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   psi = new ParGridFunction(&fespace);
   Array<int> ess_bdr_psi(attributes);
   ess_bdr_psi = 0;
-  ess_bdr_psi[1] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
+  ess_bdr_psi[0] =  1;
   psi->ProjectBdrCoefficient(boundary_psi_coeff, ess_bdr_psi);
   psi->ParallelProject(y.GetBlock(0));
 
   w =  new ParGridFunction(&fespace);
   Array<int> ess_bdr_w(attributes);
   ess_bdr_w = 0;
-  ess_bdr_w[1] = ess_bdr_w[2] = ess_bdr_w[3] = 1;
+  ess_bdr_w[0] = ess_bdr_w[2] = ess_bdr_w[3] = 1;
   w->ProjectBdrCoefficient(g_coeff, ess_bdr_w);
   w->ParallelProject(y.GetBlock(1));
 
