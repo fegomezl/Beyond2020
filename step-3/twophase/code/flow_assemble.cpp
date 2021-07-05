@@ -44,12 +44,14 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   ConstantCoefficient viscosity(1.);
   FunctionCoefficient eta_coeff(porous_constant);
 
-  GradientGridFunctionCoefficient delta_T(x_T);
+  this->Update_T(config, fespace, x_T);
+
+  /*GradientGridFunctionCoefficient delta_T(x_T);
   VectorFunctionCoefficient rcap(2, r_vec);
   InnerProductCoefficient r_deltaT(rcap, delta_T);
   ProductCoefficient bg_deltaT(bg, r_deltaT);
   FunctionCoefficient r(r_f);
-  ProductCoefficient rF(bg_deltaT, r);
+  ProductCoefficient rF(bg_deltaT, r);*/
 
   //Define grid functions and apply essential boundary conditions(?)
   psi = new ParGridFunction(&fespace);
@@ -66,14 +68,14 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   w->ProjectBdrCoefficient(g_coeff, ess_bdr_w);
   w->ParallelProject(y.GetBlock(1));
 
-    //Define the RHS
-  f = new ParLinearForm;
+  //Define the RHS
+  /*f = new ParLinearForm;
   f->Update(&fespace, b.GetBlock(0), 0);
   f->AddDomainIntegrator(new DomainLFIntegrator(rF));
   f->Assemble();
   f->SyncAliasMemory(b);
   f->ParallelAssemble(B.GetBlock(0));
-  B.GetBlock(0).SyncAliasMemory(B);
+  B.GetBlock(0).SyncAliasMemory(B);*/
 
   g = new ParLinearForm;
   g->Update(&fespace, b.GetBlock(1), 0);
@@ -152,4 +154,24 @@ double porous_constant(const Vector &x){
 void r_vec(const Vector &x, Vector &y){
   y(0)=1;
   y(1)=0;
+}
+
+void Flow_Operator::Update_T(Config config, ParFiniteElementSpace &fespace, const ParGridFunction *x_T){
+
+  GradientGridFunctionCoefficient delta_T(x_T);
+  VectorFunctionCoefficient rcap(2, r_vec);
+  InnerProductCoefficient r_deltaT(rcap, delta_T);
+  ProductCoefficient bg_deltaT(bg, r_deltaT);
+  FunctionCoefficient r(r_f);
+  ProductCoefficient rF(bg_deltaT, r);
+
+  //Update the RHS
+  if(f) delete f;
+  f = new ParLinearForm;
+  f->Update(&fespace, b.GetBlock(0), 0);
+  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
+  f->Assemble();
+  f->SyncAliasMemory(b);
+  f->ParallelAssemble(B.GetBlock(0));
+  B.GetBlock(0).SyncAliasMemory(B);
 }
