@@ -25,66 +25,56 @@ void Artic_sea::assemble_system(){
     Array<int> ess_tdof_list_w;
     Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
     ess_bdr_w = 0; 
-    ess_bdr_w[1] = ess_bdr_w[2] = ess_bdr_w[3] = 1;
+    ess_bdr_w[2] = ess_bdr_w[3] = 1;
     fespace_w->GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
     w =  new ParGridFunction;
     w->MakeRef(fespace_w, x.GetBlock(0), 0);
     w->ProjectBdrCoefficient(boundary_w_coeff, ess_bdr_w);
     w->ParallelProject(x.GetBlock(0));
-    x.GetBlock(0).SyncAliasMemory(x);
 
     Array<int> ess_tdof_list_psi;
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
     ess_bdr_psi = 0; 
-    ess_bdr_psi[1] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
+    ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
     fespace_psi->GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
 
     psi = new ParGridFunction;
     psi->MakeRef(fespace_psi, x.GetBlock(1), 0);
     psi->ProjectBdrCoefficient(boundary_psi_coeff, ess_bdr_psi);
     psi->ParallelProject(x.GetBlock(1));
-    x.GetBlock(1).SyncAliasMemory(x);
 
     //Define the RHS
     g = new ParLinearForm;
     g->Update(fespace_w, b.GetBlock(0), 0);
     g->AddDomainIntegrator(new DomainLFIntegrator(g_coeff));
     g->Assemble();
-    g->SyncAliasMemory(b);
     g->ParallelAssemble(B.GetBlock(0));
-    B.GetBlock(0).SyncAliasMemory(B);
 
     f = new ParLinearForm;
     f->Update(fespace_psi, b.GetBlock(1), 0);
     f->AddDomainIntegrator(new DomainLFIntegrator(neg_f_coeff));
     f->Assemble();
-    f->SyncAliasMemory(b);
     f->ParallelAssemble(B.GetBlock(1));
-    B.GetBlock(1).SyncAliasMemory(B);
 
     //Define bilinear forms of the system
     m = new ParBilinearForm(fespace_w);
     m->AddDomainIntegrator(new MassIntegrator(viscosity));
     m->Assemble();
-    m->EliminateEssentialBCFromDofs(ess_tdof_list_w);
+    m->EliminateEssentialBCFromDofs(ess_tdof_list_w, *w, *g);
     m->Finalize();
     M = m->ParallelAssemble();
 
     d = new ParBilinearForm(fespace_psi);
     d->AddDomainIntegrator(new DiffusionIntegrator(neg_eta_coeff));
     d->Assemble();
-    d->EliminateEssentialBCFromDofs(ess_tdof_list_psi);
+    d->EliminateEssentialBCFromDofs(ess_tdof_list_psi, *psi, *f);
     d->Finalize();
     D = d->ParallelAssemble();
 
     c = new ParMixedBilinearForm(fespace_psi, fespace_w);
     c->AddDomainIntegrator(new MixedGradGradIntegrator(neg_viscosity));
     c->Assemble();
-    //c->EliminateTrialDofs(ess_bdr_psi, *psi, *g);
-    //c->EliminateTestDofs(ess_bdr_w);
-    //c->Finalize();
-    //C = c->ParallelAssemble();
     OperatorHandle Ch;
     c->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Ch);
     C = Ch.Is<HypreParMatrix>();
@@ -92,10 +82,6 @@ void Artic_sea::assemble_system(){
     ct = new ParMixedBilinearForm(fespace_w, fespace_psi);
     ct->AddDomainIntegrator(new MixedGradGradIntegrator(neg_viscosity));
     ct->Assemble();
-    //ct->EliminateTrialDofs(ess_bdr_w, *w, *f);
-    //ct->EliminateTestDofs(ess_bdr_psi);
-    //ct->Finalize();
-    //Ct = ct->ParallelAssemble();
     OperatorHandle Cth;
     ct->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Cth);
     Ct = Cth.Is<HypreParMatrix>();
