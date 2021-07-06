@@ -24,7 +24,7 @@ void Artic_sea::assemble_system(){
     X_Psi = new HypreParVector(fespace);
 
     flow_oper = new Flow_Operator(config, *fespace, pmesh->bdr_attributes.Max(), x_T);
-    x_psi->SetFromTrueDofs(*X_Psi);
+    flow_oper->Solve(config, X_Psi, x_psi, x_T);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -76,7 +76,7 @@ void Artic_sea::assemble_system(){
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x_T);
-    paraview_out->RegisterField("Stream_Function", x_psi);
+    paraview_out->RegisterField("Stream_Function", flow_oper->psi);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();

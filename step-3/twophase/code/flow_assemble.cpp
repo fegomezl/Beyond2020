@@ -39,43 +39,26 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   b.Update(block_offsets); B.Update(block_true_offsets);
 
   FunctionCoefficient boundary_psi_coeff(boundary_psi);
-  FunctionCoefficient f_coeff(f_rhs);
   ConstantCoefficient g_coeff(0.);
   ConstantCoefficient viscosity(1.);
   FunctionCoefficient eta_coeff(porous_constant);
-
-  this->Update_T(config, fespace, x_T);
-
-  /*GradientGridFunctionCoefficient delta_T(x_T);
-  VectorFunctionCoefficient rcap(2, r_vec);
-  InnerProductCoefficient r_deltaT(rcap, delta_T);
-  ProductCoefficient bg_deltaT(bg, r_deltaT);
-  FunctionCoefficient r(r_f);
-  ProductCoefficient rF(bg_deltaT, r);*/
 
   //Define grid functions and apply essential boundary conditions(?)
   psi = new ParGridFunction(&fespace);
   Array<int> ess_bdr_psi(attributes);
   ess_bdr_psi = 0;
-  ess_bdr_psi[0] =  1;
+  ess_bdr_psi[1] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
   psi->ProjectBdrCoefficient(boundary_psi_coeff, ess_bdr_psi);
   psi->ParallelProject(y.GetBlock(0));
 
   w =  new ParGridFunction(&fespace);
   Array<int> ess_bdr_w(attributes);
   ess_bdr_w = 0;
-  ess_bdr_w[0] = ess_bdr_w[2] = ess_bdr_w[3] = 1;
+  ess_bdr_w[1] = ess_bdr_w[2] = ess_bdr_w[3] = 1;
   w->ProjectBdrCoefficient(g_coeff, ess_bdr_w);
   w->ParallelProject(y.GetBlock(1));
 
-  //Define the RHS
-  /*f = new ParLinearForm;
-  f->Update(&fespace, b.GetBlock(0), 0);
-  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
-  f->Assemble();
-  f->SyncAliasMemory(b);
-  f->ParallelAssemble(B.GetBlock(0));
-  B.GetBlock(0).SyncAliasMemory(B);*/
+  this->Update_T(config, x_T);
 
   g = new ParLinearForm;
   g->Update(&fespace, b.GetBlock(1), 0);
@@ -156,20 +139,23 @@ void r_vec(const Vector &x, Vector &y){
   y(1)=0;
 }
 
-void Flow_Operator::Update_T(Config config, ParFiniteElementSpace &fespace, const ParGridFunction *x_T){
+void Flow_Operator::Update_T(Config config, const ParGridFunction *x_T){
 
-  GradientGridFunctionCoefficient delta_T(x_T);
+  //Create the temperature coeffcient (rF)
+  /*GradientGridFunctionCoefficient delta_T(x_T);
   VectorFunctionCoefficient rcap(2, r_vec);
   InnerProductCoefficient r_deltaT(rcap, delta_T);
   ProductCoefficient bg_deltaT(bg, r_deltaT);
   FunctionCoefficient r(r_f);
-  ProductCoefficient rF(bg_deltaT, r);
+  ProductCoefficient rF(bg_deltaT, r);*/
+
+  FunctionCoefficient f_coeff(f_rhs);
 
   //Update the RHS
   if(f) delete f;
   f = new ParLinearForm;
   f->Update(&fespace, b.GetBlock(0), 0);
-  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
+  f->AddDomainIntegrator(new DomainLFIntegrator(f_coeff));
   f->Assemble();
   f->SyncAliasMemory(b);
   f->ParallelAssemble(B.GetBlock(0));
