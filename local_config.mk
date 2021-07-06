@@ -1,5 +1,5 @@
 #Computer parameters
-MFEM_INSTALL_DIR = ~/Repos/spack/opt/spack/linux-arch-sandybridge/gcc-11.1.0/mfem-4.2.0-4ybpcz34b6xk64a3acnu4u5lnkd3a5jr
+MFEM_INSTALL_DIR = ~/Repos/spack/opt/spack/linux-arch-sandybridge/gcc-11.1.0/mfem-4.2.0-di22qif3vvteq46ntd7jrouwbctljvu6/
 
 SHARE_DIR = /media/sf_Archdata/
 PROCCESORS = 4

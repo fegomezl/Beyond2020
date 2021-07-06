@@ -38,7 +38,7 @@ void Artic_sea::solve_system(){
     solver.SetAbsTol(1e-6);
     solver.SetRelTol(1e-6);
     solver.SetMaxIter(1000);
-    X = 0.;
+    X = 10.;
     solver.Mult(B, X);
 
     //Recover the solution on each proccesor

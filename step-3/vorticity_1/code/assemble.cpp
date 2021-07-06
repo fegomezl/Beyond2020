@@ -116,7 +116,7 @@ double boundary_psi(const Vector &x){
 }
 
 double f_rhs(const Vector &x){                 
-    return 1e+8*((out_rad - int_rad)/2 - x(0));
+    return 1.*((out_rad - int_rad)/2 - x(0));
 }
 
 double porous_constant(const Vector &x){
