@@ -59,6 +59,9 @@ class Artic_sea{
         Array<int> block_true_offsets;
 
         //System objects
+        ParGridFunction *w;
+        ParGridFunction *psi;
+        ParGridFunction *v;
         BlockVector x;
         BlockVector b;
         ParLinearForm *g;
@@ -66,7 +69,6 @@ class Artic_sea{
         ParBilinearForm *m;
         ParBilinearForm *d;
         ParMixedBilinearForm *c;
-        ParMixedBilinearForm *ct;
 
         //Solver objects
         BlockVector X;
@@ -74,11 +76,6 @@ class Artic_sea{
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
-        HypreParMatrix *Ct;
-        BlockOperator *A;
-        ParGridFunction *w;
-        ParGridFunction *psi;
-        ParGridFunction *v;
 };
 
 extern double height;

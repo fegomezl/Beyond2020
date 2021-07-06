@@ -11,11 +11,10 @@ Artic_sea::Artic_sea(Config config):
     fec_w(NULL), fec_psi(NULL), fec_v(NULL),
     fespace_w(NULL), fespace_psi(NULL), fespace_v(NULL),
     block_offsets(3), block_true_offsets(3),
+    w(NULL), psi(NULL), v(NULL),
     g(NULL), f(NULL),
-    m(NULL), d(NULL), c(NULL), ct(NULL),
-    M(NULL), D(NULL), C(NULL), Ct(NULL),
-    A(NULL),
-    w(NULL), psi(NULL), v(NULL)
+    m(NULL), d(NULL), c(NULL), 
+    M(NULL), D(NULL), C(NULL)
 {}
 
 void Artic_sea::run(const char *mesh_file){
@@ -31,10 +30,9 @@ Artic_sea::~Artic_sea(){
     delete pmesh;
     delete fec_w, fec_psi, fec_v;
     delete fespace_w, fespace_psi, fespace_v;
-    delete g, f;
-    delete m, c, ct;
-    delete M, C, Ct;  
-    delete A;
     delete w, psi, v;
+    delete g, f;
+    delete m, d, c;
+    delete M, D, C;  
     if (config.master) cout << "Memory deleted!\n";
 }

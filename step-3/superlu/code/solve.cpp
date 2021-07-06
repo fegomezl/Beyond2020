@@ -2,15 +2,22 @@
 
 void Artic_sea::solve_system(){
 
+    //Create the complete bilinear operator:
+    //
+    //   H = [ M    C ] 
+    //       [ C^t  D ] 
     Array2D<HypreParMatrix*> hBlocks(2,2);
     hBlocks = NULL;
     hBlocks(0, 0) = M;
     hBlocks(0, 1) = C;
-    hBlocks(1, 0) = Ct;
+    hBlocks(1, 0) = C->Transpose();
     hBlocks(1, 1) = D;
 
     Array2D<double> blockCoeff(2,2);
-    blockCoeff = 1.0;
+    blockCoeff(0, 0) = 1.;
+    blockCoeff(0, 1) = -1.;
+    blockCoeff(1, 0) = -1.;
+    blockCoeff(1, 1) = -1.;
 
     HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
 
@@ -19,72 +26,11 @@ void Artic_sea::solve_system(){
     superlu->SetOperator(*SLU_A);
     superlu->SetPrintStatistics(true);
     superlu->SetSymmetricPattern(true);
-
-    int slu_colperm = 4;
-    int slu_rowperm = 1;
-    int slu_iterref = 2;
-
-    if (slu_colperm == 0)
-      {
-	superlu->SetColumnPermutation(superlu::NATURAL);
-      }
-    else if (slu_colperm == 1)
-      {
-	superlu->SetColumnPermutation(superlu::MMD_ATA);
-      }
-    else if (slu_colperm == 2)
-      {
-	superlu->SetColumnPermutation(superlu::MMD_AT_PLUS_A);
-      }
-    else if (slu_colperm == 3)
-      {
-	superlu->SetColumnPermutation(superlu::COLAMD);
-      }
-    else if (slu_colperm == 4)
-      {
-	superlu->SetColumnPermutation(superlu::METIS_AT_PLUS_A);
-      }
-    else if (slu_colperm == 5)
-      {
-	superlu->SetColumnPermutation(superlu::PARMETIS);
-      }
-    else if (slu_colperm == 6)
-      {
-	superlu->SetColumnPermutation(superlu::ZOLTAN);
-      }
-    
-    if (slu_rowperm == 0)
-      {
-	superlu->SetRowPermutation(superlu::NOROWPERM);
-      }
-    else if (slu_rowperm == 1)
-      {
-#ifdef MFEM_USE_SUPERLU5
-	superlu->SetRowPermutation(superlu::LargeDiag);
-#else
-	superlu->SetRowPermutation(superlu::LargeDiag_MC64);
-#endif
-      }
-    
-    if (slu_iterref == 0)
-      {
-	superlu->SetIterativeRefine(superlu::NOREFINE);
-      }
-    else if (slu_iterref == 1)
-      {
-	superlu->SetIterativeRefine(superlu::SLU_SINGLE);
-      }
-    else if (slu_iterref == 2)
-      {
-	superlu->SetIterativeRefine(superlu::SLU_DOUBLE);
-      }
-    else if (slu_iterref == 3)
-      {
-	superlu->SetIterativeRefine(superlu::SLU_EXTRA);
-      }
+    superlu->SetColumnPermutation(superlu::PARMETIS);
+    superlu->SetIterativeRefine(superlu::SLU_DOUBLE);
 
     //Solve the linear system Ax=B
-    X = 0.;
+    X.Randomize();
     superlu->Mult(B, X);
 
     //Recover the solution on each proccesor

@@ -1,8 +1,5 @@
 #include "header.h"
 
-//Boundary values for psi
-double boundary_psi(const Vector &x);
-
 //Right hand side of the equation
 double f_rhs(const Vector &x);
 
@@ -11,38 +8,42 @@ double porous_constant(const Vector &x);
 
 void Artic_sea::assemble_system(){
     //Define local coefficients
-    ConstantCoefficient boundary_w_coeff(0.);
-    FunctionCoefficient boundary_psi_coeff(boundary_psi);
     ConstantCoefficient g_coeff(0.);
     FunctionCoefficient f_coeff(f_rhs);
-    ProductCoefficient neg_f_coeff(-1., f_coeff);
-    ConstantCoefficient viscosity(1.);
-    ProductCoefficient neg_viscosity(-1., viscosity);
-    FunctionCoefficient eta_coeff(porous_constant);
-    ProductCoefficient neg_eta_coeff(-1., eta_coeff);
 
-    //Define grid functions and apply essential boundary conditions(?)
+    ConstantCoefficient viscosity(1.);
+    FunctionCoefficient eta_coeff(porous_constant);
+
+    ProductCoefficient neg_f_coeff(-1., f_coeff);
+
+    //Define essential boundary conditions
+    //   
+    //                  1
+    //            /------------\
+    //            |            |
+    //           2|            |3
+    //            |            |
+    //            \------------/
+    //                  0
+
     Array<int> ess_tdof_list_w;
     Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
-    ess_bdr_w = 0; 
-    ess_bdr_w[2] = ess_bdr_w[3] = 1;
+    ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
+    ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
     fespace_w->GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
-
-    w =  new ParGridFunction;
-    w->MakeRef(fespace_w, x.GetBlock(0), 0);
-    w->ProjectBdrCoefficient(boundary_w_coeff, ess_bdr_w);
-    w->ParallelProject(x.GetBlock(0));
 
     Array<int> ess_tdof_list_psi;
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
-    ess_bdr_psi = 0; 
-    ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
+    ess_bdr_psi[0] = 0; ess_bdr_psi[1] = 0;
+    ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
     fespace_psi->GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
+
+    //Define grid functions
+    w =  new ParGridFunction;
+    w->MakeRef(fespace_w, x.GetBlock(0), 0);
 
     psi = new ParGridFunction;
     psi->MakeRef(fespace_psi, x.GetBlock(1), 0);
-    psi->ProjectBdrCoefficient(boundary_psi_coeff, ess_bdr_psi);
-    psi->ParallelProject(x.GetBlock(1));
 
     //Define the RHS
     g = new ParLinearForm;
@@ -66,39 +67,18 @@ void Artic_sea::assemble_system(){
     M = m->ParallelAssemble();
 
     d = new ParBilinearForm(fespace_psi);
-    d->AddDomainIntegrator(new DiffusionIntegrator(neg_eta_coeff));
+    d->AddDomainIntegrator(new DiffusionIntegrator(eta_coeff));
     d->Assemble();
     d->EliminateEssentialBCFromDofs(ess_tdof_list_psi, *psi, *f);
     d->Finalize();
     D = d->ParallelAssemble();
 
     c = new ParMixedBilinearForm(fespace_psi, fespace_w);
-    c->AddDomainIntegrator(new MixedGradGradIntegrator(neg_viscosity));
+    c->AddDomainIntegrator(new MixedGradGradIntegrator(viscosity));
     c->Assemble();
     OperatorHandle Ch;
     c->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Ch);
     C = Ch.Is<HypreParMatrix>();
-
-    ct = new ParMixedBilinearForm(fespace_w, fespace_psi);
-    ct->AddDomainIntegrator(new MixedGradGradIntegrator(neg_viscosity));
-    ct->Assemble();
-    OperatorHandle Cth;
-    ct->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Cth);
-    Ct = Cth.Is<HypreParMatrix>();
-
-    //Create the complete bilinear operator:
-    //
-    //   A = [ M    C ] 
-    //       [ C^t  D ] 
-    A = new BlockOperator(block_true_offsets);
-    A->SetBlock(0, 0, M);
-    A->SetBlock(0, 1, C);
-    A->SetBlock(1, 0, Ct);
-    A->SetBlock(1, 1, D);
-}
-
-double boundary_psi(const Vector &x){
-    return x(0);
 }
 
 double f_rhs(const Vector &x){                 
