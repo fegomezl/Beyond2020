@@ -8,16 +8,14 @@ Config::Config(bool master, int nproc):
 Artic_sea::Artic_sea(Config config):
     config(config),
     pmesh(NULL),
-    fec_w(NULL), fec_psi(NULL), fec_v(NULL),
-    fespace_w(NULL), fespace_psi(NULL), fespace_v(NULL),
+    fec(NULL), fec_v(NULL),
+    fespace(NULL), fespace_v(NULL),
     block_offsets(3), block_true_offsets(3),
+    w(NULL), psi(NULL), v(NULL),
     g(NULL), f(NULL),
-    m(NULL), d(NULL), c(NULL), ct(NULL),
-    M(NULL), D(NULL), C(NULL), Ct(NULL),
-    A(NULL),
-    w(NULL), w_boundary(NULL), 
-    psi(NULL), psi_boundary(NULL),
-    v(NULL)
+    m(NULL), d(NULL), c(NULL), 
+    M(NULL), D(NULL), C(NULL),
+    w_aux(NULL), psi_aux(NULL)
 {}
 
 void Artic_sea::run(const char *mesh_file){
@@ -31,14 +29,12 @@ void Artic_sea::run(const char *mesh_file){
 Artic_sea::~Artic_sea(){
     //Delete used memory
     delete pmesh;
-    delete fec_w, fec_psi, fec_v;
-    delete fespace_w, fespace_psi, fespace_v;
+    delete fec, fec_v;
+    delete fespace, fespace_v;
+    delete w, psi, v;
     delete g, f;
-    delete m, c, ct;
-    delete M, C, Ct;  
-    delete A;
-    delete w, w_boundary;
-    delete psi, psi_boundary;
-    delete v;
+    delete m, d, c;
+    delete M, D, C;  
+    delete w_aux, psi_aux;
     if (config.master) cout << "Memory deleted!\n";
 }

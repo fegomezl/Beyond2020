@@ -35,8 +35,12 @@ void Artic_sea::solve_system(){
 
     //Recover the solution on each proccesor
     w->Distribute(&(X.GetBlock(0)));
+    for (int ii = 0; ii < w->Size(); ii++)
+        (*w)(ii) += (*w_aux)(ii); 
     
     psi->Distribute(&(X.GetBlock(1)));
+    for (int ii = 0; ii < psi->Size(); ii++)
+        (*psi)(ii) += (*psi_aux)(ii); 
 
     v = new ParGridFunction(fespace_v);
     GradientGridFunctionCoefficient psi_grad(psi);

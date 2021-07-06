@@ -71,6 +71,10 @@ class Artic_sea{
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
+
+        //Boundary conditions
+        ParGridFunction *w_aux;
+        ParGridFunction *psi_aux;
 };
 
 extern double height;
