@@ -3,9 +3,8 @@
 void Artic_sea::output_results(){
     if (config.master){
     //Print general information of the program
-        cout << "\nSize(Psi): " << size_psi << "\n"
-             << "Size(W): " << size_w << "\n"
-             << "Total Size: " << size_w + size_psi << "\n"
+        cout << "\nScalar size: " << 2*size << "\n"
+             << "Vectorial size: " << size_v << "\n"
              << "Mesh Size: " << h_min << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"

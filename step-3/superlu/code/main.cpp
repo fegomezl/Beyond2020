@@ -4,7 +4,6 @@
 double height;
 double out_rad;
 double int_rad;
-double k = 1e-3;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters

@@ -37,22 +37,17 @@ class Artic_sea{
         //Output parameters
         int dim;
         int serial_refinements;
-        HYPRE_BigInt size_w;
-        HYPRE_BigInt size_psi;
+        HYPRE_BigInt size;
         HYPRE_BigInt size_v;
         double h_min;
-        double v_error;
-        double p_error;
 
         //Mesh objects
         ParMesh *pmesh;
 
-        FiniteElementCollection *fec_w;
-        FiniteElementCollection *fec_psi;
+        FiniteElementCollection *fec;
         FiniteElementCollection *fec_v;
 
-        ParFiniteElementSpace *fespace_w;
-        ParFiniteElementSpace *fespace_psi;
+        ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
 
         Array<int> block_offsets;
