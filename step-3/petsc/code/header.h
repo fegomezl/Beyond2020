@@ -27,7 +27,6 @@ class Artic_sea{
         ~Artic_sea();
     private:
         void make_grid(const char *mesh_file);
-        void boundary_conditions();
         void assemble_system();
         void solve_system();
         void output_results();

@@ -13,6 +13,8 @@ int main(int argc, char *argv[]){
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
+    MFEMInitializePetsc(NULL, NULL,"stokes_fieldsplit", NULL);
+
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
@@ -31,15 +33,6 @@ int main(int argc, char *argv[]){
                    "Finite element order (polynomial degree).");
     args.AddOption(&config.refinements, "-r", "--refinements",
                    "Number of total uniform refinements");
-    /*args.AddOption(&slu_colperm, "-cp", "--colperm",
-		   "SuperLU Column Permutation Method:  0-NATURAL, 1-MMD-ATA "
-		   "2-MMD_AT_PLUS_A, 3-COLAMD, 4-METIS_AT_PLUS_A, 5-PARMETIS "
-		   "6-ZOLTAN");
-    args.AddOption(&slu_rowperm, "-rp", "--rowperm",
-		   "SuperLU Row Permutation Method:  0-NOROWPERM, 1-LargeDiag");
-    args.AddOption(&slu_iterref, "-rp", "--rowperm",
-		   "SuperLU Iterative Refinement:  0-NOREFINE, 1-Single, "
-		   "2-Double, 3-Extra");*/
 
     //Check if parameters were read correctly
     args.Parse();

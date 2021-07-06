@@ -3,9 +3,6 @@
 //Boundary values for psi
 double boundary_psi(const Vector &x);
 
-//Boundary values for w
-double boundary_w(const Vector &x);
-
 //Right hand side of the equation
 double f_rhs(const Vector &x);
 
@@ -14,7 +11,7 @@ double porous_constant(const Vector &x);
 
 void Artic_sea::assemble_system(){
     //Define local coefficients
-  ConstantCoefficient boundary_w_coeff(10.0);
+    ConstantCoefficient boundary_w_coeff(0.);
     FunctionCoefficient boundary_psi_coeff(boundary_psi);
     ConstantCoefficient g_coeff(0.);
     FunctionCoefficient f_coeff(f_rhs);
@@ -22,19 +19,17 @@ void Artic_sea::assemble_system(){
     FunctionCoefficient eta_coeff(porous_constant);
 
     //Define grid functions and apply essential boundary conditions(?)
-    Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
-    Array<int> ess_tdof_list_w;
-    ess_bdr_w = 0; 
-    ess_bdr_w[0]  = ess_bdr_w[2]  = ess_bdr_w[3] = 1;
     w =  new ParGridFunction(fespace_w);
-    w->ProjectCoefficient(boundary_w_coeff);
+    Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
+    ess_bdr_w = 0; 
+    ess_bdr_w[1] = ess_bdr_w[2] = ess_bdr_w[3] = 20;
+    w->ProjectBdrCoefficient(g_coeff, ess_bdr_w);
     w->ParallelProject(x.GetBlock(0));
-    fespace_w->GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
     psi = new ParGridFunction(fespace_psi);
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
     ess_bdr_psi = 0; 
-    ess_bdr_psi[0] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
+    ess_bdr_psi[1] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
     psi->ProjectBdrCoefficient(boundary_psi_coeff, ess_bdr_psi);
     psi->ParallelProject(x.GetBlock(1));
 
@@ -99,11 +94,7 @@ void Artic_sea::assemble_system(){
 }
 
 double boundary_psi(const Vector &x){
-    return x(0)*10;
-}
-double boundary_w(const Vector &x)
-{
-  return 10.0;
+    return x(0);
 }
 
 double f_rhs(const Vector &x){                 
@@ -121,6 +112,6 @@ double porous_constant(const Vector &x){
     if (r_2 < pow(sigma, 2))
         result = 1e+6;
     else
-        result = 0.001;
+        result = 0.1;
     return -result;
 }
