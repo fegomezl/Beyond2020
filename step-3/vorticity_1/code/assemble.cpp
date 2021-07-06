@@ -15,23 +15,36 @@ void Artic_sea::assemble_system(){
     FunctionCoefficient boundary_psi_coeff(boundary_psi);
     ConstantCoefficient g_coeff(0.);
     FunctionCoefficient f_coeff(f_rhs);
-    ConstantCoefficient viscosity(-1.);
+    ProductCoefficient neg_f_coeff(-1., f_coeff);
+    ConstantCoefficient viscosity(1.);
+    ProductCoefficient neg_viscosity(-1., viscosity);
     FunctionCoefficient eta_coeff(porous_constant);
+    ProductCoefficient neg_eta_coeff(-1., eta_coeff);
 
     //Define grid functions and apply essential boundary conditions(?)
-    w =  new ParGridFunction(fespace_w);
+    Array<int> ess_tdof_list_w;
     Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
     ess_bdr_w = 0; 
     ess_bdr_w[1] = ess_bdr_w[2] = ess_bdr_w[3] = 1;
-    w->ProjectBdrCoefficient(g_coeff, ess_bdr_w);
-    w->ParallelProject(x.GetBlock(0));
+    fespace_w->GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
-    psi = new ParGridFunction(fespace_psi);
+    w =  new ParGridFunction;
+    w->MakeRef(fespace_w, x.GetBlock(0), 0);
+    w->ProjectBdrCoefficient(boundary_w_coeff, ess_bdr_w);
+    w->ParallelProject(x.GetBlock(0));
+    x.GetBlock(0).SyncAliasMemory(x);
+
+    Array<int> ess_tdof_list_psi;
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
     ess_bdr_psi = 0; 
     ess_bdr_psi[1] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
+    fespace_psi->GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
+
+    psi = new ParGridFunction;
+    psi->MakeRef(fespace_psi, x.GetBlock(1), 0);
     psi->ProjectBdrCoefficient(boundary_psi_coeff, ess_bdr_psi);
     psi->ParallelProject(x.GetBlock(1));
+    x.GetBlock(1).SyncAliasMemory(x);
 
     //Define the RHS
     g = new ParLinearForm;
@@ -44,7 +57,7 @@ void Artic_sea::assemble_system(){
 
     f = new ParLinearForm;
     f->Update(fespace_psi, b.GetBlock(1), 0);
-    f->AddDomainIntegrator(new DomainLFIntegrator(f_coeff));
+    f->AddDomainIntegrator(new DomainLFIntegrator(neg_f_coeff));
     f->Assemble();
     f->SyncAliasMemory(b);
     f->ParallelAssemble(B.GetBlock(1));
@@ -54,33 +67,38 @@ void Artic_sea::assemble_system(){
     m = new ParBilinearForm(fespace_w);
     m->AddDomainIntegrator(new MassIntegrator(viscosity));
     m->Assemble();
-    m->EliminateEssentialBC(ess_bdr_w, *w, *g);
+    m->EliminateEssentialBCFromDofs(ess_tdof_list_w);
     m->Finalize();
     M = m->ParallelAssemble();
-    (*M) *= -1.;
 
     d = new ParBilinearForm(fespace_psi);
-    d->AddDomainIntegrator(new DiffusionIntegrator(eta_coeff));
+    d->AddDomainIntegrator(new DiffusionIntegrator(neg_eta_coeff));
     d->Assemble();
-    d->EliminateEssentialBC(ess_bdr_psi, *psi, *f);
+    d->EliminateEssentialBCFromDofs(ess_tdof_list_psi);
     d->Finalize();
     D = d->ParallelAssemble();
 
     c = new ParMixedBilinearForm(fespace_psi, fespace_w);
-    c->AddDomainIntegrator(new MixedGradGradIntegrator(viscosity));
+    c->AddDomainIntegrator(new MixedGradGradIntegrator(neg_viscosity));
     c->Assemble();
-    c->EliminateTrialDofs(ess_bdr_psi, *psi, *f);
-    c->EliminateTestDofs(ess_bdr_w);
-    c->Finalize();
-    C = c->ParallelAssemble();
+    //c->EliminateTrialDofs(ess_bdr_psi, *psi, *g);
+    //c->EliminateTestDofs(ess_bdr_w);
+    //c->Finalize();
+    //C = c->ParallelAssemble();
+    OperatorHandle Ch;
+    c->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Ch);
+    C = Ch.Is<HypreParMatrix>();
 
     ct = new ParMixedBilinearForm(fespace_w, fespace_psi);
-    ct->AddDomainIntegrator(new MixedGradGradIntegrator(viscosity));
+    ct->AddDomainIntegrator(new MixedGradGradIntegrator(neg_viscosity));
     ct->Assemble();
-    ct->EliminateTrialDofs(ess_bdr_w, *w, *g);
-    ct->EliminateTestDofs(ess_bdr_psi);
-    ct->Finalize();
-    Ct = ct->ParallelAssemble();
+    //ct->EliminateTrialDofs(ess_bdr_w, *w, *f);
+    //ct->EliminateTestDofs(ess_bdr_psi);
+    //ct->Finalize();
+    //Ct = ct->ParallelAssemble();
+    OperatorHandle Cth;
+    ct->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Cth);
+    Ct = Cth.Is<HypreParMatrix>();
 
     //Create the complete bilinear operator:
     //
@@ -98,8 +116,7 @@ double boundary_psi(const Vector &x){
 }
 
 double f_rhs(const Vector &x){                 
-    double result = (out_rad - int_rad)/2 - x(0);
-    return -result;
+    return 1e+8*((out_rad - int_rad)/2 - x(0));
 }
 
 double porous_constant(const Vector &x){
@@ -110,8 +127,7 @@ double porous_constant(const Vector &x){
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     double result = 0.;
     if (r_2 < pow(sigma, 2))
-        result = 1e+6;
+        return 1e+6;
     else
-        result = 0.1;
-    return -result;
+        return 0.1;
 }

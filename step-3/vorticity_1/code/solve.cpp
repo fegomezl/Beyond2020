@@ -35,17 +35,15 @@ void Artic_sea::solve_system(){
     solver.SetPreconditioner(*Prec);
     solver.SetOperator(*A);
     solver.SetPrintLevel(1);
-    solver.SetAbsTol(1e-2);
+    solver.SetAbsTol(1e-6);
     solver.SetRelTol(1e-6);
-    solver.SetMaxIter(2000);
+    solver.SetMaxIter(1000);
     X = 0.;
     solver.Mult(B, X);
 
     //Recover the solution on each proccesor
-    w->MakeRef(fespace_w, x.GetBlock(0), 0);
     w->Distribute(&(X.GetBlock(0)));
 
-    psi->MakeRef(fespace_psi, x.GetBlock(1), 0);
     psi->Distribute(&(X.GetBlock(1)));
 
     v = new ParGridFunction(fespace_v);
