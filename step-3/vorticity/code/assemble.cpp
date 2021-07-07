@@ -1,5 +1,11 @@
 #include "header.h"
 
+//Temperature field
+double temperature_f(const Vector &x);
+
+//Right hand side of the equation
+double f_rhs(const Vector &x);
+
 //Boundary values for w
 double scaled_boundary_w(const Vector &x);
 
@@ -10,19 +16,20 @@ double scaled_boundary_psi(const Vector &x);
 
 void scaled_boundary_gradpsi(const Vector &x, Vector &f);
 
-//Right hand side of the equation
-double f_rhs(const Vector &x);
-
-//Constant to the brinkman term
-double porous_constant(const Vector &x);
-
 void Artic_sea::assemble_system(){
-    double viscosity = 1.;
+    //Calculate the porus coefficient
+    theta = new ParGridFunction(fespace);
+    FunctionCoefficient temperature(temperature_f);
+    theta->ProjectCoefficient(temperature);
+    for (int ii = 0; ii < theta->Size(); ii++){
+        (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
+        (*theta)(ii) = config.cold_porosity + (1 - pow((*theta)(ii), 2))/(pow((*theta)(ii), 3) + config.cold_porosity);
+    }
+    GridFunctionCoefficient eta(theta);
 
     //Define local coefficients
-    ConstantCoefficient mu(viscosity);
+    ConstantCoefficient mu(config.viscosity);
     ProductCoefficient neg_mu(-1., mu);
-    FunctionCoefficient eta(porous_constant);
     ProductCoefficient neg_eta(-1., eta);
 
     FunctionCoefficient f_coeff(f_rhs);
@@ -116,23 +123,26 @@ void Artic_sea::assemble_system(){
     C = Ch.Is<HypreParMatrix>();
 }
 
-double f_rhs(const Vector &x){                 
-    return 0.;
-}
-
-double porous_constant(const Vector &x){
+//Temperature field
+double temperature_f(const Vector &x){
     double mid_x = (out_rad + int_rad)/2;
     double mid_y = height/2;
     double sigma = (out_rad - int_rad)/10;
 
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    double result = 0.;
     if (r_2 < pow(sigma, 2))
-        return 1e+6;
+        return -10;
     else
-        return 0.1;
+        return 10;
+    
 }
 
+//Right hand side of the equation
+double f_rhs(const Vector &x){                 
+    return 0.;
+}
+
+//Boundary values for w
 double boundary_w(const Vector &x){
     return 0.;
 }
@@ -142,6 +152,7 @@ void boundary_gradw(const Vector &x, Vector &f){
     f(1) = 0.;
 }
 
+//Boundary values for psi
 double boundary_psi(const Vector &x){
     return x(0);
 }
@@ -151,6 +162,7 @@ void boundary_gradpsi(const Vector &x, Vector &f){
     f(1) = 0.;
 }
 
+//Scaling for the boundary conditions
 double left_border(const Vector &x){
     double width = out_rad - int_rad;
     return 0.5*(1 - tanh((5*border/width)*(int_rad + width/border - x(0))));
