@@ -4,8 +4,8 @@ settings/square.geo #Mesh_script
 10      #Rmax
 0       #Zmin
 10      #Zmax
-30      #Rcells
-30      #Zcells
+15      #Rcells
+15      #Zcells
 
 Simulation parameters
 0.0001  #Dt
@@ -13,7 +13,7 @@ Simulation parameters
 10      #Visualization_steps
 
 FE parameters
-2          #Refinements
+4          #Refinements
 1          #Order
 12         #ODE_solver_type
 0          #abstol(Conduction)
