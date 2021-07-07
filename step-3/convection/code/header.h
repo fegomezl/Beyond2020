@@ -40,7 +40,7 @@ class Conduction_Operator : public TimeDependentOperator{
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
         void SetParameters(const Vector &X);
-        void UpdateVelocity(const HypreParVector &psi);
+        void UpdateVelocity(const Vector &psi);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
@@ -90,49 +90,6 @@ class Conduction_Operator : public TimeDependentOperator{
         ScalarVectorProductCoefficient dt_coeff_rCLV;
 };
 
-class Flow_Operator{
-  public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, const ParGridFunction *x_T);
-    void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const ParGridFunction *x_T);
-    void Update_T(Config config, const ParGridFunction *x_T);
-    ParGridFunction *psi;
-    ~Flow_Operator();
-
-  protected:
-
-        //Mesh objects
-        ParFiniteElementSpace &fespace;
-
-        Array<int> block_offsets;
-        Array<int> block_true_offsets;
-
-        //System objects
-        BlockVector y;
-        BlockVector b;
-        ParLinearForm *f;
-        ParLinearForm *g;
-        ParBilinearForm *m;
-        ParBilinearForm *d;
-        ParMixedBilinearForm *c;
-        ParMixedBilinearForm *ct;
-
-        //Solver objects
-        BlockVector Y;
-        BlockVector B;
-        HypreParMatrix *M;
-        HypreParMatrix *D;
-        HypreParMatrix *C;
-
-        //TransposeOperator *Ct;
-        HypreParMatrix *Ct;
-        BlockOperator *A;
-
-        ParGridFunction *w;
-
-        ConstantCoefficient bg;
-
-};
-
 class Artic_sea{
     public:
         Artic_sea(Config config);
@@ -174,11 +131,6 @@ class Artic_sea{
         ARKStepSolver *arkode;
 
         ParaViewDataCollection *paraview_out;
-
-        //Flow_Operator objects
-        Flow_Operator *flow_oper;
-        ParGridFunction *x_psi;
-        HypreParVector *X_Psi;
 };
 
 extern double r_f(const Vector &x);

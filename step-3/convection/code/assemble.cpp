@@ -19,13 +19,6 @@ void Artic_sea::assemble_system(){
     oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *X_T);
     x_T->SetFromTrueDofs(*X_T);
 
-    //Define solution psi
-    x_psi = new ParGridFunction(fespace);
-    X_Psi = new HypreParVector(fespace);
-
-    flow_oper = new Flow_Operator(config, *fespace, pmesh->bdr_attributes.Max(), x_T);
-    flow_oper->Solve(config, X_Psi, x_psi, x_T);
-
     //Set the ODE solver type
     switch (config.ode_solver_type){
         // MFEM explicit methods
@@ -76,7 +69,6 @@ void Artic_sea::assemble_system(){
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x_T);
-    paraview_out->RegisterField("Stream_Function", flow_oper->psi);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();
@@ -92,6 +84,7 @@ void Artic_sea::assemble_system(){
              << "Progress"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
+
 }
 
 double r_f(const Vector &x){
