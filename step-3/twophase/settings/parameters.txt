@@ -1,0 +1,32 @@
+Mesh Parameters
+settings/square.geo #Mesh_script
+0       #Rmin
+10      #Rmax
+0       #Zmin
+10      #Zmax
+30      #Rcells
+30      #Zcells
+
+Simulation parameters
+0.0001  #Dt
+0.05     #Final_time
+10      #Visualization_steps
+
+FE parameters
+2          #Refinements
+1          #Order
+12         #ODE_solver_type
+0          #abstol(Conduction)
+0.00000001 #reltol(Conduction)
+100        #iter(Conduction)
+0.00001    #abstol(SUNDIALS)
+0.00001    #reltol(SUNDIALS)
+
+Physical parameters
+0       #Fusion_temperature
+9       #n_DeltaT
+4.22    #Liquid_volumetric_heat_capacity
+1.88    #Solid_volumetric_heat_capacity
+33.7    #Liquid_thermal_conductivity
+133.1   #Solid_thermal_conductivity
+302.3   #Volumetric_latent_heat
