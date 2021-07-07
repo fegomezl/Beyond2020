@@ -21,5 +21,9 @@
 <Piece Source="proc000001.vtu"/>
 <Piece Source="proc000002.vtu"/>
 <Piece Source="proc000003.vtu"/>
+<Piece Source="proc000004.vtu"/>
+<Piece Source="proc000005.vtu"/>
+<Piece Source="proc000006.vtu"/>
+<Piece Source="proc000007.vtu"/>
 </PUnstructuredGrid>
 </VTKFile>
