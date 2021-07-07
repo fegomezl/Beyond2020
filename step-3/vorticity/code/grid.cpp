@@ -51,9 +51,6 @@ void Artic_sea::make_grid(const char *mesh_file){
     block_true_offsets.PartialSum();
 
     //Initialize the corresponding vectors
-    const char *device_config = "cpu";
-    Device device(device_config);
-    MemoryType mt = device.GetMemoryType();
-    x.Update(block_offsets, mt); X.Update(block_true_offsets, mt);
-    b.Update(block_offsets, mt); B.Update(block_true_offsets, mt);
+    x.Update(block_offsets); X.Update(block_true_offsets);
+    b.Update(block_offsets); B.Update(block_true_offsets);
 }
