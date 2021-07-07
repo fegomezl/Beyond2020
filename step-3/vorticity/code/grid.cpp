@@ -38,12 +38,6 @@ void Artic_sea::make_grid(const char *mesh_file){
     fec_v = new RT_FECollection(config.order, dim);
     fespace_v = new ParFiniteElementSpace(pmesh, fec_v);
     size_v = fespace_v->GlobalTrueVSize();
-    
-    //Create the block offsets
-    block_offsets[0] = 0;
-    block_offsets[1] = fespace->GetVSize();
-    block_offsets[2] = fespace->GetVSize();
-    block_offsets.PartialSum();
 
     block_true_offsets[0] = 0;
     block_true_offsets[1] = fespace->TrueVSize();
@@ -51,9 +45,6 @@ void Artic_sea::make_grid(const char *mesh_file){
     block_true_offsets.PartialSum();
 
     //Initialize the corresponding vectors
-    const char *device_config = "cpu";
-    Device device(device_config);
-    MemoryType mt = device.GetMemoryType();
-    x.Update(block_offsets, mt); X.Update(block_true_offsets, mt);
-    b.Update(block_offsets, mt); B.Update(block_true_offsets, mt);
+    X.Update(block_true_offsets);
+    B.Update(block_true_offsets);
 }

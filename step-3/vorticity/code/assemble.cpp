@@ -71,27 +71,23 @@ void Artic_sea::assemble_system(){
     fespace->GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
 
     //Define grid functions
-    w =  new ParGridFunction;
+    w =  new ParGridFunction(fespace);
     w_aux = new ParGridFunction(fespace);
-    w->MakeRef(fespace, x.GetBlock(0), 0);
     w_aux->ProjectCoefficient(w_coeff);
 
-    psi = new ParGridFunction;
+    psi = new ParGridFunction(fespace);
     psi_aux = new ParGridFunction(fespace);
-    psi->MakeRef(fespace, x.GetBlock(1), 0);
     psi_aux->ProjectCoefficient(psi_coeff);
 
     //Define the RHS
-    g = new ParLinearForm;
-    g->Update(fespace, b.GetBlock(0), 0);
+    g = new ParLinearForm(fespace);
     g->AddDomainIntegrator(new DomainLFIntegrator(neg_mu_w));
     g->AddDomainIntegrator(new DomainLFGradIntegrator(mu_psi_grad));
     g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad));
     g->Assemble();
     g->ParallelAssemble(B.GetBlock(0));
 
-    f = new ParLinearForm;
-    f->Update(fespace, b.GetBlock(1), 0);
+    f = new ParLinearForm(fespace);
     f->AddDomainIntegrator(new DomainLFIntegrator(neg_f_coeff));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));

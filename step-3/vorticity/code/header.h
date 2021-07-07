@@ -56,7 +56,6 @@ class Artic_sea{
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
 
-        Array<int> block_offsets;
         Array<int> block_true_offsets;
 
         //System objects
@@ -67,9 +66,6 @@ class Artic_sea{
         ParGridFunction *w_aux;
         ParGridFunction *psi_aux;
         ParGridFunction *theta;
-
-        BlockVector x;
-        BlockVector b;
 
         ParLinearForm *g;
         ParLinearForm *f;

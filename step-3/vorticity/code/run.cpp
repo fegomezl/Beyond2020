@@ -10,7 +10,7 @@ Artic_sea::Artic_sea(Config config):
     pmesh(NULL),
     fec(NULL), fec_v(NULL),
     fespace(NULL), fespace_v(NULL),
-    block_offsets(3), block_true_offsets(3),
+    block_true_offsets(3),
     w(NULL), psi(NULL), v(NULL),
     w_aux(NULL), psi_aux(NULL), theta(NULL),
     g(NULL), f(NULL),
