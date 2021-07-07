@@ -85,6 +85,10 @@ class Artic_sea{
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
+
+       //convergence analisys objects
+        double actual_error_w=0;
+        double actual_error_psi=0;
 };
 
 extern double height;
@@ -92,3 +96,5 @@ extern double int_rad;
 extern double out_rad;
 
 extern double border;
+extern double exact_w(const Vector &x);
+extern double exact_psi(const Vector &x);

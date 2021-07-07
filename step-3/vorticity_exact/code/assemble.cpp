@@ -129,6 +129,7 @@ double temperature_f(const Vector &x){
     double mid_y = height/2;
     double sigma = (out_rad - int_rad)/10;
 
+    return 10;
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     if (r_2 < pow(sigma, 2))
         return -10;
@@ -154,12 +155,12 @@ void boundary_gradw(const Vector &x, Vector &f){
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return x(0);
+  return x(0)*x(1);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = 1.;
-    f(1) = 0.;
+  f(0) = x(1);
+  f(1) = x(0);
 }
 
 //Scaling for the boundary conditions

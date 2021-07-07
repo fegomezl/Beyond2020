@@ -3,13 +3,14 @@
 void Artic_sea::output_results(){
     if (config.master){
     //Print general information of the program
-        cout << "\nSize(Psi): " << size_psi << "\n"
-             << "Size(W): " << size_w << "\n"
-             << "Total Size: " << size_w + size_psi << "\n"
+        cout << "\nScalar size: " << 2*size << "\n"
+             << "Vectorial size: " << size_v << "\n"
              << "Mesh Size: " << h_min << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
-             << "Total refinements: " << config.refinements << "\n";
+             << "Total refinements: " << config.refinements << "\n"
+	     << "W total mean error: " << actual_error_w/(height*(out_rad-int_rad)) << "\n"
+	     << "Psi total mean error: " << actual_error_psi/(height*(out_rad-int_rad)) << "\n";
     }
 
     //Print visual results to Paraview
