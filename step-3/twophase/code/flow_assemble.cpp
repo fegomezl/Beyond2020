@@ -12,7 +12,7 @@ double porous_constant(const Vector &x);
 //r as a vector function
 void r_vec(const Vector &x, Vector &y);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, const ParGridFunction *x_T):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, const HypreParVector *X_T):
   fespace(fespace),
   block_offsets(3), block_true_offsets(3),
   f(NULL), g(NULL),
@@ -58,7 +58,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   w->ProjectBdrCoefficient(g_coeff, ess_bdr_w);
   w->ParallelProject(y.GetBlock(1));
 
-  this->Update_T(config, x_T);
+  this->Update_T(config,X_T);
 
   g = new ParLinearForm;
   g->Update(&fespace, b.GetBlock(1), 0);
@@ -139,7 +139,7 @@ void r_vec(const Vector &x, Vector &y){
   y(1)=0;
 }
 
-void Flow_Operator::Update_T(Config config, const ParGridFunction *x_T){
+void Flow_Operator::Update_T(Config config, const HypreParVector *X_T){
 
   //Create the temperature coeffcient (rF)
   /*GradientGridFunctionCoefficient delta_T(x_T);
