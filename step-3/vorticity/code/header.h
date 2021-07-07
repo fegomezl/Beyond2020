@@ -12,9 +12,15 @@ struct Config{
     //Passing parameters
     bool master;
     int nproc;
+
     int order;
     int refinements;
     bool last;
+
+    double T_f;
+    double invDeltaT;
+    double viscosity;
+    double cold_porosity;
 };
 
 using namespace std;
@@ -57,10 +63,17 @@ class Artic_sea{
         ParGridFunction *w;
         ParGridFunction *psi;
         ParGridFunction *v;
+
+        ParGridFunction *w_aux;
+        ParGridFunction *psi_aux;
+        ParGridFunction *theta;
+
         BlockVector x;
         BlockVector b;
+
         ParLinearForm *g;
         ParLinearForm *f;
+
         ParBilinearForm *m;
         ParBilinearForm *d;
         ParMixedBilinearForm *c;
@@ -68,13 +81,10 @@ class Artic_sea{
         //Solver objects
         BlockVector X;
         BlockVector B;
+
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
-
-        //Boundary conditions
-        ParGridFunction *w_aux;
-        ParGridFunction *psi_aux;
 };
 
 extern double height;
