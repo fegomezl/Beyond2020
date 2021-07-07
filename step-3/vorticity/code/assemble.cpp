@@ -1,9 +1,14 @@
 #include "header.h"
 
-double boundary_w(const Vector &x);
-void boundary_gradw(const Vector &x, Vector &f);
-double boundary_psi(const Vector &x);
-void boundary_gradpsi(const Vector &x, Vector &f);
+//Boundary values for w
+double scaled_boundary_w(const Vector &x);
+
+void scaled_boundary_gradw(const Vector &x, Vector &f);
+
+//Boundary values for psi
+double scaled_boundary_psi(const Vector &x);
+
+void scaled_boundary_gradpsi(const Vector &x, Vector &f);
 
 //Right hand side of the equation
 double f_rhs(const Vector &x);
@@ -23,14 +28,14 @@ void Artic_sea::assemble_system(){
     FunctionCoefficient f_coeff(f_rhs);
     ProductCoefficient neg_f_coeff(-1., f_coeff);
 
-    FunctionCoefficient w_coeff(boundary_w);
-    VectorFunctionCoefficient w_grad(dim, boundary_gradw);
+    FunctionCoefficient w_coeff(scaled_boundary_w);
+    VectorFunctionCoefficient w_grad(dim, scaled_boundary_gradw);
     ProductCoefficient neg_mu_w(neg_mu, w_coeff);
     ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
     ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
 
-    FunctionCoefficient psi_coeff(boundary_psi);
-    VectorFunctionCoefficient psi_grad(dim, boundary_gradpsi);
+    FunctionCoefficient psi_coeff(scaled_boundary_psi);
+    VectorFunctionCoefficient psi_grad(dim, scaled_boundary_gradpsi);
     ScalarVectorProductCoefficient mu_psi_grad(mu, psi_grad);
     ScalarVectorProductCoefficient neg_mu_psi_grad(neg_mu, psi_grad);
     ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
@@ -72,19 +77,19 @@ void Artic_sea::assemble_system(){
     //Define the RHS
     g = new ParLinearForm;
     g->Update(fespace, b.GetBlock(0), 0);
-     g->AddDomainIntegrator(new DomainLFIntegrator(neg_mu_w));
-     g->AddDomainIntegrator(new DomainLFGradIntegrator(mu_psi_grad));
-     g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad));
+    g->AddDomainIntegrator(new DomainLFIntegrator(neg_mu_w));
+    g->AddDomainIntegrator(new DomainLFGradIntegrator(mu_psi_grad));
+    g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad));
     g->Assemble();
     g->ParallelAssemble(B.GetBlock(0));
 
     f = new ParLinearForm;
     f->Update(fespace, b.GetBlock(1), 0);
     f->AddDomainIntegrator(new DomainLFIntegrator(neg_f_coeff));
-     f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
-     f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
-     f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad));
-     f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad));
+    f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
+    f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
+    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad));
+    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad));
     f->Assemble();
     f->ParallelAssemble(B.GetBlock(1));
 
@@ -111,6 +116,23 @@ void Artic_sea::assemble_system(){
     C = Ch.Is<HypreParMatrix>();
 }
 
+double f_rhs(const Vector &x){                 
+    return 0.;
+}
+
+double porous_constant(const Vector &x){
+    double mid_x = (out_rad + int_rad)/2;
+    double mid_y = height/2;
+    double sigma = (out_rad - int_rad)/10;
+
+    double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
+    double result = 0.;
+    if (r_2 < pow(sigma, 2))
+        return 1e+6;
+    else
+        return 0.1;
+}
+
 double boundary_w(const Vector &x){
     return 0.;
 }
@@ -129,19 +151,66 @@ void boundary_gradpsi(const Vector &x, Vector &f){
     f(1) = 0.;
 }
 
-double f_rhs(const Vector &x){                 
-    return 0.;
+double left_border(const Vector &x){
+    double width = out_rad - int_rad;
+    return 0.5*(1 - tanh((5*border/width)*(int_rad + width/border - x(0))));
 }
 
-double porous_constant(const Vector &x){
-    double mid_x = (out_rad + int_rad)/2;
-    double mid_y = height/2;
-    double sigma = (out_rad - int_rad)/10;
+double right_border(const Vector &x){
+    double width = out_rad - int_rad;
+    return 0.5*(1 - tanh((5*border/width)*(x(0) - out_rad + width/border)));
+}
 
-    double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    double result = 0.;
-    if (r_2 < pow(sigma, 2))
-        return 1e+6;
-    else
-        return 0.1;
+double lower_border(const Vector &x){
+    return 0.5*(1 - tanh((5*border/height)*(height/border - x(1))));
+}
+
+double upper_border(const Vector &x){
+    return 0.5*(1 - tanh((5*border/height)*(x(1) - height + height/border)));
+}
+
+double left_grad(const Vector &x){
+    double width = out_rad - int_rad;
+    return (2.5*border/width)*(1 - pow(tanh((5*border/width)*(int_rad + width/border - x(0))), 2));
+}
+
+double right_grad(const Vector &x){
+    double width = out_rad - int_rad;
+    return -(2.5*border/width)*(1 - pow(tanh((5*border/width)*(x(0) - out_rad + width/border)), 2));
+}
+
+double lower_grad(const Vector &x){
+    return (2.5*border/height)*(1 - pow(tanh((5*border/height)*(height/border - x(1))), 2));
+}
+
+double upper_grad(const Vector &x){
+    return -(2.5*border/height)*(1 - pow(tanh((5*border/height)*(x(1) - height + height/border)), 2));
+}
+
+double scaled_boundary_w(const Vector &x){
+    return (1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x))*boundary_w(x);
+}
+
+void scaled_boundary_gradw(const Vector &x, Vector &f){
+    boundary_gradw(x, f);
+
+    f(0) *= 1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x);
+    f(1) *= 1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x);
+
+    f(0) -= boundary_w(x)*(left_grad(x)*right_border(x) + left_border(x)*right_grad(x))*lower_border(x)*upper_border(x);
+    f(1) -= boundary_w(x)*left_border(x)*right_border(x)*(lower_grad(x)*upper_border(x) + lower_border(x)*upper_grad(x));
+}
+
+double scaled_boundary_psi(const Vector &x){
+    return (1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x))*boundary_psi(x);
+}
+
+void scaled_boundary_gradpsi(const Vector &x, Vector &f){
+    boundary_gradpsi(x, f);
+
+    f(0) *= 1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x);
+    f(1) *= 1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x);
+
+    f(0) -= boundary_psi(x)*(left_grad(x)*right_border(x) + left_border(x)*right_grad(x))*lower_border(x)*upper_border(x);
+    f(1) -= boundary_psi(x)*left_border(x)*right_border(x)*(lower_grad(x)*upper_border(x) + lower_border(x)*upper_grad(x));
 }

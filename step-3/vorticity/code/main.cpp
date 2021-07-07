@@ -5,6 +5,8 @@ double height;
 double out_rad;
 double int_rad;
 
+double border = 10;
+
 int main(int argc, char *argv[]){
     //Define MPI parameters
     int nproc = 0, pid = 0;

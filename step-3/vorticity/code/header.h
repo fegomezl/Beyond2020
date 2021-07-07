@@ -80,3 +80,5 @@ class Artic_sea{
 extern double height;
 extern double int_rad;
 extern double out_rad;
+
+extern double border;
