@@ -35,7 +35,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
+	$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
 						-o $(ORDER) -r $(REF) -T_f $(T_FU) -c_s $(C_S) -c_l $(C_L)\
 						-k_s $(K_S) -k_l $(K_L) -L $(L) -DeltaT $(DELTA_T)\
 						-dt $(DT) -t_f $(T_FI) -v_s $(VIS) -ode $(ODE) -reltol $(RELT) -abstol $(ABST)
