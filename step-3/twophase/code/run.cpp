@@ -34,6 +34,9 @@ Flow_Operator::~Flow_Operator(){
     delete M, D, C, Ct;
     delete A;
     delete psi, w;
+    delete psi_aux, w_aux, theta;
+    if(f_integrator) delete f_integrator;
+    if(x_T) delete x_T;
 }
 
 Artic_sea::~Artic_sea(){

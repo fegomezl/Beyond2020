@@ -33,6 +33,8 @@ struct Config{
     double c_l, c_s;
     double k_l, k_s;
     double L;
+    double viscosity;
+    double cold_porosity;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -92,7 +94,7 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
   public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, const HypreParVector *X_T);
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, const HypreParVector *X_T);
     void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T);
     void Update_T(Config config, const HypreParVector *X_T);
     ParGridFunction *psi;
@@ -104,12 +106,9 @@ class Flow_Operator{
         //Mesh objects
         ParFiniteElementSpace &fespace;
 
-        Array<int> block_offsets;
         Array<int> block_true_offsets;
 
         //System objects
-        BlockVector y;
-        BlockVector b;
         ParLinearForm *f;
         ParLinearForm *g;
         ParBilinearForm *m;
@@ -131,8 +130,11 @@ class Flow_Operator{
        //Boundary conditions
        ParGridFunction *w_aux;
        ParGridFunction *psi_aux;
+       ParGridFunction *theta;
 
-        ConstantCoefficient bg;
+       ConstantCoefficient bg;
+       DomainLFIntegrator *f_integrator;
+       ParGridFunction *x_T;
 
 };
 
@@ -188,4 +190,5 @@ extern double r_f(const Vector &x);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
-extern double Rmin, Rmax, Zmin, Zmax;
+extern double Rmin, Rmax, Zmin, Zmax, height;
+extern double border;

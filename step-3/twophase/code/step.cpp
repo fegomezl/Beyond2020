@@ -9,6 +9,7 @@ void Artic_sea::time_step(){
     oper_T->SetParameters(*X_T);
     ode_solver->Step(*X_T, t, dt);
 
+    //Solve the flow problem
     flow_oper->Solve(config, X_Psi, x_psi, X_T);
 
     //Update visualization steps

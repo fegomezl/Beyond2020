@@ -6,6 +6,10 @@ double Zmin;
 double Rmax;
 double Zmax;
 
+//Size of the BC border
+double border;
+double height;
+
 int main(int argc, char *argv[]){
     //Define MPI parameters
     int nproc = 0, pid = 0;
@@ -16,7 +20,7 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-    int nDeltaT = 0;
+    int nDeltaT, nCold_porosity;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -29,6 +33,8 @@ int main(int argc, char *argv[]){
                    "Minimum Z border.");
     args.AddOption(&Zmax, "-Zmax", "--Zmax",
                    "Maximum Z border.");
+    args.AddOption(&border, "-b", "--border",
+                   "Border size for the BCs in fraction (1/x).");
 
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
@@ -69,6 +75,10 @@ int main(int argc, char *argv[]){
                    "Solid thermal conductivity.");
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
+    args.AddOption(&config.viscosity, "-v", "--viscosity",
+                   "Kinematic viscosity of the material.");
+    args.AddOption(&nCold_porosity, "-ct", "--cold_porosity",
+                   "Value of the porosity on the solid domain (10^(n)).");
 
     //Check if parameters were read correctly
     args.Parse();
@@ -79,8 +89,11 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
+    height = Zmax - Zmin;
+
     //Run the program for different refinements
     config.invDeltaT = pow(10, nDeltaT);
+    config.cold_porosity = pow(10, -nCold_porosity);
     Artic_sea artic_sea(config);
     artic_sea.run(mesh_file);
 

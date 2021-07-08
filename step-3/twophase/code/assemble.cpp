@@ -23,7 +23,7 @@ void Artic_sea::assemble_system(){
     x_psi = new ParGridFunction(fespace);
     X_Psi = new HypreParVector(fespace);
 
-    flow_oper = new Flow_Operator(config, *fespace, pmesh->bdr_attributes.Max(), X_T);
+    flow_oper = new Flow_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), X_T);
     flow_oper->Solve(config, X_Psi, x_psi, X_T);
 
     //Set the ODE solver type
