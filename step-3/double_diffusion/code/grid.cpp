@@ -30,4 +30,13 @@ void Artic_sea::make_grid(const char *mesh_file){
     fec = new H1_FECollection(config.order, dim);
     fespace = new ParFiniteElementSpace(pmesh, fec);
     size = fespace->GlobalTrueVSize();
+
+    //Create the block offsets
+    block_true_offsets[0] = 0;
+    block_true_offsets[1] = fespace->TrueVSize();
+    block_true_offsets[2] = fespace->TrueVSize();
+    block_true_offsets.PartialSum();
+
+    //Initialize the corresponding vectors
+    X.Update(block_true_offsets);
 }
