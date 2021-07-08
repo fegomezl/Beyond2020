@@ -43,7 +43,6 @@ class Conduction_Operator : public TimeDependentOperator{
         void UpdateVelocity(const Vector &psi);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
 	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
