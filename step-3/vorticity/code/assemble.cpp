@@ -100,14 +100,14 @@ void Artic_sea::assemble_system(){
     m = new ParBilinearForm(fespace);
     m->AddDomainIntegrator(new MassIntegrator(mu));
     m->Assemble();
-    m->EliminateEssentialBCFromDofs(ess_tdof_list_w, *w, *g);
+    m->EliminateEssentialBCFromDofs(ess_tdof_list_w);
     m->Finalize();
     M = m->ParallelAssemble();
 
     d = new ParBilinearForm(fespace);
     d->AddDomainIntegrator(new DiffusionIntegrator(eta));
     d->Assemble();
-    d->EliminateEssentialBCFromDofs(ess_tdof_list_psi, *psi, *f);
+    d->EliminateEssentialBCFromDofs(ess_tdof_list_psi);
     d->Finalize();
     D = d->ParallelAssemble();
 
