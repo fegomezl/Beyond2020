@@ -140,27 +140,27 @@ double temperature_f(const Vector &x){
 
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    return 0.;
+  return -12*x(0)*x(0)+12*x(1)*x(1);
 }
 
 //Boundary values for w
 double boundary_w(const Vector &x){
-    return 0.;
+    return 12*x(1)*x(1)-12*x(0)*x(0);
 }
 
 void boundary_gradw(const Vector &x, Vector &f){
-    f(0) = 0.;
-    f(1) = 0.;
+  f(0) = -24*x(0);
+  f(1) = 24*x(1);
 }
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-  return x(0)*x(1);
+  return pow(x(0),4)-pow(x(1),4);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-  f(0) = x(1);
-  f(1) = x(0);
+  f(0) = 4*pow(x(0),3);
+  f(1) = -4*pow(x(1),3);
 }
 
 //Scaling for the boundary conditions
