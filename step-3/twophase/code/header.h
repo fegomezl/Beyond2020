@@ -95,8 +95,8 @@ class Conduction_Operator : public TimeDependentOperator{
 class Flow_Operator{
   public:
     Flow_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, const HypreParVector *X_T);
-    void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T);
-    void Update_T(Config config, const HypreParVector *X_T);
+    void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim);
+    void Update_T(Config config, const HypreParVector *X_T, int dim);
     ParGridFunction *psi;
     ParGridFunction *w;
     ~Flow_Operator();

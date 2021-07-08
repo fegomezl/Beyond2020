@@ -116,11 +116,9 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   ProductCoefficient bg_deltaT(bg, r_deltaT);
   FunctionCoefficient r(r_f);
   ProductCoefficient rF(bg_deltaT, r);
-  f_integrator = new DomainLFIntegrator(rF);
 
-  if(f) delete f;
   f = new ParLinearForm(&fespace);
-  f->AddDomainIntegrator(f_integrator);
+  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
   f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
   f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
   f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad));
@@ -128,7 +126,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   f->Assemble();
   f->ParallelAssemble(B.GetBlock(1));
 
-  this->Update_T(config, X_T);
+  this->Update_T(config, X_T, dim);
 
   //Define bilinear forms of the system
   m = new ParBilinearForm(&fespace);
@@ -153,24 +151,70 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   C = Ch.Is<HypreParMatrix>();
 }
 
-void Flow_Operator::Update_T(Config config, const HypreParVector *X_T){
+void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim){
 
   //Create the temperature coeffcient (rF)
-  x_T->SetFromTrueDofs(*X_T);
+  /*x_T->SetFromTrueDofs(*X_T);
   GradientGridFunctionCoefficient delta_T(x_T);
   VectorFunctionCoefficient rcap(2, r_vec);
   InnerProductCoefficient r_deltaT(rcap, delta_T);
   ProductCoefficient bg_deltaT(bg, r_deltaT);
   FunctionCoefficient r(r_f);
-  ProductCoefficient rF(bg_deltaT, r);
+  ProductCoefficient rF(bg_deltaT, r);*/
 
-  if(f_integrator) delete f_integrator;
-  f_integrator = new DomainLFIntegrator(rF);
+  //if(f_integrator) delete f_integrator;
+  //f_integrator = new DomainLFIntegrator(rF);
 
-  (f->GetDLFI())[0]=f_integrator;
+  //(f->GetDLFI())[0]=f_integrator;
 
   //f->Assemble();
   //f->ParallelAssemble(B.GetBlock(1));*/
+
+  if(theta) delete theta;
+  theta = new ParGridFunction(&fespace);
+  FunctionCoefficient temperature(temperature_f);
+  theta->ProjectCoefficient(temperature);
+  for (int ii = 0; ii < theta->Size(); ii++){
+      (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
+      (*theta)(ii) = config.cold_porosity + (1 - pow((*theta)(ii), 2))/(pow((*theta)(ii), 3) + config.cold_porosity);
+  }
+  GridFunctionCoefficient eta(theta);
+
+  //Define local coefficients
+  ConstantCoefficient mu(config.viscosity);
+  ProductCoefficient neg_mu(-1., mu);
+  ProductCoefficient neg_eta(-1., eta);
+
+  FunctionCoefficient w_coeff(scaled_boundary_w);
+  VectorFunctionCoefficient w_grad(dim, scaled_boundary_gradw);
+  ProductCoefficient neg_mu_w(neg_mu, w_coeff);
+  ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
+  ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
+
+  FunctionCoefficient psi_coeff(scaled_boundary_psi);
+  VectorFunctionCoefficient psi_grad(dim, scaled_boundary_gradpsi);
+  ScalarVectorProductCoefficient mu_psi_grad(mu, psi_grad);
+  ScalarVectorProductCoefficient neg_mu_psi_grad(neg_mu, psi_grad);
+  ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
+  ScalarVectorProductCoefficient neg_eta_psi_grad(neg_eta, psi_grad);
+
+  x_T->SetFromTrueDofs(*X_T);
+  GradientGridFunctionCoefficient delta_T(x_T);
+  VectorFunctionCoefficient rcap(dim, r_vec);
+  InnerProductCoefficient r_deltaT(rcap, delta_T);
+  ProductCoefficient bg_deltaT(bg, r_deltaT);
+  FunctionCoefficient r(r_f);
+  ProductCoefficient rF(bg_deltaT, r);
+
+  if(f) delete f;
+  f = new ParLinearForm(&fespace);
+  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
+  f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
+  f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
+  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad));
+  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad));
+  f->Assemble();
+  f->ParallelAssemble(B.GetBlock(1));
 }
 
 

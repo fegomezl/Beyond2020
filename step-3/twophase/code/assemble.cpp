@@ -24,7 +24,7 @@ void Artic_sea::assemble_system(){
     X_Psi = new HypreParVector(fespace);
 
     flow_oper = new Flow_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), X_T);
-    flow_oper->Solve(config, X_Psi, x_psi, X_T);
+    flow_oper->Solve(config, X_Psi, x_psi, X_T, dim);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){

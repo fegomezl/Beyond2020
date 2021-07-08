@@ -1,8 +1,8 @@
 #include "header.h"
 
-void Flow_Operator::Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T){
+void Flow_Operator::Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim){
 
-    this->Update_T(config, X_T);
+    this->Update_T(config, X_T, dim);
 
     //Create the complete bilinear operator:
     //

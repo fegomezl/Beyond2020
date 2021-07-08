@@ -10,7 +10,7 @@ void Artic_sea::time_step(){
     ode_solver->Step(*X_T, t, dt);
 
     //Solve the flow problem
-    flow_oper->Solve(config, X_Psi, x_psi, X_T);
+    flow_oper->Solve(config, X_Psi, x_psi, X_T, dim);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
