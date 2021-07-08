@@ -17,7 +17,7 @@ git clone https://github.com/mfem/mfem.git
 
 cd ${INSTALL_DIR}/petsc_src
 
-./configure --prefix=${INSTALL_DIR}/petsc --with-debugging=0 --download-hypre --download-metis --download-parmetis --download-suitesparse --download-slepc --download-sprng --download-openblas --with-fortran-bindings=0 COPTFLAGS="-O3 -march=native -mtune=native" CXXOPTFLAGS="-O3 -march=native -mtune=native" FOPTFLAGS="-O3 -march=native -mtune=native"
+./configure --prefix=${INSTALL_DIR}/petsc --with-debugging=0 --download-hypre --download-superlu_dist --download-metis --download-parmetis --download-suitesparse --download-slepc --download-sprng --download-openblas --with-fortran-bindings=0 COPTFLAGS="-O3 -march=native -mtune=native" CXXOPTFLAGS="-O3 -march=native -mtune=native" FOPTFLAGS="-O3 -march=native -mtune=native"
 
 #In case you dont have MPI on your system add the following line to above command
 #--download-mpich  --download-hwloc
@@ -61,7 +61,7 @@ cd ${INSTALL_DIR}/mfem
 mkdir build
 cd ${INSTALL_DIR}/mfem/build
 
-cmake -DMFEM_USE_MPI:BOOL=ON -DMFEM_USE_METIS:BOOL=ON -DMFEM_USE_LAPACK:BOOL=ON -DMFEM_ENABLE_MINIAPPS:BOOL=ON -DMFEM_USE_SUNDIALS:BOOL=ON -DMFEM_USE_SLEPC:BOOL=ON -DMFEM_USE_PETSC:BOOL=ON -DMFEM_USE_SUITESPARSE=ON -DMFEM_USE_ZLIB:BOOL=ON -DHYPRE_DIR=${PETSC_DIR} -DMETIS_DIR=${PETSC_DIR} -DParMETIS_DIR=${PETSC_DIR} -DSuiteSparse_DIR=${PETSC_DIR} -DBLAS_INCLUDE_DIRS= -DLAPACK_INCLUDE_DIRS= -DLAPACK_LIBRARIES= -DBLAS_LIBRARIES=${PETSC_DIR}/lib/libopenblas.so -DPETSC_ARCH= -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=${PETSC_DIR}/lib/petsc/bin -DSUNDIALS_DIR=${SUNDIALS_DIR}/install -DSLEPC_DIR=${PETSC_DIR} -DSLEPC_VERSION_OK=yes ${INSTALL_DIR}/mfem
+cmake -DMFEM_USE_MPI:BOOL=ON -DMFEM_USE_METIS:BOOL=ON -DMFEM_USE_LAPACK:BOOL=ON -DMFEM_ENABLE_MINIAPPS:BOOL=ON -DMFEM_USE_SUNDIALS:BOOL=ON -DMFEM_USE_SLEPC:BOOL=ON -DMFEM_USE_PETSC:BOOL=ON -DMFEM_USE_SUITESPARSE=ON -DMFEM_USE_ZLIB:BOOL=ON -DHYPRE_DIR=${PETSC_DIR} -DMETIS_DIR=${PETSC_DIR} -DParMETIS_DIR=${PETSC_DIR} -DSuiteSparse_DIR=${PETSC_DIR} -DBLAS_INCLUDE_DIRS= -DLAPACK_INCLUDE_DIRS= -DLAPACK_LIBRARIES= -DBLAS_LIBRARIES=${PETSC_DIR}/lib/libopenblas.so -DPETSC_ARCH= -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=${PETSC_DIR}/lib/petsc/bin -DSUNDIALS_DIR=${SUNDIALS_DIR}/install -DSLEPC_DIR=${PETSC_DIR} -DSLEPC_VERSION_OK=yes -DMFEM_USE_SUPERLU=yes -DSuperLUDist_DIR=${PETSC_DIR} ${INSTALL_DIR}/mfem
 
 #In case you are using the zlib instaled with PETSC add before ${INSTALL_DIR}/mfem
 #-DZLIB_INCLUDE_DIR=${PETSC_DIR}/include -DZLIB_LIBRARIES=${PETSC_DIR}/lib/libz.a
