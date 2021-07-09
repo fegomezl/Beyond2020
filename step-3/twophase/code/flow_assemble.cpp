@@ -19,15 +19,15 @@ double temperature_f(const Vector &x);
 
  void scaled_boundary_gradpsi(const Vector &x, Vector &f);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, const HypreParVector *X_T):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T):
   fespace(fespace),
   block_true_offsets(3),
   f(NULL), g(NULL),
   m(NULL), d(NULL), c(NULL),
   M(NULL), D(NULL), C(NULL),
-  A(NULL), psi(NULL), w(NULL),
+  A(NULL), psi(NULL), w(NULL), v(NULL),
   w_aux(NULL), psi_aux(NULL), theta(NULL),
-  bg(0.002), f_integrator(NULL), x_T(NULL)
+  bg(0.002), x_T(NULL)
 {
   //Create the block offsets
   block_true_offsets[0] = 0;
@@ -98,6 +98,9 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   psi = new ParGridFunction(&fespace);
   psi_aux = new ParGridFunction(&fespace);
   psi_aux->ProjectCoefficient(psi_coeff);
+
+  v = new ParGridFunction(&fespace_v);
+  (*v) = 0.;
 
   g = new ParLinearForm(&fespace);
   g->AddDomainIntegrator(new DomainLFIntegrator(neg_mu_w));

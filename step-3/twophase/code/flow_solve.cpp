@@ -44,10 +44,6 @@ void Flow_Operator::Solve(Config config, HypreParVector *X_Psi, ParGridFunction 
     for (int ii = 0; ii < psi->Size(); ii++)
         (*psi)(ii) += (*psi_aux)(ii);
 
-    /*v = new ParGridFunction(fespace_v);
-    GradientGridFunctionCoefficient psi_grad(psi);
-    v->ProjectCoefficient(psi_grad);*/
-
     //Delete used memory
     delete H;
     delete superlu;

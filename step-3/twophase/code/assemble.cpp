@@ -23,7 +23,7 @@ void Artic_sea::assemble_system(){
     x_psi = new ParGridFunction(fespace);
     X_Psi = new HypreParVector(fespace);
 
-    flow_oper = new Flow_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), X_T);
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), X_T);
     flow_oper->Solve(config, X_Psi, x_psi, X_T, dim, pmesh->bdr_attributes.Max());
 
     //Set the ODE solver type
@@ -77,6 +77,7 @@ void Artic_sea::assemble_system(){
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x_T);
     paraview_out->RegisterField("Stream_Function", flow_oper->psi);
+    paraview_out->RegisterField("Velocity", flow_oper->v);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();

@@ -30,4 +30,7 @@ void Artic_sea::make_grid(const char *mesh_file){
     fec = new H1_FECollection(config.order, dim);
     fespace = new ParFiniteElementSpace(pmesh, fec);
     size = fespace->GlobalTrueVSize();
+
+    fec_v = new RT_FECollection(config.order, dim);
+    fespace_v = new ParFiniteElementSpace(pmesh, fec_v);
 }

@@ -42,7 +42,7 @@ class Conduction_Operator : public TimeDependentOperator{
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
         void SetParameters(const Vector &X);
-        void UpdateVelocity(const HypreParVector &psi);
+        void UpdateVelocity(const HypreParVector &psi, ParGridFunction *v);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
@@ -94,11 +94,12 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
   public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, const HypreParVector *X_T);
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T);
     void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim, int attributes);
     void Update_T(Config config, const HypreParVector *X_T, int dim, int attributes);
     ParGridFunction *psi;
     ParGridFunction *w;
+    ParGridFunction *v;
     ~Flow_Operator();
 
   protected:
@@ -133,7 +134,6 @@ class Flow_Operator{
        ParGridFunction *theta;
 
        ConstantCoefficient bg;
-       DomainLFIntegrator *f_integrator;
        ParGridFunction *x_T;
 
 };
@@ -166,7 +166,9 @@ class Artic_sea{
 
         ParMesh *pmesh;
         FiniteElementCollection *fec;
+        FiniteElementCollection *fec_v;
         ParFiniteElementSpace *fespace;
+        ParFiniteElementSpace *fespace_v;
 
         //System objects
         ParGridFunction *x_T;

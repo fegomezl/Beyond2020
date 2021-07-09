@@ -9,6 +9,9 @@ void Artic_sea::time_step(){
     oper_T->SetParameters(*X_T);
     ode_solver->Step(*X_T, t, dt);
 
+    X_Psi = (flow_oper->psi)->GetTrueDofs();
+    oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
+
     //Solve the flow problem
     flow_oper->Solve(config, X_Psi, x_psi, X_T, dim, pmesh->bdr_attributes.Max());
 
@@ -90,9 +93,11 @@ void Conduction_Operator::SetParameters(const Vector &X){
     k->Finalize();
 }
 
-void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi){
+void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi, ParGridFunction *v){
     psi.SetFromTrueDofs(Psi);
     gradpsi.SetGridFunction(&psi);
     rV.SetBCoef(gradpsi);
-    coeff_rCLV.SetBCoef(rV);
+    v->Randomize();
+    v->ProjectCoefficient(rV);
+    //coeff_rCLV.SetBCoef(rV);
 }
