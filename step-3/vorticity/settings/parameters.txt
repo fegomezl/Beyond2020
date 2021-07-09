@@ -4,13 +4,13 @@ settings/square.geo #Mesh_script
 10 #Rmax
 0 #Zmin
 10 #Zmax
-15 #Rcells
-15 #Zcells
+100 #Rcells
+100 #Zcells
 
 FE parameters
 5 #Refinements
 1 #Order
-10 #BC_border_size(fraction_of_width)
+200 #BC_border_size(fraction_of_width)
 
 Physical parameters
 0       #Fusion_temperature

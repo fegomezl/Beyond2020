@@ -19,9 +19,9 @@ void Artic_sea::output_results(){
         paraview_out.SetTime(0.);
         paraview_out.SetLevelsOfDetail(config.order);
         paraview_out.SetHighOrderOutput(true);
-        paraview_out.RegisterField("StreamFunction", psi);
-        paraview_out.RegisterField("Vorticity", w);
-        paraview_out.RegisterField("StreamGradient", v);
+        paraview_out.RegisterField("StreamFunction(r)", psi);
+        paraview_out.RegisterField("Vorticity(r)", w);
+        paraview_out.RegisterField("Velocity(r)", v);
         paraview_out.Save();
     }
 }

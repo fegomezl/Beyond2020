@@ -1,5 +1,7 @@
 #include "header.h"
 
+void rot_f(const Vector &x, DenseMatrix &f);
+
 void Artic_sea::solve_system(){
 
     //Create the complete bilinear operator:
@@ -44,10 +46,17 @@ void Artic_sea::solve_system(){
 
     v = new ParGridFunction(fespace_v);
     GradientGridFunctionCoefficient psi_grad(psi);
-    v->ProjectCoefficient(psi_grad);
+    MatrixFunctionCoefficient rot(dim, rot_f);
+    MatrixVectorProductCoefficient rV(rot, psi_grad);
+    v->ProjectCoefficient(rV);
 
     //Delete used memory
     delete H;
     delete superlu;
     delete SLU_A;
+}
+
+void rot_f(const Vector &x, DenseMatrix &f){
+    f(0,0) = 0.; f(0,1) = -1.;
+    f(1,0) = 1.; f(1,1) = 0.;
 }
