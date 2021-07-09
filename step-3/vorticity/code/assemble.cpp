@@ -1,5 +1,18 @@
 #include "header.h"
 
+double r_f(const Vector &x){
+    return x(0);
+}
+
+double rsquare_f(const Vector &x){
+    return pow(x(0), 2);
+}
+
+void r2_hat_f(const Vector &x, Vector &f){
+    f(0) = 2.;
+    f(1) = 0.;
+}
+
 //Temperature field
 double temperature_f(const Vector &x);
 
@@ -25,15 +38,21 @@ void Artic_sea::assemble_system(){
         (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
         (*theta)(ii) = config.cold_porosity + (1 - pow((*theta)(ii), 2))/(pow((*theta)(ii), 3) + config.cold_porosity);
     }
-    GridFunctionCoefficient eta(theta);
 
-    //Define local coefficients
+    //Rotational coefficients
+    FunctionCoefficient r_coeff(r_f);
+    FunctionCoefficient rsquare_coeff(rsquare_f);
+    VectorFunctionCoefficient r2_hat(dim, r2_hat_f);
+
+    //Define properties coefficients
     ConstantCoefficient mu(config.viscosity);
+    GridFunctionCoefficient eta(theta);
     ProductCoefficient neg_mu(-1., mu);
     ProductCoefficient neg_eta(-1., eta);
 
     FunctionCoefficient f_coeff(f_rhs);
     ProductCoefficient neg_f_coeff(-1., f_coeff);
+    ProductCoefficient neg_rsquare_f_coeff(rsquare_coeff, neg_f_coeff);
 
     FunctionCoefficient w_coeff(scaled_boundary_w);
     VectorFunctionCoefficient w_grad(dim, scaled_boundary_gradw);
