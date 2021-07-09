@@ -4,19 +4,15 @@ double initial_theta_f(const Vector &x);
 double initial_phi_f(const Vector &x);
 
 Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
-    TimeDependentOperator(fespace.GetTrueVSize(), 0.),
+    TimeDependentOperator(2*fespace.GetTrueVSize(), 0.),
     config(config),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
     m_theta(NULL), m_phi(NULL),
     k_theta(NULL), k_phi(NULL),
     t_theta(NULL), t_phi(NULL),
-    M_theta(NULL), M_phi(NULL), M(NULL),
-    K_theta(NULL), K_phi(NULL), K(NULL),
-    T_theta(NULL), T_phi(NULL), T(NULL),
-    M_blocks(2,2), K_blocks(2,2), T_blocks(2,2),
-    M_solver(fespace.GetComm()), T_solver(fespace.GetComm()),
-    SLU_M(NULL), SLU_T(NULL),
+    M_theta_solver(fespace.GetComm()), M_phi_solver(fespace.GetComm()),
+    T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
     aux_theta(&fespace), aux_phi(&fespace), 
     aux_C(&fespace), aux_K(&fespace), aux_D(&fespace),
     psi(&fespace),
@@ -40,7 +36,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     Array<int> ess_tdof_list_theta;
     Array<int> ess_bdr_theta(attributes);
     ess_bdr_theta[0] = 1; ess_bdr_theta[1] = 1;
-    ess_bdr_theta[2] = 0; ess_bdr_theta[3] = 1;
+    ess_bdr_theta[2] = 0; ess_bdr_theta[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_list_theta);
 
     Array<int> ess_tdof_list_phi;
@@ -54,34 +50,57 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     FunctionCoefficient initial_theta(initial_theta_f);
     theta.ProjectCoefficient(initial_theta);
     theta.ProjectBdrCoefficient(initial_theta, ess_bdr_theta);
-    theta.ParallelAverage(X.GetBlock(0));
+    theta.GetTrueDofs(X.GetBlock(0));
 
     ParGridFunction phi(&fespace);
     FunctionCoefficient initial_phi(initial_phi_f);
     phi.ProjectCoefficient(initial_phi);
     phi.ProjectBdrCoefficient(initial_phi, ess_bdr_phi);
-    phi.ParallelAverage(X.GetBlock(1));
+    phi.GetTrueDofs(X.GetBlock(1));
 
-    //Configure M solver
-    //M_solver.iterative_mode = false;
-    M_solver.SetPrintStatistics(false);
-    M_solver.SetSymmetricPattern(true);
-    M_solver.SetColumnPermutation(superlu::PARMETIS);
-    M_solver.SetIterativeRefine(superlu::SLU_DOUBLE);
+    //Configure M solvers
+    M_theta_solver.iterative_mode = false;
+    M_theta_solver.SetRelTol(config.reltol_conduction);
+    M_theta_solver.SetAbsTol(config.abstol_conduction);
+    M_theta_solver.SetMaxIter(config.iter_conduction);
+    M_theta_solver.SetPrintLevel(0);
+    M_theta_solver.SetPreconditioner(M_theta_prec);
+    M_theta_prec.SetType(HypreSmoother::Jacobi);
 
-    //Configure T solver
-    //T_solver.iterative_mode = false;
-    T_solver.SetPrintStatistics(false);
-    T_solver.SetSymmetricPattern(true);
-    T_solver.SetColumnPermutation(superlu::PARMETIS);
-    T_solver.SetIterativeRefine(superlu::SLU_DOUBLE);
+    M_phi_solver.iterative_mode = false;
+    M_phi_solver.SetRelTol(config.reltol_conduction);
+    M_phi_solver.SetAbsTol(config.abstol_conduction);
+    M_phi_solver.SetMaxIter(config.iter_conduction);
+    M_phi_solver.SetPrintLevel(0);
+    M_phi_solver.SetPreconditioner(M_phi_prec);
+    M_phi_prec.SetType(HypreSmoother::Jacobi);
+
+    //Configure T solvers
+    T_theta_solver.iterative_mode = false;
+    T_theta_solver.SetRelTol(config.reltol_conduction);
+    T_theta_solver.SetAbsTol(config.abstol_conduction);
+    T_theta_solver.SetMaxIter(config.iter_conduction);
+    T_theta_solver.SetPrintLevel(0);
+    T_theta_solver.SetPreconditioner(T_theta_prec);
+
+    T_phi_solver.iterative_mode = false;
+    T_phi_solver.SetRelTol(config.reltol_conduction);
+    T_phi_solver.SetAbsTol(config.abstol_conduction);
+    T_phi_solver.SetMaxIter(config.iter_conduction);
+    T_phi_solver.SetPrintLevel(0);
+    T_phi_solver.SetPreconditioner(T_phi_prec);
 
     SetParameters(X);
 }
 
 //Initial conditions
 double initial_theta_f(const Vector &x){
-    return 0.001*(x(1) - Zmin)*(Zmax - x(1))*(x(0) + Rmax - 2*Rmin)*(Rmax - x(0));
+    //return 0.001*(x(1) - Zmin)*(Zmax - x(1))*(x(0) + Rmax - 2*Rmin)*(Rmax - x(0));
+    double mid = 0.6*Zmax;
+    if (x(1) <= mid)
+        return -10*(1 - x(1)/mid);
+    else
+        return 10*(x(1) - mid)/(Zmax - mid);
 }
 
 double initial_phi_f(const Vector &x){

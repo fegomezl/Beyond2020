@@ -37,9 +37,9 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
+        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
-        void SetParameters(const BlockVector &X);
+        void SetParameters(const Vector &X);
         void UpdateVelocity(const Vector &psi);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
@@ -51,50 +51,40 @@ class Conduction_Operator : public TimeDependentOperator{
         //Global parameters
         Config config;
 
-        //Mesh objects
         ParFiniteElementSpace &fespace;
-        Array<int> block_true_offsets;
-        Array<int> ess_tdof_list_theta, ess_tdof_list_phi;
+        Array<int> ess_tdof_list;
 
         //System objects
-        ParBilinearForm *m_theta, *m_phi;        //Mass operators
-        ParBilinearForm *k_theta, *k_phi;        //Difussion operators
-        ParBilinearForm *t_theta, *t_phi;        //m + dt*k
+        ParBilinearForm *m;  //Mass operator
+        ParBilinearForm *k;  //Difussion operator
+        ParBilinearForm *t;  //m + dt*k
 
-        HypreParMatrix M_theta, M_phi;
-        HypreParMatrix T_theta, T_phi;   
+        HypreParMatrix M;
+        HypreParMatrix T;   
 
-        //Solver objects
-        CGSolver M_theta_solver, M_phi_solver;
-        CGSolver T_theta_solver, T_phi_solver;
-        HypreSmoother M_theta_prec, M_phi_prec;
-        HypreSmoother T_theta_prec, T_phi_prec;
+        CGSolver M_solver;
+        CGSolver T_solver;
+        HypreSmoother M_prec;
+        HypreSmoother T_prec;
 
-        //Auxiliar grid functions
-        ParGridFunction aux_phi, aux_theta;
+        ParGridFunction aux;
         ParGridFunction aux_C;
         ParGridFunction aux_K;
-        ParGridFunction aux_D;
 
         ParGridFunction psi;
 
-        //Coefficients
-        FunctionCoefficient coeff_r;
+        FunctionCoefficient r;
         VectorFunctionCoefficient zero;
-        MatrixFunctionCoefficient rot;
-
-        GradientGridFunctionCoefficient gradpsi;
-        MatrixVectorProductCoefficient coeff_rV;
-        ScalarVectorProductCoefficient dt_coeff_rV;
 
         ProductCoefficient coeff_rCL;
 
         ProductCoefficient coeff_rK; 
         ProductCoefficient dt_coeff_rK;
 
-        ProductCoefficient coeff_rD; 
-        ProductCoefficient dt_coeff_rD;
-
+        //GradientGridFunctionCoefficient rV;
+        MatrixFunctionCoefficient rot;
+        GradientGridFunctionCoefficient gradpsi;
+        MatrixVectorProductCoefficient rV;
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
 };
@@ -129,13 +119,9 @@ class Artic_sea{
         FiniteElementCollection *fec;
         ParFiniteElementSpace *fespace;
 
-        Array<int> block_true_offsets;
-
         //System objects
-        ParGridFunction *theta;
-        ParGridFunction *phi;
-
-        BlockVector X;
+        ParGridFunction *x_T;
+        HypreParVector *X_T;
         Conduction_Operator *oper_T;
 
         //Solver objects

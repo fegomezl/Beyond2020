@@ -79,50 +79,29 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     m_theta = new ParBilinearForm(&fespace);
     m_theta->AddDomainIntegrator(new MassIntegrator(coeff_rCL));
     m_theta->Assemble();
-    m_theta->EliminateEssentialBCFromDofs(ess_tdof_list_theta);
-    m_theta->Finalize();
-    M_theta = m_theta->ParallelAssemble();
+    m_theta->FormSystemMatrix(ess_tdof_list_theta, M_theta);
+    M_theta_solver.SetOperator(M_theta);
 
     delete m_phi;
     m_phi = new ParBilinearForm(&fespace);
     m_phi->AddDomainIntegrator(new MassIntegrator(coeff_r));
     m_phi->Assemble();
-    m_phi->EliminateEssentialBCFromDofs(ess_tdof_list_phi);
-    m_phi->Finalize();
-    M_phi = m_phi->ParallelAssemble();
+    m_phi->FormSystemMatrix(ess_tdof_list_phi, M_phi);
+    M_phi_solver.SetOperator(M_phi);
 
     delete k_theta;
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCLV));
     k_theta->Assemble();
-    k_theta->EliminateEssentialBCFromDofs(ess_tdof_list_theta);
     k_theta->Finalize();
-    K_theta = k_theta->ParallelAssemble();
 
     delete k_phi;
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
     k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
     k_phi->Assemble();
-    k_phi->EliminateEssentialBCFromDofs(ess_tdof_list_phi);
     k_phi->Finalize();
-    K_phi = k_phi->ParallelAssemble();
-
-    //Create corresponding block matrix
-    M_blocks = NULL;
-    M_blocks(0, 0) = M_theta;
-    M_blocks(1, 1) = M_phi;
-
-    M = HypreParMatrixFromBlocks(M_blocks);
-    SLU_M = new SuperLURowLocMatrix(*M);
-    M_solver.SetOperator(*SLU_M);
-
-    K_blocks = NULL;
-    K_blocks(0, 0) = K_theta;  
-    K_blocks(1, 1) = K_phi;
-
-    K = HypreParMatrixFromBlocks(K_blocks);
 }
 
 void Conduction_Operator::UpdateVelocity(const Vector &Psi){
