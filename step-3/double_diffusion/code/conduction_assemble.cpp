@@ -33,13 +33,11 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //            \------------/
     //                  0
 
-    Array<int> ess_tdof_list_theta;
     Array<int> ess_bdr_theta(attributes);
     ess_bdr_theta[0] = 1; ess_bdr_theta[1] = 1;
     ess_bdr_theta[2] = 0; ess_bdr_theta[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_list_theta);
 
-    Array<int> ess_tdof_list_phi;
     Array<int> ess_bdr_phi(attributes);
     ess_bdr_phi[0] = 1; ess_bdr_phi[1] = 1;
     ess_bdr_phi[2] = 0; ess_bdr_phi[3] = 1;
@@ -47,16 +45,23 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 
     //Apply initial conditions
     ParGridFunction theta(&fespace);
+    //HypreParVector Theta(&fespace);
     FunctionCoefficient initial_theta(initial_theta_f);
     theta.ProjectCoefficient(initial_theta);
     theta.ProjectBdrCoefficient(initial_theta, ess_bdr_theta);
     theta.GetTrueDofs(X.GetBlock(0));
 
     ParGridFunction phi(&fespace);
+    //HypreParVector Phi(&fespace);
     FunctionCoefficient initial_phi(initial_phi_f);
     phi.ProjectCoefficient(initial_phi);
     phi.ProjectBdrCoefficient(initial_phi, ess_bdr_phi);
     phi.GetTrueDofs(X.GetBlock(1));
+
+    /*for (int ii = block_true_offsets[0]; ii < block_true_offsets[1]; ii++)
+        X(ii) = Theta(ii);
+    for (int ii = block_true_offsets[1]; ii < block_true_offsets[2]; ii++)
+        X(ii) = Phi(ii - block_true_offsets[1]);*/
 
     //Configure M solvers
     M_theta_solver.iterative_mode = false;

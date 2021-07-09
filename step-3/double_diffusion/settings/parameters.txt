@@ -15,7 +15,7 @@ Simulation parameters
 FE parameters
 2          #Refinements
 1          #Order
-1          #ODE_solver_type
+12         #ODE_solver_type
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
 100        #iter(Conduction)
@@ -23,7 +23,7 @@ FE parameters
 0.00001    #reltol(SUNDIALS)
 
 Physical parameters
-1     #Fusion_temperature
+0       #Fusion_temperature
 9       #n_DeltaT
 4.22    #Liquid_volumetric_heat_capacity
 1.88    #Solid_volumetric_heat_capacity
