@@ -43,10 +43,10 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
 
   theta = new ParGridFunction(&fespace);
   FunctionCoefficient temperature(temperature_f);
-  theta->ProjectCoefficient(temperature);
+  theta->SetFromTrueDofs(*X_T);
   for (int ii = 0; ii < theta->Size(); ii++){
       (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
-      (*theta)(ii) = config.cold_porosity + (1 - pow((*theta)(ii), 2))/(pow((*theta)(ii), 3) + config.cold_porosity);
+      (*theta)(ii) = config.cold_porosity + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.cold_porosity);
   }
   GridFunctionCoefficient eta(theta);
 
@@ -126,7 +126,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   f->Assemble();
   f->ParallelAssemble(B.GetBlock(1));
 
-  this->Update_T(config, X_T, dim);
+  this->Update_T(config, X_T, dim, attributes);
 
   //Define bilinear forms of the system
   m = new ParBilinearForm(&fespace);
@@ -151,7 +151,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int 
   C = Ch.Is<HypreParMatrix>();
 }
 
-void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim){
+void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, int attributes){
 
   //Create the temperature coeffcient (rF)
   /*x_T->SetFromTrueDofs(*X_T);
@@ -173,10 +173,10 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim){
   if(theta) delete theta;
   theta = new ParGridFunction(&fespace);
   FunctionCoefficient temperature(temperature_f);
-  theta->ProjectCoefficient(temperature);
+  theta->SetFromTrueDofs(*X_T);
   for (int ii = 0; ii < theta->Size(); ii++){
       (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
-      (*theta)(ii) = config.cold_porosity + (1 - pow((*theta)(ii), 2))/(pow((*theta)(ii), 3) + config.cold_porosity);
+      (*theta)(ii) = config.cold_porosity + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.cold_porosity);
   }
   GridFunctionCoefficient eta(theta);
 
@@ -215,6 +215,20 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim){
   f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad));
   f->Assemble();
   f->ParallelAssemble(B.GetBlock(1));
+
+  Array<int> ess_tdof_list_psi;
+  Array<int> ess_bdr_psi(attributes);
+  ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
+  ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
+  fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
+
+  if(d) delete d;
+  d = new ParBilinearForm(&fespace);
+  d->AddDomainIntegrator(new DiffusionIntegrator(eta));
+  d->Assemble();
+  d->EliminateEssentialBCFromDofs(ess_tdof_list_psi, *psi, *f);
+  d->Finalize();
+  D = d->ParallelAssemble();
 }
 
 

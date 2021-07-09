@@ -17,6 +17,14 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     M_solver(fespace.GetComm()), T_solver(fespace.GetComm())
 {
     //Set boundary conditions
+    //
+    //                  1
+    //            /------------\
+    //            |            |
+    //           2|            |3
+    //            |            |
+    //            \------------/
+    //                  0
     Array<int> ess_bdr(attributes);
     ess_bdr = 0;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
