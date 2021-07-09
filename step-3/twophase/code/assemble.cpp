@@ -25,6 +25,8 @@ void Artic_sea::assemble_system(){
 
     flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), X_T);
     flow_oper->Solve(config, X_Psi, x_psi, X_T, dim, pmesh->bdr_attributes.Max());
+    X_Psi = (flow_oper->psi)->GetTrueDofs();
+    oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -78,6 +80,7 @@ void Artic_sea::assemble_system(){
     paraview_out->RegisterField("Temperature", x_T);
     paraview_out->RegisterField("Stream_Function", flow_oper->psi);
     paraview_out->RegisterField("Velocity", flow_oper->v);
+    paraview_out->RegisterField("Vorticity", flow_oper->w);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();

@@ -2,6 +2,9 @@
 
 double initial_f(const Vector &x);
 
+//Temperature field
+double temperature_f(const Vector &x);
+
 Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     config(config),
@@ -26,9 +29,9 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //            \------------/
     //                  0
     Array<int> ess_bdr(attributes);
-    ess_bdr = 0;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
+    ess_bdr = 1;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
-    FunctionCoefficient initial(initial_f);
+    FunctionCoefficient initial(temperature_f);
 
     //Define solution x and apply initial conditions
     ParGridFunction x(&fespace);

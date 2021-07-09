@@ -271,11 +271,11 @@ void boundary_gradw(const Vector &x, Vector &f){
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return x(0);
+    return 100*x(0)*x(0);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = 1.;
+    f(0) = 200*x(0);
     f(1) = 0.;
 }
 
