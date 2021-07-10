@@ -88,3 +88,4 @@ extern double int_rad;
 extern double out_rad;
 
 extern double border;
+extern double InvR;
