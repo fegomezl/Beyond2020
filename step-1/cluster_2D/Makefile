@@ -1,4 +1,4 @@
-include ../../local_config_cluster.mk
+include ../../local_config.mk
 
 #Mesh parameters
 SCRIPT = $(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
@@ -52,7 +52,7 @@ results/mesh.msh: settings/parameters.txt
 	@echo -e 'Reading parameters ... \c'
 	@bash settings/configure_script.sh
 	@echo -e 'Generating mesh ... \c'
-	@~/gmsh/gmsh-4.8.4-Linux64/bin/gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
+	@gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
 clean:
