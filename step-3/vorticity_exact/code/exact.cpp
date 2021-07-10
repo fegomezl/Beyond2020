@@ -1,10 +1,10 @@
 #include "header.h"
 
-double exact_w(const Vector &x)
+extern double exact_w(const Vector &x)
 {
-  return 12*x(1)*x(1)-12*x(0)*x(0);
+  return -8*pow(x(0),2)*x(1);
 }
-double exact_psi(const Vector &x)
+extern double exact_psi(const Vector &x)
 {
-  return pow(x(0),4)-pow(x(1),4);
+  return x(1)*pow(x(0),4);
 }

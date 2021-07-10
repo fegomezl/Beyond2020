@@ -1,5 +1,7 @@
 #include "header.h"
 
+void rot_f(const Vector &x, DenseMatrix &f);
+
 void Artic_sea::solve_system(){
 
     //Create the complete bilinear operator:
@@ -40,22 +42,27 @@ void Artic_sea::solve_system(){
     
     psi->Distribute(&(X.GetBlock(1)));
     for (int ii = 0; ii < psi->Size(); ii++)
-        (*psi)(ii) += (*psi_aux)(ii);
+        (*psi)(ii) += (*psi_aux)(ii); 
 
-    //Calculate convergence of solution
-    // W->SetFromTrueDofs(*w);
-    // PSI->SetFromTrueDofs(*psi);
+    v = new ParGridFunction(fespace_v);
+    GradientGridFunctionCoefficient psi_grad(psi);
+    MatrixFunctionCoefficient rot(dim, rot_f);
+    MatrixVectorProductCoefficient rV(rot, psi_grad);
+    v->ProjectCoefficient(rV);
+
+    //calculate solution error
     FunctionCoefficient w_exact(exact_w);
     FunctionCoefficient psi_exact(exact_psi);
     actual_error_w = w->ComputeL2Error(w_exact);
     actual_error_psi = psi->ComputeL2Error(psi_exact);
 
-    v = new ParGridFunction(fespace_v);
-    GradientGridFunctionCoefficient psi_grad(psi);
-    v->ProjectCoefficient(psi_grad);
-
     //Delete used memory
     delete H;
     delete superlu;
     delete SLU_A;
+}
+
+void rot_f(const Vector &x, DenseMatrix &f){
+    f(0,0) = 0.; f(0,1) = -1.;
+    f(1,0) = 1.; f(1,1) = 0.;
 }

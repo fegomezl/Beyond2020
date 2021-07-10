@@ -16,11 +16,12 @@ T_FU=$(shell sed -n 16p settings/parameters.txt | tr -d -c 0-9.-)
 DELTA_T=$(shell sed -n 17p settings/parameters.txt | tr -d -c 0-9.)
 VISC=$(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.-)
 COLD_P=$(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
+INV_R=$(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX=mpic++
 FLAGS=-std=c++11 -O3 $(MFEM_FLAGS)
-RUN=mpirun --use-hwthread-cpus -np $(PROCCESORS) ./
+RUN=mpirun -np $(PROCCESORS) ./
 SOURCES=$(wildcard code/*.cpp)
 DEPENDENCIES=$(SOURCES:code/%.cpp=.objects/%.o)
 
@@ -30,7 +31,7 @@ all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh --height $(HEIGHT) --internal-radius $(INNER_RADIUS) --outer-radius $(OUTER_RADIUS) \
   					--order $(ORDER) --refinements $(REF) --border $(BORDER) \
-					--temperature_fusion $(T_FU) --DeltaT $(DELTA_T) --viscosity $(VISC) --cold_porosity $(COLD_P)
+					--temperature_fusion $(T_FU) --DeltaT $(DELTA_T) --viscosity $(VISC) --cold_porosity $(COLD_P) --inv_r $(INV_R)
 	@echo -e '\n'
 	@echo -e '\nDone!'
 
