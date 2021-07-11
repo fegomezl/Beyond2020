@@ -1,5 +1,6 @@
 #include "header.h"
 
+//Rotational functions
 double r_f(const Vector &x);
 
 void r_inv_hat_f(const Vector &x, Vector &f);
@@ -19,11 +20,6 @@ void scaled_boundary_gradw(const Vector &x, Vector &f);
 double scaled_boundary_psi(const Vector &x);
 
 void scaled_boundary_gradpsi(const Vector &x, Vector &f);
-
-double boundary_w(const Vector &x);
-void boundary_gradw(const Vector &x, Vector &f);
-double boundary_psi(const Vector &x);
-void boundary_gradpsi(const Vector &x, Vector &f);
 
 void Artic_sea::assemble_system(){
     //Calculate the porus coefficient
@@ -85,13 +81,13 @@ void Artic_sea::assemble_system(){
 
     Array<int> ess_tdof_list_w;
     Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
-    ess_bdr_w[0] = 0; ess_bdr_w[1] = 1;
+    ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
     fespace->GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
     Array<int> ess_tdof_list_psi;
-    Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
-    ess_bdr_psi[0] = 0; ess_bdr_psi[1] = 1;
+    ess_bdr_psi.SetSize(pmesh->bdr_attributes.Max());
+    ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
     fespace->GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
 
@@ -166,39 +162,38 @@ double temperature_f(const Vector &x){
 
     //double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    if (r_2 < pow(sigma, 2))
+    /*if (r_2 < pow(sigma, 2))
         return -10;
     else
-        return 10;
+        return 10;*/
+    return 1.;
 }
+
+double scale = 1e-5;
 
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    return 0.;
+    return -8*scale*x(0)*x(1);
 }
 
 //Boundary values for w
 double boundary_w(const Vector &x){
-    return 0.;
+    return -8*scale*pow(x(0), 2)*x(1);
 }
 
 void boundary_gradw(const Vector &x, Vector &f){
-    f(0) = 0.;
-    f(1) = 0.;
+    f(0) = -16*scale*x(0)*x(1);
+    f(1) = -8*scale*pow(x(0), 2);
 }
-
-double vel = 1e-2;
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return -vel*0.5*pow(x(0), 2);
-    //return (vel*0.5/out_rad)*x(0)*(x(0) - 2*out_rad);
+    return scale*pow(x(0), 4)*x(1);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = -vel*x(0);
-    //f(0) = (vel/out_rad)*(x(0) - out_rad);
-    f(1) = 0.;
+    f(0) = 4*scale*pow(x(0), 3)*x(1);
+    f(1) = scale*pow(x(0), 4);
 }
 
 //Scaling for the boundary conditions

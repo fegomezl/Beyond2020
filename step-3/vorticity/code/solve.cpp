@@ -48,7 +48,11 @@ void Artic_sea::solve_system(){
     GradientGridFunctionCoefficient psi_grad(psi);
     MatrixFunctionCoefficient rot(dim, rot_f);
     MatrixVectorProductCoefficient rV(rot, psi_grad);
-    v->ProjectCoefficient(rV);
+    v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
+
+    VectorFunctionCoefficient normal_gradpsi(dim, boundary_gradpsi);
+    MatrixVectorProductCoefficient normal_rV(rot, normal_gradpsi);
+    v->ProjectBdrCoefficientNormal(normal_rV, ess_bdr_psi);
 
     //Delete used memory
     delete H;
@@ -57,6 +61,6 @@ void Artic_sea::solve_system(){
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.; f(0,1) = -1.;
-    f(1,0) = 1.; f(1,1) = 0.;
+    f(0,0) = 0.;  f(0,1) = 1.;
+    f(1,0) = -1.; f(1,1) = 0.;
 }
