@@ -85,13 +85,13 @@ void Artic_sea::assemble_system(){
 
     Array<int> ess_tdof_list_w;
     Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
-    ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
+    ess_bdr_w[0] = 0; ess_bdr_w[1] = 1;
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
     fespace->GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
     Array<int> ess_tdof_list_psi;
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
-    ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
+    ess_bdr_psi[0] = 0; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
     fespace->GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
 
@@ -107,9 +107,9 @@ void Artic_sea::assemble_system(){
     //Define the RHS
     g = new ParLinearForm(fespace);
     g->AddDomainIntegrator(new DomainLFIntegrator(neg_mu_w));
-    g->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_w_grad));
+    g->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_psi_grad));
     g->AddDomainIntegrator(new DomainLFGradIntegrator(mu_psi_grad));
-    g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad));
+    g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad), ess_bdr_psi);
     g->Assemble();
     g->ParallelAssemble(B.GetBlock(0));
 
@@ -119,8 +119,8 @@ void Artic_sea::assemble_system(){
     f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
-    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad));
-    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad));
+    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad), ess_bdr_w);
+    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad), ess_bdr_psi);
     f->Assemble();
     f->ParallelAssemble(B.GetBlock(1));
 

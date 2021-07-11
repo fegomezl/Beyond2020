@@ -10,7 +10,7 @@ settings/square.geo #Mesh_script
 FE parameters
 5 #Refinements
 1 #Order
-100 #BC_border_size(fraction_of_width)
+10 #BC_border_size(fraction_of_width)
 
 Physical parameters
 0       #Fusion_temperature
