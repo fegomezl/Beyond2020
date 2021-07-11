@@ -43,7 +43,6 @@ void Artic_sea::assemble_system(){
 
     //RHS coefficients
     FunctionCoefficient f_coeff(f_rhs);
-    ProductCoefficient neg_f_coeff(-1., f_coeff);
 
     //Dirichlet coefficients
     FunctionCoefficient w_coeff(scaled_boundary_w);
@@ -55,7 +54,6 @@ void Artic_sea::assemble_system(){
     //Rotational coupled coefficients
     ScalarVectorProductCoefficient mu_r_inv_hat(mu, r_inv_hat);
     ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
-    ProductCoefficient neg_r_f_coeff(r_coeff, neg_f_coeff);
 
     ProductCoefficient neg_mu_w(neg_mu, w_coeff);
     InnerProductCoefficient mu_r_inv_hat_w_grad(mu_r_inv_hat, w_grad);
@@ -110,7 +108,7 @@ void Artic_sea::assemble_system(){
     g->ParallelAssemble(B.GetBlock(0));
 
     f = new ParLinearForm(fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(neg_r_f_coeff));
+    f->AddDomainIntegrator(new DomainLFIntegrator(f_coeff));
     f->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_w_grad));
     f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
@@ -166,14 +164,14 @@ double temperature_f(const Vector &x){
         return -10;
     else
         return 10;*/
-    return 1.;
+    return 10.;
 }
 
 double scale = 1e-5;
 
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    return -8*scale*x(0)*x(1);
+    return 8*scale*pow(x(0), 2)*x(1);
 }
 
 //Boundary values for w

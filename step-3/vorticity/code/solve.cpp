@@ -7,7 +7,7 @@ void Artic_sea::solve_system(){
     //Create the complete bilinear operator:
     //
     //   H = [ M    C ] 
-    //       [ C^t  D ] 
+    //       [ C^t  cm D ] 
     Array2D<HypreParMatrix*> hBlocks(2,2);
     hBlocks = NULL;
     hBlocks(0, 0) = M;
@@ -49,10 +49,6 @@ void Artic_sea::solve_system(){
     MatrixFunctionCoefficient rot(dim, rot_f);
     MatrixVectorProductCoefficient rV(rot, psi_grad);
     v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
-
-    VectorFunctionCoefficient normal_gradpsi(dim, boundary_gradpsi);
-    MatrixVectorProductCoefficient normal_rV(rot, normal_gradpsi);
-    v->ProjectBdrCoefficientNormal(normal_rV, ess_bdr_psi);
 
     //Delete used memory
     delete H;

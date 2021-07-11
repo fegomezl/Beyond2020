@@ -16,5 +16,5 @@ Physical parameters
 0       #Fusion_temperature
 9       #n_DeltaT
 1       #Viscosity
-3       #n_ColdPorosity
+0       #n_ColdPorosity
 2       #n_Inv_R
