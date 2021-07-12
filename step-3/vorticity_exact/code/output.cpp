@@ -1,7 +1,6 @@
 #include "header.h"
 
 void Artic_sea::output_results(){
-  
     if (config.master){
     //Print general information of the program
         cout << "\nScalar size: " << size << "\n"
@@ -13,7 +12,6 @@ void Artic_sea::output_results(){
              << "W total mean error: " << actual_error_w/(height*(out_rad-int_rad)) << "\n"
              << "Psi total mean error: " << actual_error_psi/(height*(out_rad-int_rad)) << "\n";
     }
-    
 
     //Print visual results to Paraview
     if (config.last){
