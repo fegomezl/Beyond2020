@@ -167,11 +167,11 @@ double temperature_f(const Vector &x){
     return 10;
 }
 
-double scale = 1.;
+double scale = 1e-4;
 
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    return 8*scale*pow(x(0), 2)*x(1);
+    return 8*scale*pow(x(0),2)*x(1);
 }
 
 //Boundary values for w

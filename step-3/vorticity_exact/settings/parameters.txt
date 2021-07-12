@@ -17,4 +17,4 @@ Physical parameters
 9       #n_DeltaT
 1       #Viscosity
 0       #n_ColdPorosity
-2       #n_Inv_R
+1       #n_Inv_R
