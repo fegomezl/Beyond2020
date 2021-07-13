@@ -161,8 +161,10 @@ class Artic_sea{
         int vis_impressions;
 
         int dim;
+        double h_min;
         int serial_refinements;
         HYPRE_Int size;
+        HYPRE_Int size_v;
 
         ParMesh *pmesh;
         FiniteElementCollection *fec;
@@ -194,3 +196,4 @@ extern void zero_f(const Vector &x, Vector &f);
 
 extern double Rmin, Rmax, Zmin, Zmax, height;
 extern double border;
+extern double InvR;

@@ -33,6 +33,7 @@ K_S=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
 L=$(shell sed -n 33p settings/parameters.txt | tr -d -c 0-9.)
 VISC=$(shell sed -n 34p settings/parameters.txt | tr -d -c 0-9.)
 COLD_P=$(shell sed -n 35p settings/parameters.txt | tr -d -c 0-9.)
+INV_R=$(shell sed -n 36p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
@@ -51,7 +52,7 @@ all: main.x results/mesh.msh
 						-abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 						-abstol_s $(ABST_S) -reltol_s $(RELT_S) \
 						-T_f $(T_FU) -DT $(DELTA_T) -c_l $(C_L) -c_s $(C_S) -k_l $(K_L) -k_s $(K_S) -L $(L) \
-						-b $(BORDER) -v $(VISC) -ct $(COLD_P)
+						-b $(BORDER) -v $(VISC) -ct $(COLD_P) --inv_r $(INV_R)
 	@echo -e '\nDone!\n'
 
 main: main.x
@@ -88,7 +89,7 @@ results/mesh.msh: settings/parameters.txt
 	@echo -e 'Done!\n'
 
 clean:
-	@rm -rf *.x results/*
+	@rm -rf *.x results/graph/*
 
 oclean:
 	@rm -rf .objects/*.o

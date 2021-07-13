@@ -3,6 +3,8 @@
 // unitary r vector
 void r_vec(const Vector &x, Vector &y);
 
+void r_inv_hat_f(const Vector &x, Vector &f);
+
 //Temperature field
 double temperature_f(const Vector &x);
 
@@ -48,21 +50,36 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
       (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
       (*theta)(ii) = config.cold_porosity + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.cold_porosity);
   }
-  GridFunctionCoefficient eta(theta);
 
   //Define local coefficients
+  //
+  //Rotational coefficients
+  VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
+
+  //Properties coefficients
+  GridFunctionCoefficient eta(theta);
   ConstantCoefficient mu(config.viscosity);
   ProductCoefficient neg_mu(-1., mu);
   ProductCoefficient neg_eta(-1., eta);
 
+  //Dirichlet coefficients
   FunctionCoefficient w_coeff(scaled_boundary_w);
   VectorFunctionCoefficient w_grad(dim, scaled_boundary_gradw);
-  ProductCoefficient neg_mu_w(neg_mu, w_coeff);
-  ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
-  ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
 
   FunctionCoefficient psi_coeff(scaled_boundary_psi);
   VectorFunctionCoefficient psi_grad(dim, scaled_boundary_gradpsi);
+
+  //Rotational coupled coefficients
+  ScalarVectorProductCoefficient mu_r_inv_hat(mu, r_inv_hat);
+  ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
+
+  ProductCoefficient neg_mu_w(neg_mu, w_coeff);
+  InnerProductCoefficient mu_r_inv_hat_w_grad(mu_r_inv_hat, w_grad);
+  ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
+  ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
+
+  InnerProductCoefficient mu_r_inv_hat_psi_grad(mu_r_inv_hat, psi_grad);
+  InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
   ScalarVectorProductCoefficient mu_psi_grad(mu, psi_grad);
   ScalarVectorProductCoefficient neg_mu_psi_grad(neg_mu, psi_grad);
   ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
@@ -100,34 +117,14 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   psi_aux->ProjectCoefficient(psi_coeff);
 
   v = new ParGridFunction(&fespace_v);
-  (*v) = 0.;
 
   g = new ParLinearForm(&fespace);
   g->AddDomainIntegrator(new DomainLFIntegrator(neg_mu_w));
+  g->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_psi_grad));
   g->AddDomainIntegrator(new DomainLFGradIntegrator(mu_psi_grad));
   g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad));
   g->Assemble();
   g->ParallelAssemble(B.GetBlock(0));
-
-  //Update the RHS
-
-  //Create the temperature coeffcient (rF)
-  x_T->SetFromTrueDofs(*X_T);
-  GradientGridFunctionCoefficient delta_T(x_T);
-  VectorFunctionCoefficient rcap(2, r_vec);
-  InnerProductCoefficient r_deltaT(rcap, delta_T);
-  ProductCoefficient bg_deltaT(bg, r_deltaT);
-  FunctionCoefficient r(r_f);
-  ProductCoefficient rF(bg_deltaT, r);
-
-  f = new ParLinearForm(&fespace);
-  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
-  f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
-  f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
-  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad));
-  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad));
-  f->Assemble();
-  f->ParallelAssemble(B.GetBlock(1));
 
   this->Update_T(config, X_T, dim, attributes);
 
@@ -141,13 +138,15 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
 
   d = new ParBilinearForm(&fespace);
   d->AddDomainIntegrator(new DiffusionIntegrator(eta));
+  d->AddDomainIntegrator(new ConvectionIntegrator(eta_r_inv_hat));
   d->Assemble();
-  d->EliminateEssentialBCFromDofs(ess_tdof_list_psi, *psi, *f);
+  d->EliminateEssentialBCFromDofs(ess_tdof_list_psi);
   d->Finalize();
   D = d->ParallelAssemble();
 
   c = new ParMixedBilinearForm(&fespace, &fespace);
   c->AddDomainIntegrator(new MixedGradGradIntegrator(mu));
+  c->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(mu_r_inv_hat));
   c->Assemble();
   OperatorHandle Ch;
   c->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Ch);
@@ -155,24 +154,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
 }
 
 void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, int attributes){
-
-  //Create the temperature coeffcient (rF)
-  /*x_T->SetFromTrueDofs(*X_T);
-  GradientGridFunctionCoefficient delta_T(x_T);
-  VectorFunctionCoefficient rcap(2, r_vec);
-  InnerProductCoefficient r_deltaT(rcap, delta_T);
-  ProductCoefficient bg_deltaT(bg, r_deltaT);
-  FunctionCoefficient r(r_f);
-  ProductCoefficient rF(bg_deltaT, r);*/
-
-  //if(f_integrator) delete f_integrator;
-  //f_integrator = new DomainLFIntegrator(rF);
-
-  //(f->GetDLFI())[0]=f_integrator;
-
-  //f->Assemble();
-  //f->ParallelAssemble(B.GetBlock(1));*/
-
   if(theta) delete theta;
   theta = new ParGridFunction(&fespace);
   FunctionCoefficient temperature(temperature_f);
@@ -181,25 +162,41 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, 
       (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
       (*theta)(ii) = config.cold_porosity + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.cold_porosity);
   }
-  GridFunctionCoefficient eta(theta);
 
   //Define local coefficients
+  //
+  //Rotational coefficients
+  VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
+
+  //Properties coefficients
+  GridFunctionCoefficient eta(theta);
   ConstantCoefficient mu(config.viscosity);
   ProductCoefficient neg_mu(-1., mu);
   ProductCoefficient neg_eta(-1., eta);
 
+  //Dirichlet coefficients
   FunctionCoefficient w_coeff(scaled_boundary_w);
   VectorFunctionCoefficient w_grad(dim, scaled_boundary_gradw);
-  ProductCoefficient neg_mu_w(neg_mu, w_coeff);
-  ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
-  ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
 
   FunctionCoefficient psi_coeff(scaled_boundary_psi);
   VectorFunctionCoefficient psi_grad(dim, scaled_boundary_gradpsi);
+
+  //Rotational coupled coefficients
+  ScalarVectorProductCoefficient mu_r_inv_hat(mu, r_inv_hat);
+  ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
+
+  ProductCoefficient neg_mu_w(neg_mu, w_coeff);
+  InnerProductCoefficient mu_r_inv_hat_w_grad(mu_r_inv_hat, w_grad);
+  ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
+  ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
+
+  InnerProductCoefficient mu_r_inv_hat_psi_grad(mu_r_inv_hat, psi_grad);
+  InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
   ScalarVectorProductCoefficient mu_psi_grad(mu, psi_grad);
   ScalarVectorProductCoefficient neg_mu_psi_grad(neg_mu, psi_grad);
   ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
   ScalarVectorProductCoefficient neg_eta_psi_grad(neg_eta, psi_grad);
+
 
   x_T->SetFromTrueDofs(*X_T);
   GradientGridFunctionCoefficient delta_T(x_T);
@@ -209,21 +206,31 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, 
   FunctionCoefficient r(r_f);
   ProductCoefficient rF(bg_deltaT, r);
 
-  if(f) delete f;
-  f = new ParLinearForm(&fespace);
-  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
-  f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
-  f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
-  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad));
-  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad));
-  f->Assemble();
-  f->ParallelAssemble(B.GetBlock(1));
+  Array<int> ess_tdof_list_w;
+  Array<int> ess_bdr_w(attributes);
+  ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
+  ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
+  fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
+
 
   Array<int> ess_tdof_list_psi;
   Array<int> ess_bdr_psi(attributes);
   ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
   ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
   fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
+
+
+  if(f) delete f;
+  f = new ParLinearForm(&fespace);
+  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
+  f->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_w_grad));
+  f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
+  f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
+  f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
+  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad), ess_bdr_psi);
+  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad), ess_bdr_w);
+  f->Assemble();
+  f->ParallelAssemble(B.GetBlock(1));
 
   if(d) delete d;
   d = new ParBilinearForm(&fespace);
@@ -240,6 +247,11 @@ void r_vec(const Vector &x, Vector &y){
   y(1)=0;
 }
 
+void r_inv_hat_f(const Vector &x, Vector &f){
+    f(0) = pow(x(0) + InvR, -1);
+    f(1) = 0.;
+}
+
 //Temperature field
 double temperature_f(const Vector &x){
     double mid_x = (Rmax + Rmin)/2;
@@ -254,29 +266,31 @@ double temperature_f(const Vector &x){
 
 }
 
+const double scale = 1e-5;
+
 //Right hand side of the equation
 double f_rhs(const Vector &x){
-    return 0.;
+    return 8*scale*pow(x(0), 2)*x(1);
 }
 
 //Boundary values for w
 double boundary_w(const Vector &x){
-    return 0.;
+    return -8*scale*pow(x(0), 2)*x(1);
 }
 
 void boundary_gradw(const Vector &x, Vector &f){
-    f(0) = 0.;
-    f(1) = 0.;
+    f(0) = -16*scale*x(0)*x(1);
+    f(1) = -8*scale*pow(x(0), 2);
 }
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return 100*x(0)*x(0);
+    return scale*pow(x(0), 4)*x(1);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = 200*x(0);
-    f(1) = 0.;
+    f(0) = 4*scale*pow(x(0), 3)*x(1);
+    f(1) = scale*pow(x(0), 4);
 }
 
 //Scaling for the boundary conditions

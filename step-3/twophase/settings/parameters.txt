@@ -10,7 +10,7 @@ settings/square.geo #Mesh_script
 
 Simulation parameters
 0.0001  #Dt
-0.04     #Final_time
+0.07     #Final_time
 10      #Visualization_steps
 
 FE parameters
@@ -33,3 +33,4 @@ Physical parameters
 302.3   #Volumetric_latent_heat
 1       #Viscosity
 3       #n_ColdPorosity
+2       #n_Inv_R

@@ -98,6 +98,6 @@ void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi, ParGridFunct
     gradpsi.SetGridFunction(&psi);
     rV.SetBCoef(gradpsi);
     v->Randomize();
-    v->ProjectCoefficient(rV);
+    v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
     coeff_rCLV.SetBCoef(rV);
 }
