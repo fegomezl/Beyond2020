@@ -56,6 +56,8 @@ class Artic_sea{
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
 
+        Array<int> ess_bdr_psi;
+
         Array<int> block_true_offsets;
 
         //System objects
@@ -83,8 +85,11 @@ class Artic_sea{
         HypreParMatrix *C;
 };
 
+void boundary_gradpsi(const Vector &x, Vector &f);
+
 extern double height;
 extern double int_rad;
 extern double out_rad;
 
 extern double border;
+extern double InvR;

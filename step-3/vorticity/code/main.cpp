@@ -7,6 +7,7 @@ double int_rad;
 
 //Size of the BC border
 double border;
+double InvR;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -18,7 +19,7 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-    int nDeltaT, nCold_porosity;
+    int nDeltaT, nCold_porosity, nInvR;
 
     //Make program parameters readeable in execution
     OptionsParser args(argc, argv);
@@ -46,6 +47,8 @@ int main(int argc, char *argv[]){
                    "Kinematic viscosity of the material.");
     args.AddOption(&nCold_porosity, "-ct", "--cold_porosity",
                    "Value of the porosity on the solid domain (10^(n)).");
+    args.AddOption(&nInvR, "-ir", "--inv_r",
+                   "Value of constant m for 1/(r + m) (10^(n)).");
 
     //Check if parameters were read correctly
     args.Parse();
@@ -61,6 +64,7 @@ int main(int argc, char *argv[]){
     for (int ii = total_refinements; ii <= total_refinements; ii++){
         config.invDeltaT = pow(10, nDeltaT);
         config.cold_porosity = pow(10, -nCold_porosity);
+        InvR = pow(10, -nInvR);
         config.last = ((config.refinements = ii) == total_refinements);
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);

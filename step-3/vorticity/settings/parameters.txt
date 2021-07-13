@@ -4,8 +4,8 @@ settings/square.geo #Mesh_script
 10 #Rmax
 0 #Zmin
 10 #Zmax
-15 #Rcells
-15 #Zcells
+100 #Rcells
+100 #Zcells
 
 FE parameters
 5 #Refinements
@@ -16,4 +16,5 @@ Physical parameters
 0       #Fusion_temperature
 9       #n_DeltaT
 1       #Viscosity
-3       #n_ColdPorosity
+0       #n_ColdPorosity
+2       #n_Inv_R

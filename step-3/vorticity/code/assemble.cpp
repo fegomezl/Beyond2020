@@ -1,5 +1,10 @@
 #include "header.h"
 
+//Rotational functions
+double r_f(const Vector &x);
+
+void r_inv_hat_f(const Vector &x, Vector &f);
+
 //Temperature field
 double temperature_f(const Vector &x);
 
@@ -25,24 +30,38 @@ void Artic_sea::assemble_system(){
         (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
         (*theta)(ii) = config.cold_porosity + (1 - pow((*theta)(ii), 2))/(pow((*theta)(ii), 3) + config.cold_porosity);
     }
-    GridFunctionCoefficient eta(theta);
 
-    //Define local coefficients
+    //Rotational coefficients
+    FunctionCoefficient r_coeff(r_f);
+    VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
+
+    //Properties coefficients
     ConstantCoefficient mu(config.viscosity);
+    GridFunctionCoefficient eta(theta);
     ProductCoefficient neg_mu(-1., mu);
     ProductCoefficient neg_eta(-1., eta);
 
+    //RHS coefficients
     FunctionCoefficient f_coeff(f_rhs);
-    ProductCoefficient neg_f_coeff(-1., f_coeff);
 
+    //Dirichlet coefficients
     FunctionCoefficient w_coeff(scaled_boundary_w);
     VectorFunctionCoefficient w_grad(dim, scaled_boundary_gradw);
-    ProductCoefficient neg_mu_w(neg_mu, w_coeff);
-    ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
-    ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
 
     FunctionCoefficient psi_coeff(scaled_boundary_psi);
     VectorFunctionCoefficient psi_grad(dim, scaled_boundary_gradpsi);
+
+    //Rotational coupled coefficients
+    ScalarVectorProductCoefficient mu_r_inv_hat(mu, r_inv_hat);
+    ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
+
+    ProductCoefficient neg_mu_w(neg_mu, w_coeff);
+    InnerProductCoefficient mu_r_inv_hat_w_grad(mu_r_inv_hat, w_grad);
+    ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
+    ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
+
+    InnerProductCoefficient mu_r_inv_hat_psi_grad(mu_r_inv_hat, psi_grad);
+    InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
     ScalarVectorProductCoefficient mu_psi_grad(mu, psi_grad);
     ScalarVectorProductCoefficient neg_mu_psi_grad(neg_mu, psi_grad);
     ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
@@ -65,7 +84,7 @@ void Artic_sea::assemble_system(){
     fespace->GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
     Array<int> ess_tdof_list_psi;
-    Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
+    ess_bdr_psi.SetSize(pmesh->bdr_attributes.Max());
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
     fespace->GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
@@ -82,17 +101,20 @@ void Artic_sea::assemble_system(){
     //Define the RHS
     g = new ParLinearForm(fespace);
     g->AddDomainIntegrator(new DomainLFIntegrator(neg_mu_w));
+    g->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_psi_grad));
     g->AddDomainIntegrator(new DomainLFGradIntegrator(mu_psi_grad));
-    g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad));
+    g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad), ess_bdr_psi);
     g->Assemble();
     g->ParallelAssemble(B.GetBlock(0));
 
     f = new ParLinearForm(fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(neg_f_coeff));
-    f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
+    f->AddDomainIntegrator(new DomainLFIntegrator(f_coeff));
+    f->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_w_grad));
+    f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
-    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad));
-    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad));
+    f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
+    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad), ess_bdr_w);
+    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad), ess_bdr_psi);
     f->Assemble();
     f->ParallelAssemble(B.GetBlock(1));
 
@@ -100,23 +122,34 @@ void Artic_sea::assemble_system(){
     m = new ParBilinearForm(fespace);
     m->AddDomainIntegrator(new MassIntegrator(mu));
     m->Assemble();
-    m->EliminateEssentialBCFromDofs(ess_tdof_list_w, *w, *g);
+    m->EliminateEssentialBCFromDofs(ess_tdof_list_w);
     m->Finalize();
     M = m->ParallelAssemble();
 
     d = new ParBilinearForm(fespace);
     d->AddDomainIntegrator(new DiffusionIntegrator(eta));
+    d->AddDomainIntegrator(new ConvectionIntegrator(eta_r_inv_hat));
     d->Assemble();
-    d->EliminateEssentialBCFromDofs(ess_tdof_list_psi, *psi, *f);
+    d->EliminateEssentialBCFromDofs(ess_tdof_list_psi);
     d->Finalize();
     D = d->ParallelAssemble();
 
     c = new ParMixedBilinearForm(fespace, fespace);
     c->AddDomainIntegrator(new MixedGradGradIntegrator(mu));
+    c->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(mu_r_inv_hat));
     c->Assemble();
     OperatorHandle Ch;
     c->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Ch);
     C = Ch.Is<HypreParMatrix>();
+}
+
+double r_f(const Vector &x){
+    return x(0);
+}
+
+void r_inv_hat_f(const Vector &x, Vector &f){
+    f(0) = pow(x(0) + InvR, -1);
+    f(1) = 0.;
 }
 
 //Temperature field
@@ -125,37 +158,40 @@ double temperature_f(const Vector &x){
     double mid_y = height/2;
     double sigma = (out_rad - int_rad)/10;
 
+    //double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    if (r_2 < pow(sigma, 2))
+    /*if (r_2 < pow(sigma, 2))
         return -10;
     else
-        return 10;
-    
+        return 10;*/
+    return 10.;
 }
+
+double scale = 1e-5;
 
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    return 0.;
+    return 8*scale*pow(x(0), 2)*x(1);
 }
 
 //Boundary values for w
 double boundary_w(const Vector &x){
-    return 0.;
+    return -8*scale*pow(x(0), 2)*x(1);
 }
 
 void boundary_gradw(const Vector &x, Vector &f){
-    f(0) = 0.;
-    f(1) = 0.;
+    f(0) = -16*scale*x(0)*x(1);
+    f(1) = -8*scale*pow(x(0), 2);
 }
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return x(0);
+    return scale*pow(x(0), 4)*x(1);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = 1.;
-    f(1) = 0.;
+    f(0) = 4*scale*pow(x(0), 3)*x(1);
+    f(1) = scale*pow(x(0), 4);
 }
 
 //Scaling for the boundary conditions
