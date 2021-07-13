@@ -1,16 +1,11 @@
 #include "header.h"
 
 // unitary r vector
-void r_vec(const Vector &x, Vector &y);
+void r_hat(const Vector &x, Vector &y);
 
 //void r_inv_hat_f(const Vector &x, Vector &f);
 
 double r_inv(const Vector &x);
-
-void r_hat(const Vector &x, Vector &y);
-
-//Temperature field
-double temperature_f(const Vector &x);
 
 //Right hand side of the equation
  double f_rhs(const Vector &x);
@@ -48,7 +43,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   x_T = new ParGridFunction(&fespace);
 
   theta = new ParGridFunction(&fespace);
-  FunctionCoefficient temperature(temperature_f);
   theta->SetFromTrueDofs(*X_T);
   for (int ii = 0; ii < theta->Size(); ii++){
       (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
@@ -163,7 +157,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
 void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, int attributes){
   if(theta) delete theta;
   theta = new ParGridFunction(&fespace);
-  FunctionCoefficient temperature(temperature_f);
   theta->SetFromTrueDofs(*X_T);
   for (int ii = 0; ii < theta->Size(); ii++){
       (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
@@ -210,7 +203,7 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, 
 
   x_T->SetFromTrueDofs(*X_T);
   GradientGridFunctionCoefficient delta_T(x_T);
-  VectorFunctionCoefficient rcap(dim, r_vec);
+  VectorFunctionCoefficient rcap(dim, r_hat);
   InnerProductCoefficient r_deltaT(rcap, delta_T);
   ProductCoefficient bg_deltaT(bg, r_deltaT);
   FunctionCoefficient r(r_f);
@@ -251,12 +244,6 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, 
   D = d->ParallelAssemble();
 }
 
-
-void r_vec(const Vector &x, Vector &y){
-  y(0)=1;
-  y(1)=0;
-}
-
 /*void r_inv_hat_f(const Vector &x, Vector &f){
     f(0) = pow(x(0) + InvR, -1);
     f(1) = 0.;
@@ -269,20 +256,6 @@ double r_inv(const Vector &x){
 void r_hat(const Vector &x, Vector &y){
   y(0)=1;
   y(1)=0;
-}
-
-//Temperature field
-double temperature_f(const Vector &x){
-    double mid_x = (Rmax + Rmin)/2;
-    double mid_y = height/2;
-    double sigma = (Rmax - Rmin)/10;
-
-    double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    if (r_2 < pow(sigma, 2))
-        return -10;
-    else
-        return 10;
-
 }
 
 const double scale = 1e-5;
