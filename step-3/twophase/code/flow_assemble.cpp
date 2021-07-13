@@ -275,22 +275,22 @@ double f_rhs(const Vector &x){
 
 //Boundary values for w
 double boundary_w(const Vector &x){
-    return -8*scale*pow(x(0), 2)*x(1);
+    return 0;
 }
 
 void boundary_gradw(const Vector &x, Vector &f){
-    f(0) = -16*scale*x(0)*x(1);
-    f(1) = -8*scale*pow(x(0), 2);
+    f(0) = 0;
+    f(1) = 0;
 }
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return scale*pow(x(0), 4)*x(1);
+    return 100*x(0)*x(0);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = 4*scale*pow(x(0), 3)*x(1);
-    f(1) = scale*pow(x(0), 4);
+    f(0) = 200*x(0);
+    f(1) = 0;
 }
 
 //Scaling for the boundary conditions
