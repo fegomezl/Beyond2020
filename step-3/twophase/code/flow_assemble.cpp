@@ -3,7 +3,11 @@
 // unitary r vector
 void r_vec(const Vector &x, Vector &y);
 
-void r_inv_hat_f(const Vector &x, Vector &f);
+//void r_inv_hat_f(const Vector &x, Vector &f);
+
+double r_inv(const Vector &x);
+
+void r_hat(const Vector &x, Vector &y);
 
 //Temperature field
 double temperature_f(const Vector &x);
@@ -54,7 +58,9 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   //Define local coefficients
   //
   //Rotational coefficients
-  VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
+  FunctionCoefficient r_invCoeff(r_inv);
+  VectorFunctionCoefficient r_hatCoeff(dim, r_hat);
+  ScalarVectorProductCoefficient r_inv_hat(r_invCoeff, r_hatCoeff);
 
   //Properties coefficients
   GridFunctionCoefficient eta(theta);
@@ -153,6 +159,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   C = Ch.Is<HypreParMatrix>();
 }
 
+
 void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, int attributes){
   if(theta) delete theta;
   theta = new ParGridFunction(&fespace);
@@ -166,7 +173,10 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, 
   //Define local coefficients
   //
   //Rotational coefficients
-  VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
+  //VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
+  FunctionCoefficient r_invCoeff(r_inv);
+  VectorFunctionCoefficient r_hatCoeff(dim, r_hat);
+  ScalarVectorProductCoefficient r_inv_hat(r_invCoeff, r_hatCoeff);
 
   //Properties coefficients
   GridFunctionCoefficient eta(theta);
@@ -247,9 +257,18 @@ void r_vec(const Vector &x, Vector &y){
   y(1)=0;
 }
 
-void r_inv_hat_f(const Vector &x, Vector &f){
+/*void r_inv_hat_f(const Vector &x, Vector &f){
     f(0) = pow(x(0) + InvR, -1);
     f(1) = 0.;
+}*/
+
+double r_inv(const Vector &x){
+  return pow(x(0) + InvR, -1);
+}
+
+void r_hat(const Vector &x, Vector &y){
+  y(0)=1;
+  y(1)=0;
 }
 
 //Temperature field
