@@ -88,6 +88,8 @@ class Artic_sea{
   	    double total_error;
         double total_time;
 
+double h_min;
+
         int dim;
         int serial_refinements;
         HYPRE_Int size;
