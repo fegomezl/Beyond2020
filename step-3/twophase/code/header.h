@@ -90,6 +90,8 @@ class Conduction_Operator : public TimeDependentOperator{
         MatrixVectorProductCoefficient rV;
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
+        FunctionCoefficient r_invCoeff;
+
 };
 
 class Flow_Operator{

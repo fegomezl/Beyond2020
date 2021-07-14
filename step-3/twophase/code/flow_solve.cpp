@@ -36,6 +36,12 @@ void Flow_Operator::Solve(Config config, HypreParVector *X_Psi, ParGridFunction 
     superlu->Mult(B, Y);
 
     //Recover the solution on each proccesor
+
+    /*FunctionCoefficient r_invCoeff(r_inv);
+    VectorConstantCoefficient w_vec(Y.GetBlock(0));
+    ScalarVectorProductCoefficient w_sol(r_invCoeff, w_vec);
+
+    w->ProjectCoefficient(w_sol);*/
     w->Distribute(&(Y.GetBlock(0)));
     for (int ii = 0; ii < w->Size(); ii++)
         (*w)(ii) += (*w_aux)(ii);

@@ -5,6 +5,8 @@ double initial_f(const Vector &x);
 //Temperature field
 double temperature_f(const Vector &x);
 
+double r_inv(const Vector &x);
+
 Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     config(config),
@@ -16,7 +18,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     coeff_rCL(r, r),
     coeff_rK(r, r), dt_coeff_rK(0., coeff_rK),
     rot(dim, rot_f), gradpsi(&psi), rV(rot, zero),
-    coeff_rCLV(r, zero), dt_coeff_rCLV(0., zero),
+    coeff_rCLV(r, zero), dt_coeff_rCLV(0., zero), r_invCoeff(r_inv),
     M_solver(fespace.GetComm()), T_solver(fespace.GetComm())
 {
     //Set boundary conditions
@@ -65,4 +67,17 @@ double initial_f(const Vector &x){
         return -10*(1 - x(1)/mid);
     else
         return 10*(x(1) - mid)/(Zmax - mid);
+}
+
+double temperature_f(const Vector &x){
+    double mid_x = (Rmax + Rmin)/2;
+    double mid_y = height/2;
+    double sigma = (Rmax - Rmin)/10;
+
+    double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
+    if (r_2 < pow(sigma, 2))
+        return -10;
+    else
+        return 10;
+
 }
