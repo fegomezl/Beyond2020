@@ -10,5 +10,6 @@ void Artic_sea::output_results(){
              << "Total iterations: " << iteration << "\n"
              << "Total printing: " << vis_impressions << "\n"
              << "Final mean absolute convergence error: " << total_error/vis_impressions << "\n" 
-       	     << "Total execution time: " << total_time <<" s"<< "\n";
+       	     << "Total execution time: " << total_time <<" s"<< "\n"
+             << "h_min: " << h_min << "\n";
 }
