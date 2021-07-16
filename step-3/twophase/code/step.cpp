@@ -1,7 +1,5 @@
 #include "header.h"
 
-double r_inv(const Vector &x);
-
 void Artic_sea::time_step(){
     //Update iteration parameters
     last = (t >= config.t_final - 1e-8*config.dt_init);
@@ -99,8 +97,7 @@ void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi, ParGridFunct
     psi.SetFromTrueDofs(Psi);
     gradpsi.SetGridFunction(&psi);
     rV.SetBCoef(gradpsi);
-    ScalarVectorProductCoefficient gradpsi_sol(r_invCoeff, rV);
     v->Randomize();
-    v->ProjectDiscCoefficient(gradpsi_sol, GridFunction::ARITHMETIC);
+    v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
     coeff_rCLV.SetBCoef(rV);
 }
