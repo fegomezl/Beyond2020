@@ -4,7 +4,7 @@
 # Change parameters in mesh_script.geo
 Mesh_script=$(sed -n 2p settings/parameters.txt | cut -d ' ' -f 1)
 #Rmin=$(sed -n 3p settings/parameters.txt | tr -d -c 0-9.-)
-Rmin=0
+Rmin=$(sed -n 3p settings/parameters.txt | tr -d -c 0-9.-)
 sed -i "/Rmin =/c Rmin = $Rmin;" $Mesh_script
 Rmax=$(sed -n 4p settings/parameters.txt | tr -d -c 0-9.-)
 sed -i "/Rmax =/c Rmax = $Rmax;" $Mesh_script

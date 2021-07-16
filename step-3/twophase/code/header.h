@@ -33,6 +33,8 @@ struct Config{
     double c_l, c_s;
     double k_l, k_s;
     double L;
+    double viscosity;
+    double cold_porosity;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -40,7 +42,7 @@ class Conduction_Operator : public TimeDependentOperator{
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
         void SetParameters(const Vector &X);
-        void UpdateVelocity(const HypreParVector &psi);
+        void UpdateVelocity(const HypreParVector &psi, ParGridFunction *v);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
@@ -88,14 +90,18 @@ class Conduction_Operator : public TimeDependentOperator{
         MatrixVectorProductCoefficient rV;
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
+        FunctionCoefficient r_invCoeff;
+
 };
 
 class Flow_Operator{
   public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, const ParGridFunction *x_T);
-    void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const ParGridFunction *x_T);
-    void Update_T(Config config, const ParGridFunction *x_T);
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T);
+    void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim, int attributes);
+    void Update_T(Config config, const HypreParVector *X_T, int dim, int attributes);
     ParGridFunction *psi;
+    ParGridFunction *w;
+    ParGridFunction *v;
     ~Flow_Operator();
 
   protected:
@@ -103,12 +109,9 @@ class Flow_Operator{
         //Mesh objects
         ParFiniteElementSpace &fespace;
 
-        Array<int> block_offsets;
         Array<int> block_true_offsets;
 
         //System objects
-        BlockVector y;
-        BlockVector b;
         ParLinearForm *f;
         ParLinearForm *g;
         ParBilinearForm *m;
@@ -127,9 +130,13 @@ class Flow_Operator{
         HypreParMatrix *Ct;
         BlockOperator *A;
 
-        ParGridFunction *w;
+       //Boundary conditions
+       ParGridFunction *w_aux;
+       ParGridFunction *psi_aux;
+       ParGridFunction *theta;
 
-        ConstantCoefficient bg;
+       ConstantCoefficient bg;
+       ParGridFunction *x_T;
 
 };
 
@@ -156,12 +163,16 @@ class Artic_sea{
         int vis_impressions;
 
         int dim;
+        double h_min;
         int serial_refinements;
         HYPRE_Int size;
+        HYPRE_Int size_v;
 
         ParMesh *pmesh;
         FiniteElementCollection *fec;
+        FiniteElementCollection *fec_v;
         ParFiniteElementSpace *fespace;
+        ParFiniteElementSpace *fespace_v;
 
         //System objects
         ParGridFunction *x_T;
@@ -185,4 +196,6 @@ extern double r_f(const Vector &x);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
-extern double Rmin, Rmax, Zmin, Zmax;
+extern double Rmin, Rmax, Zmin, Zmax, height;
+extern double border;
+extern double InvR;

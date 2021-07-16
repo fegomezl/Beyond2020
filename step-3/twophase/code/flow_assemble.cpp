@@ -1,163 +1,351 @@
 #include "header.h"
 
-//Boundary values for psi
-double boundary_psi(const Vector &x);
+// unitary r vector
+void r_hat(const Vector &x, Vector &y);
+
+//void r_inv_hat_f(const Vector &x, Vector &f);
+
+double r_inv(const Vector &x);
 
 //Right hand side of the equation
-double f_rhs(const Vector &x);
+ double f_rhs(const Vector &x);
 
-//Constant to the brinkman term
-double porous_constant(const Vector &x);
+//Boundary values for w
+ double scaled_boundary_w(const Vector &x);
 
-//r as a vector function
-void r_vec(const Vector &x, Vector &y);
+ void scaled_boundary_gradw(const Vector &x, Vector &f);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, int attributes, const ParGridFunction *x_T):
+//Boundary values for psi
+ double scaled_boundary_psi(const Vector &x);
+
+ void scaled_boundary_gradpsi(const Vector &x, Vector &f);
+
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T):
   fespace(fespace),
-  block_offsets(3), block_true_offsets(3),
+  block_true_offsets(3),
   f(NULL), g(NULL),
-  m(NULL), d(NULL), c(NULL), ct(NULL),
-  M(NULL), D(NULL), C(NULL), Ct(NULL),
-  A(NULL), psi(NULL), w(NULL), bg(0.002)
+  m(NULL), d(NULL), c(NULL),
+  M(NULL), D(NULL), C(NULL),
+  A(NULL), psi(NULL), w(NULL), v(NULL),
+  w_aux(NULL), psi_aux(NULL), theta(NULL),
+  bg(0.002), x_T(NULL)
 {
   //Create the block offsets
-  block_offsets[0] = 0;
-  block_offsets[1] = fespace.GetVSize();
-  block_offsets[2] = fespace.GetVSize();
-  block_offsets.PartialSum();
-
   block_true_offsets[0] = 0;
   block_true_offsets[1] = fespace.TrueVSize();
   block_true_offsets[2] = fespace.TrueVSize();
   block_true_offsets.PartialSum();
 
   //Initialize the corresponding vectors
-  /*const char *device_config = "cpu";
-  Device device(device_config);
-  MemoryType mt = device.GetMemoryType();*/
-  y.Update(block_offsets); Y.Update(block_true_offsets);
-  b.Update(block_offsets); B.Update(block_true_offsets);
+  Y.Update(block_true_offsets);
+  B.Update(block_true_offsets);
 
-  FunctionCoefficient boundary_psi_coeff(boundary_psi);
-  ConstantCoefficient g_coeff(0.);
-  ConstantCoefficient viscosity(1.);
-  FunctionCoefficient eta_coeff(porous_constant);
+  x_T = new ParGridFunction(&fespace);
 
-  //Define grid functions and apply essential boundary conditions(?)
-  psi = new ParGridFunction(&fespace);
-  Array<int> ess_bdr_psi(attributes);
-  ess_bdr_psi = 0;
-  ess_bdr_psi[1] = ess_bdr_psi[2] = ess_bdr_psi[3] = 1;
-  psi->ProjectBdrCoefficient(boundary_psi_coeff, ess_bdr_psi);
-  psi->ParallelProject(y.GetBlock(0));
+  theta = new ParGridFunction(&fespace);
+  theta->SetFromTrueDofs(*X_T);
+  for (int ii = 0; ii < theta->Size(); ii++){
+      (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
+      (*theta)(ii) = config.cold_porosity + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.cold_porosity);
+  }
 
-  w =  new ParGridFunction(&fespace);
+  //Define local coefficients
+  //
+  //Rotational coefficients
+  FunctionCoefficient r_invCoeff(r_inv);
+  VectorFunctionCoefficient r_hatCoeff(dim, r_hat);
+  ScalarVectorProductCoefficient r_inv_hat(r_invCoeff, r_hatCoeff);
+
+  //Properties coefficients
+  GridFunctionCoefficient eta(theta);
+  ConstantCoefficient mu(config.viscosity);
+  ProductCoefficient neg_mu(-1., mu);
+  ProductCoefficient neg_eta(-1., eta);
+
+  //Dirichlet coefficients
+  FunctionCoefficient w_coeff(scaled_boundary_w);
+  VectorFunctionCoefficient w_grad(dim, scaled_boundary_gradw);
+
+  FunctionCoefficient psi_coeff(scaled_boundary_psi);
+  VectorFunctionCoefficient psi_grad(dim, scaled_boundary_gradpsi);
+
+  //Rotational coupled coefficients
+  ScalarVectorProductCoefficient mu_r_inv_hat(mu, r_inv_hat);
+  ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
+
+  ProductCoefficient neg_mu_w(neg_mu, w_coeff);
+  InnerProductCoefficient mu_r_inv_hat_w_grad(mu_r_inv_hat, w_grad);
+  ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
+  ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
+
+  InnerProductCoefficient mu_r_inv_hat_psi_grad(mu_r_inv_hat, psi_grad);
+  InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
+  ScalarVectorProductCoefficient mu_psi_grad(mu, psi_grad);
+  ScalarVectorProductCoefficient neg_mu_psi_grad(neg_mu, psi_grad);
+  ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
+  ScalarVectorProductCoefficient neg_eta_psi_grad(neg_eta, psi_grad);
+
+  //Define essential boundary conditions
+    //
+    //                  1
+    //            /------------\
+    //            |            |
+    //           2|            |3
+    //            |            |
+    //            \------------/
+    //                  0
+
+  Array<int> ess_tdof_list_w;
   Array<int> ess_bdr_w(attributes);
-  ess_bdr_w = 0;
-  ess_bdr_w[1] = ess_bdr_w[2] = ess_bdr_w[3] = 1;
-  w->ProjectBdrCoefficient(g_coeff, ess_bdr_w);
-  w->ParallelProject(y.GetBlock(1));
+  ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
+  ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
+  fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
-  this->Update_T(config, x_T);
+  Array<int> ess_tdof_list_psi;
+  Array<int> ess_bdr_psi(attributes);
+  ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
+  ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
+  fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
 
-  g = new ParLinearForm;
-  g->Update(&fespace, b.GetBlock(1), 0);
-  g->AddDomainIntegrator(new DomainLFIntegrator(g_coeff));
+  //Define grid functions
+  w =  new ParGridFunction(&fespace);
+  w_aux = new ParGridFunction(&fespace);
+  w_aux->ProjectCoefficient(w_coeff);
+
+  psi = new ParGridFunction(&fespace);
+  psi_aux = new ParGridFunction(&fespace);
+  psi_aux->ProjectCoefficient(psi_coeff);
+
+  v = new ParGridFunction(&fespace_v);
+
+  g = new ParLinearForm(&fespace);
+  g->AddDomainIntegrator(new DomainLFIntegrator(neg_mu_w));
+  g->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_psi_grad));
+  g->AddDomainIntegrator(new DomainLFGradIntegrator(mu_psi_grad));
+  g->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_psi_grad));
   g->Assemble();
-  g->SyncAliasMemory(b);
-  g->ParallelAssemble(B.GetBlock(1));
-  B.GetBlock(1).SyncAliasMemory(B);
+  g->ParallelAssemble(B.GetBlock(0));
+
+  this->Update_T(config, X_T, dim, attributes);
 
   //Define bilinear forms of the system
+  m = new ParBilinearForm(&fespace);
+  m->AddDomainIntegrator(new MassIntegrator(mu));
+  m->Assemble();
+  m->EliminateEssentialBCFromDofs(ess_tdof_list_w, *w, *g);
+  m->Finalize();
+  M = m->ParallelAssemble();
+
   d = new ParBilinearForm(&fespace);
-  d->AddDomainIntegrator(new DiffusionIntegrator(eta_coeff));
+  d->AddDomainIntegrator(new DiffusionIntegrator(eta));
+  d->AddDomainIntegrator(new ConvectionIntegrator(eta_r_inv_hat));
   d->Assemble();
-  d->EliminateEssentialBC(ess_bdr_psi, *psi, *f);
+  d->EliminateEssentialBCFromDofs(ess_tdof_list_psi);
   d->Finalize();
   D = d->ParallelAssemble();
 
-  m = new ParBilinearForm(&fespace);
-  m->AddDomainIntegrator(new MassIntegrator(viscosity));
-  m->Assemble();
-  m->EliminateEssentialBC(ess_bdr_w, *w, *g);
-  m->Finalize();
-  M = m->ParallelAssemble();
-  (*M) *= -1.;
-
   c = new ParMixedBilinearForm(&fespace, &fespace);
-  c->AddDomainIntegrator(new MixedGradGradIntegrator(viscosity));
+  c->AddDomainIntegrator(new MixedGradGradIntegrator(mu));
+  c->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(mu_r_inv_hat));
   c->Assemble();
-  c->EliminateTrialDofs(ess_bdr_psi, *psi, *f);
-  c->EliminateTestDofs(ess_bdr_w);
-  c->Finalize();
-  C = c->ParallelAssemble();
+  OperatorHandle Ch;
+  c->FormRectangularSystemMatrix(ess_tdof_list_psi, ess_tdof_list_w, Ch);
+  C = Ch.Is<HypreParMatrix>();
+}
 
-  ct = new ParMixedBilinearForm(&fespace, &fespace);
-  ct->AddDomainIntegrator(new MixedGradGradIntegrator(viscosity));
-  ct->Assemble();
-  ct->EliminateTrialDofs(ess_bdr_w, *w, *g);
-  ct->EliminateTestDofs(ess_bdr_psi);
-  ct->Finalize();
-  Ct = ct->ParallelAssemble();
-  //Ct = new TransposeOperator(C);
 
-  //Create the complete bilinear operator:
+void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, int attributes){
+  if(theta) delete theta;
+  theta = new ParGridFunction(&fespace);
+  theta->SetFromTrueDofs(*X_T);
+  for (int ii = 0; ii < theta->Size(); ii++){
+      (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
+      (*theta)(ii) = config.cold_porosity + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.cold_porosity);
+  }
+
+  //Define local coefficients
   //
-  //   A = [ D  C^t]
-  //       [ C  M ]
+  //Rotational coefficients
+  //VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
+  FunctionCoefficient r_invCoeff(r_inv);
+  VectorFunctionCoefficient r_hatCoeff(dim, r_hat);
+  ScalarVectorProductCoefficient r_inv_hat(r_invCoeff, r_hatCoeff);
 
-  A = new BlockOperator(block_true_offsets);
-  A->SetBlock(0, 0, D);
-  A->SetBlock(0, 1, Ct);
-  A->SetBlock(1, 0, C);
-  A->SetBlock(1, 1, M);
+  //Properties coefficients
+  GridFunctionCoefficient eta(theta);
+  ConstantCoefficient mu(config.viscosity);
+  ProductCoefficient neg_mu(-1., mu);
+  ProductCoefficient neg_eta(-1., eta);
+
+  //Dirichlet coefficients
+  FunctionCoefficient w_coeff(scaled_boundary_w);
+  VectorFunctionCoefficient w_grad(dim, scaled_boundary_gradw);
+
+  FunctionCoefficient psi_coeff(scaled_boundary_psi);
+  VectorFunctionCoefficient psi_grad(dim, scaled_boundary_gradpsi);
+
+  //Rotational coupled coefficients
+  ScalarVectorProductCoefficient mu_r_inv_hat(mu, r_inv_hat);
+  ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
+
+  ProductCoefficient neg_mu_w(neg_mu, w_coeff);
+  InnerProductCoefficient mu_r_inv_hat_w_grad(mu_r_inv_hat, w_grad);
+  ScalarVectorProductCoefficient mu_w_grad(mu, w_grad);
+  ScalarVectorProductCoefficient neg_mu_w_grad(neg_mu, w_grad);
+
+  InnerProductCoefficient mu_r_inv_hat_psi_grad(mu_r_inv_hat, psi_grad);
+  InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
+  ScalarVectorProductCoefficient mu_psi_grad(mu, psi_grad);
+  ScalarVectorProductCoefficient neg_mu_psi_grad(neg_mu, psi_grad);
+  ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
+  ScalarVectorProductCoefficient neg_eta_psi_grad(neg_eta, psi_grad);
+
+
+  x_T->SetFromTrueDofs(*X_T);
+  GradientGridFunctionCoefficient delta_T(x_T);
+  VectorFunctionCoefficient rcap(dim, r_hat);
+  InnerProductCoefficient r_deltaT(rcap, delta_T);
+  ProductCoefficient bg_deltaT(bg, r_deltaT);
+  FunctionCoefficient r(r_f);
+  ProductCoefficient rF(bg_deltaT, r);
+
+  Array<int> ess_tdof_list_w;
+  Array<int> ess_bdr_w(attributes);
+  ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
+  ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
+  fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
+
+
+  Array<int> ess_tdof_list_psi;
+  Array<int> ess_bdr_psi(attributes);
+  ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
+  ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
+  fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
+
+
+  if(f) delete f;
+  f = new ParLinearForm(&fespace);
+  f->AddDomainIntegrator(new DomainLFIntegrator(rF));
+  f->AddDomainIntegrator(new DomainLFIntegrator(mu_r_inv_hat_w_grad));
+  f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
+  f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
+  f->AddDomainIntegrator(new DomainLFGradIntegrator(mu_w_grad));
+  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad), ess_bdr_psi);
+  f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_mu_w_grad), ess_bdr_w);
+  f->Assemble();
+  f->ParallelAssemble(B.GetBlock(1));
+
+  if(d) delete d;
+  d = new ParBilinearForm(&fespace);
+  d->AddDomainIntegrator(new DiffusionIntegrator(eta));
+  d->Assemble();
+  d->EliminateEssentialBCFromDofs(ess_tdof_list_psi, *psi, *f);
+  d->Finalize();
+  D = d->ParallelAssemble();
 }
 
-double boundary_psi(const Vector &x){
-    return x(0);
+/*void r_inv_hat_f(const Vector &x, Vector &f){
+    f(0) = pow(x(0) + InvR, -1);
+    f(1) = 0.;
+}*/
+
+double r_inv(const Vector &x){
+  return pow(x(0) + InvR, -1);
 }
 
-double f_rhs(const Vector &x){
-    return (Rmax - Rmin)/2 - x(0);
-}
-
-double porous_constant(const Vector &x){
-    double height = Zmax - Zmin;
-    double mid_x = (Rmax + Rmin)/2;
-    double mid_y = height/2;
-    double sigma = (Rmax - Rmin)/5;
-
-    double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    if (r_2 < pow(sigma, 2))
-        return 1e+6;
-    else
-        return 0.1;
-}
-
-void r_vec(const Vector &x, Vector &y){
+void r_hat(const Vector &x, Vector &y){
   y(0)=1;
   y(1)=0;
 }
 
-void Flow_Operator::Update_T(Config config, const ParGridFunction *x_T){
+const double scale = 1e-5;
 
-  //Create the temperature coeffcient (rF)
-  /*GradientGridFunctionCoefficient delta_T(x_T);
-  VectorFunctionCoefficient rcap(2, r_vec);
-  InnerProductCoefficient r_deltaT(rcap, delta_T);
-  ProductCoefficient bg_deltaT(bg, r_deltaT);
-  FunctionCoefficient r(r_f);
-  ProductCoefficient rF(bg_deltaT, r);*/
+//Right hand side of the equation
+double f_rhs(const Vector &x){
+    return 8*scale*pow(x(0), 2)*x(1);
+}
 
-  FunctionCoefficient f_coeff(f_rhs);
+//Boundary values for w
+double boundary_w(const Vector &x){
+    return 0;
+}
 
-  //Update the RHS
-  if(f) delete f;
-  f = new ParLinearForm;
-  f->Update(&fespace, b.GetBlock(0), 0);
-  f->AddDomainIntegrator(new DomainLFIntegrator(f_coeff));
-  f->Assemble();
-  f->SyncAliasMemory(b);
-  f->ParallelAssemble(B.GetBlock(0));
-  B.GetBlock(0).SyncAliasMemory(B);
+void boundary_gradw(const Vector &x, Vector &f){
+    f(0) = 0;
+    f(1) = 0;
+}
+
+//Boundary values for psi
+double boundary_psi(const Vector &x){
+    return 100*x(0)*x(0);
+}
+
+void boundary_gradpsi(const Vector &x, Vector &f){
+    f(0) = 200*x(0);
+    f(1) = 0;
+}
+
+//Scaling for the boundary conditions
+double left_border(const Vector &x){
+    double width = Rmax - Rmin;
+    return 0.5*(1 - tanh((5*border/width)*(Rmin + width/border - x(0))));
+}
+
+double right_border(const Vector &x){
+    double width = Rmax - Rmin;
+    return 0.5*(1 - tanh((5*border/width)*(x(0) - Rmax + width/border)));
+}
+
+double lower_border(const Vector &x){
+    return 0.5*(1 - tanh((5*border/height)*(height/border - x(1))));
+}
+
+double upper_border(const Vector &x){
+    return 0.5*(1 - tanh((5*border/height)*(x(1) - height + height/border)));
+}
+
+double left_grad(const Vector &x){
+    double width = Rmax - Rmin;
+    return (2.5*border/width)*(1 - pow(tanh((5*border/width)*(Rmin + width/border - x(0))), 2));
+}
+
+double right_grad(const Vector &x){
+    double width = Rmax - Rmin;
+    return -(2.5*border/width)*(1 - pow(tanh((5*border/width)*(x(0) - Rmax + width/border)), 2));
+}
+
+double lower_grad(const Vector &x){
+    return (2.5*border/height)*(1 - pow(tanh((5*border/height)*(height/border - x(1))), 2));
+}
+
+double upper_grad(const Vector &x){
+    return -(2.5*border/height)*(1 - pow(tanh((5*border/height)*(x(1) - height + height/border)), 2));
+}
+
+double scaled_boundary_w(const Vector &x){
+    return (1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x))*boundary_w(x);
+}
+
+void scaled_boundary_gradw(const Vector &x, Vector &f){
+    boundary_gradw(x, f);
+
+    f(0) *= 1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x);
+    f(1) *= 1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x);
+
+    f(0) -= boundary_w(x)*(left_grad(x)*right_border(x) + left_border(x)*right_grad(x))*lower_border(x)*upper_border(x);
+    f(1) -= boundary_w(x)*left_border(x)*right_border(x)*(lower_grad(x)*upper_border(x) + lower_border(x)*upper_grad(x));
+}
+
+double scaled_boundary_psi(const Vector &x){
+    return (1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x))*boundary_psi(x);
+}
+
+void scaled_boundary_gradpsi(const Vector &x, Vector &f){
+    boundary_gradpsi(x, f);
+
+    f(0) *= 1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x);
+    f(1) *= 1 - left_border(x)*right_border(x)*lower_border(x)*upper_border(x);
+
+    f(0) -= boundary_psi(x)*(left_grad(x)*right_border(x) + left_border(x)*right_grad(x))*lower_border(x)*upper_border(x);
+    f(1) -= boundary_psi(x)*left_border(x)*right_border(x)*(lower_grad(x)*upper_border(x) + lower_border(x)*upper_grad(x));
 }

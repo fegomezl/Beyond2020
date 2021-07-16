@@ -7,7 +7,7 @@ Config::Config(bool master, int nproc):
 
 Artic_sea::Artic_sea(Config config):
     config(config),
-    pmesh(NULL), fec(NULL), fespace(NULL),
+    pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
     x_T(NULL), X_T(NULL),
     oper_T(NULL),
     ode_solver(NULL), cvode(NULL), arkode(NULL),
@@ -33,11 +33,14 @@ Flow_Operator::~Flow_Operator(){
     delete m, d, c, ct;
     delete M, D, C, Ct;
     delete A;
-    delete psi, w;
+    delete psi, w, v;
+    delete psi_aux, w_aux, theta;
+    if(x_T) delete x_T;
 }
 
 Artic_sea::~Artic_sea(){
     delete pmesh, fec, fespace;
+    delete fec_v, fespace_v;
     delete x_T, X_T;
     delete oper_T;
     delete ode_solver;
