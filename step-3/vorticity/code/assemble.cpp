@@ -158,40 +158,38 @@ double temperature_f(const Vector &x){
     double mid_y = height/2;
     double sigma = (out_rad - int_rad)/10;
 
-    //double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    /*if (r_2 < pow(sigma, 2))
+    if (r_2 < pow(sigma, 2))
         return -10;
     else
-        return 10;*/
-    return 10.;
+        return 10;
 }
 
 double scale = 1e-5;
 
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    return 8*scale*pow(x(0), 2)*x(1);
+    return 0;
 }
 
 //Boundary values for w
 double boundary_w(const Vector &x){
-    return -8*scale*pow(x(0), 2)*x(1);
+    return 0;
 }
 
 void boundary_gradw(const Vector &x, Vector &f){
-    f(0) = -16*scale*x(0)*x(1);
-    f(1) = -8*scale*pow(x(0), 2);
+    f(0) = 0;
+    f(1) = 0;
 }
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return scale*pow(x(0), 4)*x(1);
+  return x(0)*x(0)/2;
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = 4*scale*pow(x(0), 3)*x(1);
-    f(1) = scale*pow(x(0), 4);
+  f(0) = x(0);
+    f(1) = 0;
 }
 
 //Scaling for the boundary conditions
