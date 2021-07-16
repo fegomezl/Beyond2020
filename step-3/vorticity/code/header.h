@@ -20,7 +20,7 @@ struct Config{
     double T_f;
     double invDeltaT;
     double viscosity;
-    double cold_porosity;
+    double epsilon_eta;
 };
 
 using namespace std;
@@ -91,5 +91,4 @@ extern double height;
 extern double int_rad;
 extern double out_rad;
 
-extern double border;
-extern double InvR;
+extern double epsilon_r;
