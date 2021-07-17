@@ -75,11 +75,13 @@ class Conduction_Operator : public TimeDependentOperator{
         ParGridFunction aux_C;
         ParGridFunction aux_K;
         ParGridFunction aux_D;
+        ParGridFunction aux_L;
+        ParGridFunction aux_F;
 
         ParGridFunction psi;
 
         //Coefficients
-        FunctionCoefficient coeff_r;
+        mutable FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
         MatrixFunctionCoefficient rot;
 
@@ -97,6 +99,11 @@ class Conduction_Operator : public TimeDependentOperator{
 
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
+
+        mutable ScalarVectorProductCoefficient rF_gradtheta;
+        ScalarVectorProductCoefficient dt_rF_gradtheta;
+
+        double Scaled_dt;
 };
 
 class Artic_sea{
@@ -151,3 +158,6 @@ extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
 extern double Rmin, Rmax, Zmin, Zmax;
+
+
+extern double initial_theta_f(const Vector &x);
