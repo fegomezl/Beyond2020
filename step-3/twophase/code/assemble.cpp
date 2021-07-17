@@ -78,9 +78,9 @@ void Artic_sea::assemble_system(){
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", x_T);
-    paraview_out->RegisterField("Stream_Function", flow_oper->psi);
-    paraview_out->RegisterField("Velocity", flow_oper->v);
-    paraview_out->RegisterField("Vorticity", flow_oper->w);
+    paraview_out->RegisterField("Stream_Function(r)", flow_oper->psi);
+    paraview_out->RegisterField("Velocity(r)", flow_oper->v);
+    paraview_out->RegisterField("Vorticity(r)", flow_oper->w);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();

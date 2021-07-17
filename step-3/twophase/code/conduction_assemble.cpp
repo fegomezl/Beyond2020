@@ -31,7 +31,8 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //            \------------/
     //                  0
     Array<int> ess_bdr(attributes);
-    ess_bdr = 1;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
+    ess_bdr[0] = 1;  ess_bdr[1] = 1;
+    ess_bdr[2] = 1;  ess_bdr[3] = 1;
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
     FunctionCoefficient initial(temperature_f);
 
@@ -79,5 +80,4 @@ double temperature_f(const Vector &x){
         return -10;
     else
         return 10;
-
 }

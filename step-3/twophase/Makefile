@@ -6,7 +6,6 @@ RMIN=$(shell sed -n 3p settings/parameters.txt | tr -d -c 0-9.-)
 RMAX=$(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.-)
 ZMIN=$(shell sed -n 5p settings/parameters.txt | tr -d -c 0-9.-)
 ZMAX=$(shell sed -n 6p settings/parameters.txt | tr -d -c 0-9.-)
-BORDER=$(shell sed -n 9p settings/parameters.txt | tr -d -c 0-9.-)
 
 #Simulation parameters
 DT=$(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.)
@@ -32,8 +31,8 @@ K_L=$(shell sed -n 31p settings/parameters.txt | tr -d -c 0-9.)
 K_S=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
 L=$(shell sed -n 33p settings/parameters.txt | tr -d -c 0-9.)
 VISC=$(shell sed -n 34p settings/parameters.txt | tr -d -c 0-9.)
-COLD_P=$(shell sed -n 35p settings/parameters.txt | tr -d -c 0-9.)
-INV_R=$(shell sed -n 36p settings/parameters.txt | tr -d -c 0-9.)
+EPSILON_ETA=$(shell sed -n 35p settings/parameters.txt | tr -d -c 0-9.)
+EPSILON_R=$(shell sed -n 36p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
@@ -52,7 +51,7 @@ all: main.x results/mesh.msh
 						-abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 						-abstol_s $(ABST_S) -reltol_s $(RELT_S) \
 						-T_f $(T_FU) -DT $(DELTA_T) -c_l $(C_L) -c_s $(C_S) -k_l $(K_L) -k_s $(K_S) -L $(L) \
-						-b $(BORDER) -v $(VISC) -ct $(COLD_P) --inv_r $(INV_R)
+						-v $(VISC) -e_eta $(EPSILON_ETA) -e_r $(EPSILON_R)
 	@echo -e '\nDone!\n'
 
 main: main.x
