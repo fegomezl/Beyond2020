@@ -44,12 +44,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     aux_theta.Distribute(&(X.GetBlock(0)));
     aux_phi.Distribute(&(X.GetBlock(1)));
 
-    double epsilon_f = 1e-1;
-
-    //aux
-    FunctionCoefficient initial_theta(initial_theta_f);
-    aux_F.ProjectCoefficient(initial_theta);
-
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux_phi.Size(); ii++){
         if (aux_theta(ii) > config.T_f){
@@ -59,31 +53,19 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
         } else {
             aux_C(ii) = config.c_s;
             aux_K(ii) = config.k_s;
-            aux_D(ii) = 1e-6;
+            aux_D(ii) = 0.;
         }
-        aux_L(ii) = config.L*config.invDeltaT*exp(-M_PI*pow(config.invDeltaT*(aux_theta(ii) - config.T_f), 2));
-
-        if (aux_F(ii) > config.T_f){
-            aux_D(ii) = 10;
-        } else {
-            aux_D(ii) = 1e-6;
-        }
-        aux_F(ii) = 0.5*(1 + tanh(5*config.invDeltaT*(aux_F(ii) - config.T_f)));
-        aux_F(ii) = epsilon_f + (1 - pow(aux_F(ii), 2))/(pow(aux_F(ii), 3) + epsilon_f);
-
+        aux_theta(ii) = config.L*config.invDeltaT*exp(-M_PI*pow(config.invDeltaT*(aux_theta(ii) - config.T_f), 2));
     }
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_C(&aux_C);
     GridFunctionCoefficient coeff_K(&aux_K);
     GridFunctionCoefficient coeff_D(&aux_D);
-    GridFunctionCoefficient coeff_L(&aux_L);
-    GridFunctionCoefficient coeff_F(&aux_F);
 
+    GridFunctionCoefficient coeff_L(&aux_theta);
     SumCoefficient coeff_CL(coeff_C, coeff_L);
     coeff_rCL.SetBCoef(coeff_CL);
-
-    GradientGridFunctionCoefficient gradtheta(&aux_theta);
 
     coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK); 
 
@@ -91,10 +73,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
 
     coeff_rCLV.SetACoef(coeff_CL);
     dt_coeff_rCLV.SetBCoef(coeff_rCLV);
-
-    ProductCoefficient coeff_rF(coeff_r,coeff_F);
-    rF_gradtheta.SetACoef(coeff_rF); rF_gradtheta.SetBCoef(gradtheta);
-    dt_rF_gradtheta.SetBCoef(rF_gradtheta);
 
     //Create corresponding bilinear forms
     delete m_theta;
@@ -115,7 +93,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCLV));
-    k_theta->AddDomainIntegrator(new MixedScalarWeakDivergenceIntegrator(rF_gradtheta));
     k_theta->Assemble();
     k_theta->Finalize();
 
