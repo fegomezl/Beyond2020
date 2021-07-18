@@ -123,6 +123,8 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
             (*theta_rho)(ii) = 0.044*pow((*theta_rho)(ii), 2)
                              - 5.265*(*theta_rho)(ii)
                              + 19.886;
+            /*(*theta_rho)(ii) = - 5.265*(*theta_rho)(ii)
+                             + 19.886;*/
         else
             (*theta_rho)(ii) = 0.;
     }
