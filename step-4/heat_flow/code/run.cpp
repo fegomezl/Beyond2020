@@ -30,9 +30,8 @@ Conduction_Operator::~Conduction_Operator(){
 
 Flow_Operator::~Flow_Operator(){
     delete f, g;
-    delete m, d, c, ct;
-    delete M, D, C, Ct;
-    delete A;
+    delete m, d, c;
+    delete M, D, C;
     delete psi, w, v;
     delete psi_aux, w_aux, theta;
     if(x_T) delete x_T;

@@ -6,7 +6,7 @@ settings/square.geo #Mesh_script
 10      #Zmax
 15      #Rcells
 15      #Zcells
-10      #BC_border_size(fraction_of_width)
+
 
 Simulation parameters
 0.0001  #Dt
@@ -32,5 +32,5 @@ Physical parameters
 133.1   #Solid_thermal_conductivity
 302.3   #Volumetric_latent_heat
 1       #Viscosity
-3       #n_ColdPorosity
-2       #n_Inv_R
+3       #n_epsilon_eta
+2       #n_epsilon_r

@@ -34,7 +34,7 @@ struct Config{
     double k_l, k_s;
     double L;
     double viscosity;
-    double cold_porosity;
+    double epsilon_eta;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -118,6 +118,8 @@ class Flow_Operator{
         ParBilinearForm *d;
         ParMixedBilinearForm *c;
         ParMixedBilinearForm *ct;
+        Array<int> ess_bdr_psi;
+        Array<int> ess_bdr_w;
 
         //Solver objects
         BlockVector Y;
@@ -125,10 +127,6 @@ class Flow_Operator{
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
-
-        //TransposeOperator *Ct;
-        HypreParMatrix *Ct;
-        BlockOperator *A;
 
        //Boundary conditions
        ParGridFunction *w_aux;
@@ -197,5 +195,4 @@ extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
 extern double Rmin, Rmax, Zmin, Zmax, height;
-extern double border;
-extern double InvR;
+extern double epsilon_r;

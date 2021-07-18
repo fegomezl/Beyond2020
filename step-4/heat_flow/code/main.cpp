@@ -5,11 +5,10 @@ double Rmin;
 double Zmin;
 double Rmax;
 double Zmax;
+double height;
 
 //Size of the BC border
-double border;
-double height;
-double InvR;
+double epsilon_r;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -21,7 +20,7 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-    int nDeltaT, nCold_porosity, nInvR;
+    int nDeltaT, nEpsilon_eta, nEpsilon_r;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -34,8 +33,6 @@ int main(int argc, char *argv[]){
                    "Minimum Z border.");
     args.AddOption(&Zmax, "-Zmax", "--Zmax",
                    "Maximum Z border.");
-    args.AddOption(&border, "-b", "--border",
-                   "Border size for the BCs in fraction (1/x).");
 
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
@@ -78,10 +75,11 @@ int main(int argc, char *argv[]){
                    "Volumetric latent heat.");
     args.AddOption(&config.viscosity, "-v", "--viscosity",
                    "Kinematic viscosity of the material.");
-    args.AddOption(&nCold_porosity, "-ct", "--cold_porosity",
-                   "Value of the porosity on the solid domain (10^(n)).");
-    args.AddOption(&nInvR, "-ir", "--inv_r",
-                   "Value of constant m for 1/(r + m) (10^(n)).");
+    args.AddOption(&nEpsilon_eta, "-e_eta", "--epsilon_eta",
+                   "Value of constatn epsilon for (1-phi)^2/(phi^3 + epsilon)(10^(-n)).");
+    args.AddOption(&nEpsilon_r, "-e_r", "--epsilon_r",
+                   "Value of constant epsilon for 1/(r + epsilon) (10^(-n)).");
+
 
     //Check if parameters were read correctly
     args.Parse();
@@ -93,11 +91,9 @@ int main(int argc, char *argv[]){
     if (config.master) args.PrintOptions(cout);
 
     height = Zmax - Zmin;
-
-    //Run the program for different refinements
     config.invDeltaT = pow(10, nDeltaT);
-    config.cold_porosity = pow(10, -nCold_porosity);
-    InvR = pow(10, -nInvR);
+    config.epsilon_eta = pow(10, -nEpsilon_eta);
+    epsilon_r = pow(10, -nEpsilon_r);
     Artic_sea artic_sea(config);
     artic_sea.run(mesh_file);
 
