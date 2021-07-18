@@ -13,18 +13,20 @@ void Artic_sea::assemble_system(){
     vis_impressions = 0;
 
     //Define solution x
-    x_T = new ParGridFunction(fespace);
-    X_T = new HypreParVector(fespace);
+    theta = new ParGridFunction(fespace);
+    phi = new ParGridFunction(fespace);
 
-    oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *X_T);
-    x_T->SetFromTrueDofs(*X_T);
+    oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
+    theta->Distribute(&(X.GetBlock(0)));
+    phi->Distribute(&(X.GetBlock(1)));
+    Theta = theta->GetTrueDofs();
 
     //Define solution psi
     x_psi = new ParGridFunction(fespace);
     X_Psi = new HypreParVector(fespace);
 
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), X_T);
-    flow_oper->Solve(config, X_Psi, x_psi, X_T, dim, pmesh->bdr_attributes.Max());
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, Theta);
+    flow_oper->Solve(config, X_Psi, x_psi, Theta, dim, pmesh->bdr_attributes.Max());
     X_Psi = (flow_oper->psi)->GetTrueDofs();
     oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
 
@@ -77,7 +79,8 @@ void Artic_sea::assemble_system(){
     paraview_out = new ParaViewDataCollection(folder, pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
-    paraview_out->RegisterField("Temperature", x_T);
+    paraview_out->RegisterField("Temperature", theta);
+    paraview_out->RegisterField("Salinity", phi);
     paraview_out->RegisterField("Stream_Function(r)", flow_oper->psi);
     paraview_out->RegisterField("Velocity(r)", flow_oper->v);
     paraview_out->RegisterField("Vorticity(r)", flow_oper->w);

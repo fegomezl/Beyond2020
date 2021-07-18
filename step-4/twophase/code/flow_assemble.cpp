@@ -20,9 +20,8 @@ double r_inv(const Vector &x);
 
  void boundary_gradpsi(const Vector &x, Vector &f);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const HypreParVector *X_T):
   fespace(fespace),
-  block_true_offsets(3),
   f(NULL), g(NULL),
   m(NULL), d(NULL), c(NULL),
   M(NULL), D(NULL), C(NULL),
@@ -30,12 +29,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   w_aux(NULL), psi_aux(NULL), theta(NULL),
   bg(0.002), x_T(NULL), ess_bdr_psi(attributes), ess_bdr_w(attributes)
 {
-  //Create the block offsets
-  block_true_offsets[0] = 0;
-  block_true_offsets[1] = fespace.TrueVSize();
-  block_true_offsets[2] = fespace.TrueVSize();
-  block_true_offsets.PartialSum();
-
   //Initialize the corresponding vectors
   Y.Update(block_true_offsets);
   B.Update(block_true_offsets);
@@ -245,10 +238,10 @@ void boundary_gradw(const Vector &x, Vector &f){
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return 10*x(0)*x(0);
+    return 0.5*x(0)*x(0);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = 20*x(0);
+    f(0) = x(0);
     f(1) = 0;
 }

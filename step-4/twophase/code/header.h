@@ -41,11 +41,11 @@ class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
 
-        void SetParameters(const Vector &X);
+        void SetParameters(const BlockVector &X);
         void UpdateVelocity(const HypreParVector &psi, ParGridFunction *v);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
+        //virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
 	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
@@ -66,38 +66,45 @@ class Conduction_Operator : public TimeDependentOperator{
 
         HypreParMatrix M_theta, M_phi;
         HypreParMatrix T_theta, T_phi;
-        CGSolver M_solver;
-        CGSolver T_solver;
-        HypreSmoother M_prec;
-        HypreSmoother T_prec;
 
-        ParGridFunction aux;
+        //Solver objects
+        CGSolver M_theta_solver, M_phi_solver;
+        CGSolver T_theta_solver, T_phi_solver;
+        HypreSmoother M_theta_prec, M_phi_prec;
+        HypreSmoother T_theta_prec, T_phi_prec;
+
+        //Auxiliar grid functions
+        ParGridFunction aux_phi, aux_theta;
         ParGridFunction aux_C;
         ParGridFunction aux_K;
+        ParGridFunction aux_D;
 
         ParGridFunction psi;
 
-        FunctionCoefficient r;
+        //Coefficients
+        FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
+        MatrixFunctionCoefficient rot;
+
+        GradientGridFunctionCoefficient gradpsi;
+        MatrixVectorProductCoefficient coeff_rV;
+        ScalarVectorProductCoefficient dt_coeff_rV;
 
         ProductCoefficient coeff_rCL;
 
         ProductCoefficient coeff_rK; 
         ProductCoefficient dt_coeff_rK;
 
-        //GradientGridFunctionCoefficient rV;
-        MatrixFunctionCoefficient rot;
-        GradientGridFunctionCoefficient gradpsi;
-        MatrixVectorProductCoefficient rV;
+        ProductCoefficient coeff_rD;
+        ProductCoefficient dt_coeff_rD;
+
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
-        FunctionCoefficient r_invCoeff;
-
 };
 
 class Flow_Operator{
   public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T);
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const HypreParVector *X_T);
     void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim, int attributes);
     void Update_T(Config config, const HypreParVector *X_T, int dim, int attributes);
     ParGridFunction *psi;
@@ -109,8 +116,6 @@ class Flow_Operator{
 
         //Mesh objects
         ParFiniteElementSpace &fespace;
-
-        Array<int> block_true_offsets;
 
         //System objects
         ParLinearForm *f;
@@ -173,9 +178,14 @@ class Artic_sea{
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
 
+        Array<int> block_true_offsets;
+
         //System objects
-        ParGridFunction *x_T;
-        HypreParVector *X_T;
+        ParGridFunction *theta;
+        HypreParVector *Theta;
+        ParGridFunction *phi;
+
+        BlockVector X;
         Conduction_Operator *oper_T;
 
         //Solver objects
