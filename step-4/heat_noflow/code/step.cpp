@@ -9,11 +9,11 @@ void Artic_sea::time_step(){
     cond_oper->SetParameters(*Theta);
     ode_solver->Step(*Theta, t, dt);
 
-    Psi = (flow_oper->psi)->GetTrueDofs();
-    cond_oper->UpdateVelocity(*Psi, flow_oper->v);
+    //Psi = (flow_oper->psi)->GetTrueDofs();
+    //cond_oper->UpdateVelocity(*Psi, flow_oper->v);
 
     //Solve the flow problem
-    flow_oper->Solve(Theta);
+    //flow_oper->Solve(Theta);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
