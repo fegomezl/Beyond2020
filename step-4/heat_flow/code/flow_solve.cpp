@@ -1,8 +1,8 @@
 #include "header.h"
 
-void Flow_Operator::Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim, int attributes){
+void Flow_Operator::Solve(const HypreParVector *Theta){
 
-    this->Update_T(config, X_T, dim, attributes);
+    this->Update_T(Theta);
 
     //Create the complete bilinear operator:
     //
@@ -21,19 +21,19 @@ void Flow_Operator::Solve(Config config, HypreParVector *X_Psi, ParGridFunction 
     blockCoeff(1, 0) = -1.;
     blockCoeff(1, 1) = -1.;
 
-    HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
+    HypreParMatrix H = *HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
 
-    SuperLUSolver *superlu = new SuperLUSolver(MPI_COMM_WORLD);
-    Operator *SLU_A = new SuperLURowLocMatrix(*H);
-    superlu->SetOperator(*SLU_A);
-    superlu->SetPrintStatistics(true);
-    superlu->SetSymmetricPattern(true);
-    superlu->SetColumnPermutation(superlu::PARMETIS);
-    superlu->SetIterativeRefine(superlu::SLU_DOUBLE);
+    SuperLUSolver superlu = SuperLUSolver(MPI_COMM_WORLD);
+    SuperLURowLocMatrix SLU_A(H);
+    superlu.SetOperator(SLU_A);
+    superlu.SetPrintStatistics(false);
+    superlu.SetSymmetricPattern(true);
+    superlu.SetColumnPermutation(superlu::PARMETIS);
+    superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
 
     //Solve the linear system Ax=B
     Y.Randomize();
-    superlu->Mult(B, Y);
+    superlu.Mult(B, Y);
 
     //Recover the solution on each proccesor
     w->Distribute(&(Y.GetBlock(0)));
@@ -43,9 +43,4 @@ void Flow_Operator::Solve(Config config, HypreParVector *X_Psi, ParGridFunction 
     psi->Distribute(&(Y.GetBlock(1)));
     for (int ii = 0; ii < psi->Size(); ii++)
         (*psi)(ii) += (*psi_aux)(ii);
-
-    //Delete used memory
-    delete H;
-    delete superlu;
-    delete SLU_A;
 }

@@ -6,14 +6,14 @@ void Artic_sea::time_step(){
     dt = min(dt, config.t_final - t);
 
     //Perform the time_step
-    oper_T->SetParameters(*X_T);
-    ode_solver->Step(*X_T, t, dt);
+    cond_oper->SetParameters(*Theta);
+    ode_solver->Step(*Theta, t, dt);
 
-    X_Psi = (flow_oper->psi)->GetTrueDofs();
-    oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
+    Psi = (flow_oper->psi)->GetTrueDofs();
+    cond_oper->UpdateVelocity(*Psi, flow_oper->v);
 
     //Solve the flow problem
-    flow_oper->Solve(config, X_Psi, x_psi, X_T, dim, pmesh->bdr_attributes.Max());
+    flow_oper->Solve(Theta);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
@@ -24,7 +24,7 @@ void Artic_sea::time_step(){
         vis_impressions++;
 
         //Graph
-        x_T->SetFromTrueDofs(*X_T);
+        theta->SetFromTrueDofs(*Theta);
         paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);
         paraview_out->Save();
@@ -46,7 +46,6 @@ void Artic_sea::time_step(){
 
 void Conduction_Operator::SetParameters(const Vector &X){
     //Create the auxiliar grid functions
-
     Vector Aux(X);
     if (config.T_f != 0)
         Aux -= config.T_f;
@@ -100,4 +99,61 @@ void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi, ParGridFunct
     v->Randomize();
     v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
     coeff_rCLV.SetBCoef(rV);
+}
+
+void Flow_Operator::Update_T(const HypreParVector *Theta){
+    //Update temperature coefficients
+    if (theta_eta) delete theta_eta;
+    theta_eta = new ParGridFunction(&fespace);
+    theta_eta->SetFromTrueDofs(*Theta);
+    for (int ii = 0; ii < theta_eta->Size(); ii++){
+      (*theta_eta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta_eta)(ii) - config.T_f)));
+      (*theta_eta)(ii) = config.epsilon_eta + pow(1-(*theta_eta)(ii), 2)/(pow((*theta_eta)(ii), 3) + config.epsilon_eta);
+    }
+
+    if (theta_aux) delete theta_aux;
+    theta_aux = new ParGridFunction(&fespace);
+    theta_aux->SetFromTrueDofs(*Theta);
+  
+    //Define local coefficients
+    ConstantCoefficient neg(-1.);
+  
+    //Properties coefficients
+    GridFunctionCoefficient eta(theta_eta);
+    ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
+  
+    //Rotational coupled boundary coefficients
+    ScalarVectorProductCoefficient neg_w_grad(neg, w_grad);
+    ScalarVectorProductCoefficient neg_psi_grad(neg, psi_grad);
+    InnerProductCoefficient r_inv_hat_w_grad(r_inv_hat, w_grad);
+
+    InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
+    ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
+    ScalarVectorProductCoefficient neg_eta_psi_grad(eta, neg_psi_grad);
+  
+    //RHS coefficients
+    GradientGridFunctionCoefficient theta_grad(theta_aux);
+    InnerProductCoefficient r_hat_theta_grad(r_hat, theta_grad);
+    ProductCoefficient rF(r, r_hat_theta_grad);
+  
+    if(f) delete f;
+    f = new ParLinearForm(&fespace);
+    //f->AddDomainIntegrator(new DomainLFIntegrator(inv_mu_TCoeff));
+    f->AddDomainIntegrator(new DomainLFIntegrator(r_inv_hat_w_grad));
+    f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
+    f->AddDomainIntegrator(new DomainLFGradIntegrator(w_grad));
+    f->AddDomainIntegrator(new DomainLFGradIntegrator(eta_psi_grad));
+    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_eta_psi_grad), ess_bdr_psi);
+    f->AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(neg_w_grad), ess_bdr_w);
+    f->Assemble();
+    f->ParallelAssemble(B.GetBlock(1));
+  
+    if(d) delete d;
+    d = new ParBilinearForm(&fespace);
+    d->AddDomainIntegrator(new DiffusionIntegrator(eta));
+    d->AddDomainIntegrator(new ConvectionIntegrator(eta_r_inv_hat));
+    d->Assemble();
+    d->EliminateEssentialBCFromDofs(ess_tdof_list_psi);
+    d->Finalize();
+    D = d->ParallelAssemble();
 }

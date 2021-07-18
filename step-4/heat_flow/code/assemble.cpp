@@ -12,21 +12,20 @@ void Artic_sea::assemble_system(){
     vis_steps = config.vis_steps_max;
     vis_impressions = 0;
 
-    //Define solution x
-    x_T = new ParGridFunction(fespace);
-    X_T = new HypreParVector(fespace);
+    //Define solution for theta
+    theta = new ParGridFunction(fespace);
+    Theta = new HypreParVector(fespace);
 
-    oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *X_T);
-    x_T->SetFromTrueDofs(*X_T);
+    cond_oper = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *Theta);
+    theta->SetFromTrueDofs(*Theta);
 
-    //Define solution psi
-    x_psi = new ParGridFunction(fespace);
-    X_Psi = new HypreParVector(fespace);
+    //Define solution for psi
+    Psi = new HypreParVector(fespace);
 
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), X_T);
-    flow_oper->Solve(config, X_Psi, x_psi, X_T, dim, pmesh->bdr_attributes.Max());
-    X_Psi = (flow_oper->psi)->GetTrueDofs();
-    oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), Theta);
+    flow_oper->Solve(Theta);
+    Psi = (flow_oper->psi)->GetTrueDofs();
+    cond_oper->UpdateVelocity(*Psi, flow_oper->v);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -55,16 +54,16 @@ void Artic_sea::assemble_system(){
 
     // Initialize ODE solver
     if (config.ode_solver_type < 8)
-        ode_solver->Init(*oper_T);
+        ode_solver->Init(*cond_oper);
     else if (cvode){
-        cvode->Init(*oper_T);
+        cvode->Init(*cond_oper);
         cvode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         cvode->SetMaxStep(dt);
         cvode->SetStepMode(CV_ONE_STEP);
         ode_solver = cvode;
     }
     else if (arkode){
-        arkode->Init(*oper_T);
+        arkode->Init(*cond_oper);
         arkode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         arkode->SetMaxStep(dt);
         arkode->SetStepMode(ARK_ONE_STEP);
@@ -77,7 +76,7 @@ void Artic_sea::assemble_system(){
     paraview_out = new ParaViewDataCollection(folder, pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
-    paraview_out->RegisterField("Temperature", x_T);
+    paraview_out->RegisterField("Temperature", theta);
     paraview_out->RegisterField("Stream_Function(r)", flow_oper->psi);
     paraview_out->RegisterField("Velocity(r)", flow_oper->v);
     paraview_out->RegisterField("Vorticity(r)", flow_oper->w);
@@ -103,8 +102,8 @@ double r_f(const Vector &x){
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.; f(0,1) = -1.;
-    f(1,0) = 1.; f(1,1) = 0.;
+    f(0,0) = 0.; f(0,1) = 1.;
+    f(1,0) = -1.; f(1,1) = 0.;
 }
 
 void zero_f(const Vector &x, Vector &f){

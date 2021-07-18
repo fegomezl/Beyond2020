@@ -33,7 +33,6 @@ struct Config{
     double c_l, c_s;
     double k_l, k_s;
     double L;
-    double viscosity;
     double epsilon_eta;
 };
 
@@ -90,26 +89,32 @@ class Conduction_Operator : public TimeDependentOperator{
         MatrixVectorProductCoefficient rV;
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
-        FunctionCoefficient r_invCoeff;
-
 };
 
 class Flow_Operator{
-  public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T);
-    void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim, int attributes);
-    void Update_T(Config config, const HypreParVector *X_T, int dim, int attributes);
-    ParGridFunction *psi;
-    ParGridFunction *w;
-    ParGridFunction *v;
-    ~Flow_Operator();
+    public:
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *Theta);
+        void Solve(const HypreParVector *Theta);
+        void Update_T(const HypreParVector *Theta);
+        ~Flow_Operator();
 
-  protected:
+        ParGridFunction *psi;
+        ParGridFunction *w;
+        ParGridFunction *v;
+    protected:
+        //Global parameters
+        Config config;
 
         //Mesh objects
         ParFiniteElementSpace &fespace;
 
         Array<int> block_true_offsets;
+
+        Array<int> ess_tdof_list_w;
+        Array<int> ess_bdr_w;
+
+        Array<int> ess_tdof_list_psi;
+        Array<int> ess_bdr_psi;
 
         //System objects
         ParLinearForm *f;
@@ -118,8 +123,6 @@ class Flow_Operator{
         ParBilinearForm *d;
         ParMixedBilinearForm *c;
         ParMixedBilinearForm *ct;
-        Array<int> ess_bdr_psi;
-        Array<int> ess_bdr_w;
 
         //Solver objects
         BlockVector Y;
@@ -128,13 +131,21 @@ class Flow_Operator{
         HypreParMatrix *D;
         HypreParMatrix *C;
 
-       //Boundary conditions
-       ParGridFunction *w_aux;
-       ParGridFunction *psi_aux;
-       ParGridFunction *theta;
+        //Boundary conditions
+        ParGridFunction *w_aux;
+        ParGridFunction *psi_aux;
+        ParGridFunction *theta_aux;
+        ParGridFunction *theta_eta;
 
-       ConstantCoefficient bg;
-       ParGridFunction *x_T;
+        //Rotational coefficients
+        FunctionCoefficient r;
+        FunctionCoefficient r_inv;
+        VectorFunctionCoefficient r_hat;
+        ScalarVectorProductCoefficient r_inv_hat;
+
+        //Boundary Coefficients
+        VectorFunctionCoefficient w_grad; 
+        VectorFunctionCoefficient psi_grad; 
 
 };
 
@@ -173,9 +184,13 @@ class Artic_sea{
         ParFiniteElementSpace *fespace_v;
 
         //System objects
-        ParGridFunction *x_T;
-        HypreParVector *X_T;
-        Conduction_Operator *oper_T;
+        ParGridFunction *theta;
+        HypreParVector *Theta;
+        HypreParVector *Psi;
+
+        //Operators
+        Conduction_Operator *cond_oper;
+        Flow_Operator *flow_oper;
 
         //Solver objects
         ODESolver *ode_solver;
@@ -183,11 +198,6 @@ class Artic_sea{
         ARKStepSolver *arkode;
 
         ParaViewDataCollection *paraview_out;
-
-        //Flow_Operator objects
-        Flow_Operator *flow_oper;
-        ParGridFunction *x_psi;
-        HypreParVector *X_Psi;
 };
 
 extern double r_f(const Vector &x);
@@ -196,3 +206,6 @@ extern void zero_f(const Vector &x, Vector &f);
 
 extern double Rmin, Rmax, Zmin, Zmax, height;
 extern double epsilon_r;
+
+extern double Vel;
+extern double Rad;

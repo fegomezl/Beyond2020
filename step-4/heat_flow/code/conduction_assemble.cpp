@@ -1,11 +1,7 @@
 #include "header.h"
 
+//Initial temperature field
 double initial_f(const Vector &x);
-
-//Temperature field
-double temperature_f(const Vector &x);
-
-double r_inv(const Vector &x);
 
 Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
@@ -18,7 +14,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     coeff_rCL(r, r),
     coeff_rK(r, r), dt_coeff_rK(0., coeff_rK),
     rot(dim, rot_f), gradpsi(&psi), rV(rot, zero),
-    coeff_rCLV(r, zero), dt_coeff_rCLV(0., zero), r_invCoeff(r_inv),
+    coeff_rCLV(r, zero), dt_coeff_rCLV(0., zero),
     M_solver(fespace.GetComm()), T_solver(fespace.GetComm())
 {
     //Set boundary conditions
@@ -32,9 +28,9 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //                  0
     Array<int> ess_bdr(attributes);
     ess_bdr[0] = 1;  ess_bdr[1] = 1;
-    ess_bdr[2] = 1;  ess_bdr[3] = 1;
+    ess_bdr[2] = 0;  ess_bdr[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
-    FunctionCoefficient initial(temperature_f);
+    FunctionCoefficient initial(initial_f);
 
     //Define solution x and apply initial conditions
     ParGridFunction x(&fespace);
@@ -63,20 +59,11 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 }
 
 double initial_f(const Vector &x){
-    double mid = 0.6*Zmax;
-    if (x(1) <= mid)
-        return -10*(1 - x(1)/mid);
-    else
-        return 10*(x(1) - mid)/(Zmax - mid);
-}
-
-double temperature_f(const Vector &x){
     double mid_x = (Rmax + Rmin)/2;
     double mid_y = height/2;
-    double sigma = (Rmax - Rmin)/10;
 
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    if (r_2 < pow(sigma, 2))
+    if (r_2 < pow(Rad, 2))
         return -10;
     else
         return 10;
