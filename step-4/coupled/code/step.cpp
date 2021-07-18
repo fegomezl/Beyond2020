@@ -9,6 +9,15 @@ void Artic_sea::time_step(){
     oper_T->SetParameters(X);
     ode_solver->Step(X, t, dt);
 
+    //Solve the flow problem
+    X_Psi = (flow_oper->psi)->GetTrueDofs();
+    theta->Distribute(&(X.GetBlock(0)));
+    Theta = theta->GetTrueDofs();
+
+    oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
+
+    flow_oper->Solve(config, X_Psi, x_psi, Theta, dim, pmesh->bdr_attributes.Max());
+
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
 
@@ -18,7 +27,6 @@ void Artic_sea::time_step(){
         vis_impressions++;
 
         //Graph
-        theta->Distribute(&(X.GetBlock(0)));
         phi->Distribute(&(X.GetBlock(1)));
         paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);
@@ -53,8 +61,9 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
         } else {
             aux_C(ii) = config.c_s;
             aux_K(ii) = config.k_s;
-            aux_D(ii) = 0.;
+            aux_D(ii) = 1e-6;
         }
+
         aux_theta(ii) = config.L*config.invDeltaT*exp(-M_PI*pow(config.invDeltaT*(aux_theta(ii) - config.T_f), 2));
     }
 
@@ -67,9 +76,9 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     SumCoefficient coeff_CL(coeff_C, coeff_L);
     coeff_rCL.SetBCoef(coeff_CL);
 
-    coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK); 
+    coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK);
 
-    coeff_rD.SetBCoef(coeff_D); dt_coeff_rD.SetBCoef(coeff_rD); 
+    coeff_rD.SetBCoef(coeff_D); dt_coeff_rD.SetBCoef(coeff_rD);
 
     coeff_rCLV.SetACoef(coeff_CL);
     dt_coeff_rCLV.SetBCoef(coeff_rCLV);
@@ -104,10 +113,12 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     k_phi->Finalize();
 }
 
-void Conduction_Operator::UpdateVelocity(const Vector &Psi){
+void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi, ParGridFunction *v){
     psi.SetFromTrueDofs(Psi);
     gradpsi.SetGridFunction(&psi);
     coeff_rV.SetBCoef(gradpsi);
+    v->Randomize();
+    v->ProjectDiscCoefficient(coeff_rV, GridFunction::ARITHMETIC);
     dt_coeff_rV.SetBCoef(coeff_rV);
     coeff_rCLV.SetBCoef(coeff_rV);
 }
