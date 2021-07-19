@@ -43,8 +43,8 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_list_theta);
 
     Array<int> ess_bdr_phi(attributes);
-    ess_bdr_phi[0] = 1; ess_bdr_phi[1] = 1; ess_bdr_phi[3] = 0; 
-    newmann_bdr_phi[0] = 0; newmann_bdr_phi[1] = 0; newmann_bdr_phi[3] = 0;
+    ess_bdr_phi[0] = 0; ess_bdr_phi[1] = 0; ess_bdr_phi[3] = 0; 
+    newmann_bdr_phi[0] = 1; newmann_bdr_phi[1] = 1; newmann_bdr_phi[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_list_phi);
 
     //Check that the boundary conditions dont overlap,
@@ -121,10 +121,7 @@ double initial_theta_f(const Vector &x){
 }
 
 double initial_phi_f(const Vector &x){
-    if (x(1) >= mid + 0.5*(Zmax-mid))
-        return 20.;
-    else
-        return 0.;
+    return 0.;
 }
 
 double newmann_theta_f(const Vector &x){
@@ -132,5 +129,5 @@ double newmann_theta_f(const Vector &x){
 }
 
 double newmann_phi_f(const Vector &x){
-    return 0.;
+    return 100.;
 }
