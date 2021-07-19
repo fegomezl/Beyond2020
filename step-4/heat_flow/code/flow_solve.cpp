@@ -21,10 +21,10 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     blockCoeff(1, 0) = -1.;
     blockCoeff(1, 1) = -1.;
 
-    HypreParMatrix H = *HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
+    HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
 
     SuperLUSolver superlu = SuperLUSolver(MPI_COMM_WORLD);
-    SuperLURowLocMatrix SLU_A(H);
+    SuperLURowLocMatrix SLU_A(*H);
     superlu.SetOperator(SLU_A);
     superlu.SetPrintStatistics(false);
     superlu.SetSymmetricPattern(true);
@@ -43,4 +43,7 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     psi->Distribute(&(Y.GetBlock(1)));
     for (int ii = 0; ii < psi->Size(); ii++)
         (*psi)(ii) += (*psi_aux)(ii);
+
+    //Free memory
+    delete H;
 }

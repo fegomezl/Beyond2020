@@ -35,7 +35,7 @@ EPSILON_R=$(shell sed -n 35p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
-FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
+FLAGS = -std=c++11 -O3 $(MFEM_FLAGS) #-g -Wall -fsanitize=address -fsanitize=undefined -fsanitize=leak#-fopt-info-vec-missed
 RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
