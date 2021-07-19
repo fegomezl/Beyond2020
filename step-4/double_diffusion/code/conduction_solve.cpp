@@ -27,6 +27,20 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //Solve the system
     m_theta->FormLinearSystem(ess_tdof_list_theta, dtheta_dt, z_theta, A_theta, dTheta_dt, Z_theta);
     m_phi->FormLinearSystem(ess_tdof_list_phi, dphi_dt, z_phi, A_phi, dPhi_dt, Z_phi);
+
+    ParLinearForm rhs_theta(&fespace), rhs_phi(&fespace);
+    HypreParVector Rhs_theta(&fespace), Rhs_phi(&fespace);
+
+    rhs_theta.AddBoundaryIntegrator(new BoundaryLFIntegrator(newmann_theta), newmann_bdr_theta);
+    rhs_theta.Assemble();
+    rhs_theta.ParallelAssemble(Rhs_theta);
+    Z_theta += Rhs_theta;
+
+    rhs_phi.AddBoundaryIntegrator(new BoundaryLFIntegrator(newmann_phi), newmann_bdr_phi);
+    rhs_phi.Assemble();
+    rhs_phi.ParallelAssemble(Rhs_phi);
+    Z_phi += Rhs_phi;
+
     M_theta_solver.Mult(Z_theta, dTheta_dt); M_phi_solver.Mult(Z_phi, dPhi_dt);
 
     //Recover solution on block vector
@@ -62,6 +76,7 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
     t_phi->FormSystemMatrix(ess_tdof_list_phi, T_phi);
     T_phi_solver.SetOperator(T_phi);
 
+    Scaled_dt = scaled_dt;
     *j_status = 1;
     return 0;
 }
@@ -81,6 +96,22 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &B, Vector &X, double tol
 
     //Solve the system
     M_theta.Mult(B_theta, Z_theta);      M_phi.Mult(B_phi, Z_phi);
+
+    ParLinearForm rhs_theta(&fespace), rhs_phi(&fespace);
+    HypreParVector Rhs_theta(&fespace), Rhs_phi(&fespace);
+
+    ProductCoefficient dt_newmann_theta(Scaled_dt, newmann_theta);
+    rhs_theta.AddBoundaryIntegrator(new BoundaryLFIntegrator(dt_newmann_theta), newmann_bdr_theta);
+    rhs_theta.Assemble();
+    rhs_theta.ParallelAssemble(Rhs_theta);
+    Z_theta += Rhs_theta;
+
+    ProductCoefficient dt_newmann_phi(Scaled_dt, newmann_phi);
+    rhs_phi.AddBoundaryIntegrator(new BoundaryLFIntegrator(dt_newmann_phi), newmann_bdr_phi);
+    rhs_phi.Assemble();
+    rhs_phi.ParallelAssemble(Rhs_phi);
+    Z_phi += Rhs_phi;
+
     T_theta_solver.Mult(Z_theta, Theta); T_phi_solver.Mult(Z_phi, Phi);
 
     //Recover solution on block vector

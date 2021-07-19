@@ -17,9 +17,17 @@ void Artic_sea::time_step(){
         vis_iteration = 0;
         vis_impressions++;
 
-        //Graph
+        //Read system state
         theta->Distribute(&(X.GetBlock(0)));
         phi->Distribute(&(X.GetBlock(1)));
+
+        //Calculate phases
+        for (int ii = 0; ii < phase->Size(); ii++){
+            double T_f = config.T_f - (0.6037*(*phi)(ii) + 0.00058123*pow((*phi)(ii), 3));
+            (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
+        }
+
+        //Graph
         paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);
         paraview_out->Save();
@@ -46,10 +54,11 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux_phi.Size(); ii++){
-        if (aux_theta(ii) > config.T_f){
+        double T_f = config.T_f - (0.6037*aux_phi(ii) + 0.00058123*pow(aux_phi(ii), 3));
+        if (aux_theta(ii) > T_f){
             aux_C(ii) = config.c_l;
             aux_K(ii) = config.k_l;
-            aux_D(ii) = 10;
+            aux_D(ii) = 6;
         } else {
             aux_C(ii) = config.c_s;
             aux_K(ii) = config.k_s;

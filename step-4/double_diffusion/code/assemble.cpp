@@ -15,12 +15,19 @@ void Artic_sea::assemble_system(){
     //Define solution x
     theta = new ParGridFunction(fespace);
     phi = new ParGridFunction(fespace);
+    phase = new ParGridFunction(fespace);
 
     oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
 
     //Recover initial conditions
     theta->Distribute(&(X.GetBlock(0)));
     phi->Distribute(&(X.GetBlock(1)));
+
+    //Calculate phases
+    for (int ii = 0; ii < phase->Size(); ii++){
+        double T_f = config.T_f - (0.6037*(*phi)(ii) + 0.00058123*pow((*phi)(ii), 3));
+        (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
+    }
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -73,6 +80,7 @@ void Artic_sea::assemble_system(){
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", theta);
     paraview_out->RegisterField("Salinity", phi);
+    paraview_out->RegisterField("Phase", phase);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();

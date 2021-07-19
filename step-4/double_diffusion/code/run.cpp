@@ -9,7 +9,7 @@ Artic_sea::Artic_sea(Config config):
     config(config),
     pmesh(NULL), fec(NULL), fespace(NULL),
     block_true_offsets(3),
-    theta(NULL), phi(NULL),
+    theta(NULL), phi(NULL), phase(NULL),
     oper_T(NULL),
     ode_solver(NULL), cvode(NULL), arkode(NULL),
     paraview_out(NULL)
@@ -33,7 +33,7 @@ Conduction_Operator::~Conduction_Operator(){
 
 Artic_sea::~Artic_sea(){
     delete pmesh, fec, fespace;
-    delete theta, phi;
+    delete theta, phi, phase;
     delete oper_T;
     delete ode_solver;
     delete paraview_out;

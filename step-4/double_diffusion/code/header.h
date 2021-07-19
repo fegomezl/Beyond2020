@@ -50,10 +50,14 @@ class Conduction_Operator : public TimeDependentOperator{
     protected:
         //Global parameters
         Config config;
+        double Scaled_dt;
 
         //Mesh objects
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
+
+        mutable Array<int> newmann_bdr_theta, newmann_bdr_phi;
+
         Array<int> ess_tdof_list_theta, ess_tdof_list_phi;
 
         //System objects
@@ -97,6 +101,8 @@ class Conduction_Operator : public TimeDependentOperator{
 
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
+
+        mutable FunctionCoefficient newmann_theta, newmann_phi;
 };
 
 class Artic_sea{
@@ -134,6 +140,7 @@ class Artic_sea{
         //System objects
         ParGridFunction *theta;
         ParGridFunction *phi;
+        ParGridFunction *phase;
 
         BlockVector X;
         Conduction_Operator *oper_T;
