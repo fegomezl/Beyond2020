@@ -35,7 +35,7 @@ EPSILON_R=$(shell sed -n 35p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
-FLAGS = -std=c++11 -O3 $(MFEM_FLAGS) #-g -Wall -fsanitize=address -fsanitize=undefined -fsanitize=leak#-fopt-info-vec-missed
+FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
 RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
@@ -44,7 +44,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
-	$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
+	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
 						-dt $(DT) -t_f $(T_FI) -v_s $(VIS) \
 						-r $(REF) -o $(ORDER) -ode $(ODE) \
 						-abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
