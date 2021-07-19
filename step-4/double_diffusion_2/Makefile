@@ -1,7 +1,7 @@
 include ../../local_config.mk
 
 #Mesh parmeters
-SCRIPT=$(shell sed -n 2p settings/parameters.txt | cut -d '\#' -f 1)
+SCRIPT=$(shell sed -n 2p settings/parameters.txt | cut -d '/#' -f 1)
 RMIN=$(shell sed -n 3p settings/parameters.txt | tr -d -c 0-9.-)
 RMAX=$(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.-)
 ZMIN=$(shell sed -n 5p settings/parameters.txt | tr -d -c 0-9.-)

@@ -1,8 +1,8 @@
 #Computer parameters
-MFEM_INSTALL_DIR = /opt/spack/opt/spack/linux-pop21-icelake/gcc-10.3.0/mfem-4.2.0-j2kudzxp2l65t32h5zwqum7tjff2qqqn
+MFEM_INSTALL_DIR = ~/spack/opt/spack/linux-debian9-skylake_avx512/gcc-11.1.0/mfem-4.2.0-ddfslg7jyfab423odotq2qqeztywajbf
 
 SHARE_DIR = 
-PROCCESORS = 4
+PROCCESORS = 32
 
 #Add variables from MFEM
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk

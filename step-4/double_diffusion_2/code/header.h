@@ -157,8 +157,6 @@ extern double r_f(const Vector &x);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
-extern double T_fun(const double &salinity);
-
 extern double Rmin, Rmax, Zmin, Zmax;
 
 extern double mid;
