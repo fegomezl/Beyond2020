@@ -24,10 +24,18 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   fespace(fespace),
   f(NULL), g(NULL),
   m(NULL), d(NULL), c(NULL),
-  M(NULL), D(NULL), C(NULL),
+  M(NULL), D(NULL), C(NULL), hBlocks(2,2), H(NULL),
   psi(NULL), w(NULL), v(NULL),
   w_aux(NULL), psi_aux(NULL), theta(NULL),
-  bg(0.002), x_T(NULL), ess_bdr_psi(attributes), ess_bdr_w(attributes)
+  bg(0.002), r_invCoeff(r_inv), r_hatCoeff(dim, r_hat), r_inv_hat(r_invCoeff, r_hatCoeff),
+  neg(-1.), w_coeff(boundary_w), w_grad(dim, boundary_gradw), psi_coeff(boundary_psi),
+  psi_grad(dim, boundary_gradpsi), eta_r_inv_hat(neg, r_inv_hat), neg_w(neg, w_coeff),
+  r_inv_hat_w_grad(r_inv_hat, w_grad), neg_w_grad(neg, w_grad), r_inv_hat_psi_grad(r_inv_hat, psi_grad),
+  eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad), neg_psi_grad(neg, psi_grad),
+  eta_psi_grad(neg, psi_grad), neg_eta_psi_grad(neg, eta_psi_grad), inv_mu(pow(config.viscosity, -1)),
+  x_T(NULL), delta_T(x_T), rcap(dim, r_hat), r_deltaT(rcap, delta_T), bg_deltaT(bg, r_deltaT),
+  r(r_f), rF(bg_deltaT, r), inv_mu_TCoeff(inv_mu, rF),
+  ess_bdr_psi(attributes), ess_bdr_w(attributes), superlu(NULL), SLU_A(NULL)
 {
   //Initialize the corresponding vectors
   Y.Update(block_true_offsets);
@@ -43,35 +51,15 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   }
 
   //Define local coefficients
-  //
-  //Rotational coefficients
-  FunctionCoefficient r_invCoeff(r_inv);
-  VectorFunctionCoefficient r_hatCoeff(dim, r_hat);
-  ScalarVectorProductCoefficient r_inv_hat(r_invCoeff, r_hatCoeff);
-
   //Properties coefficients
-  GridFunctionCoefficient eta(theta);
-  ConstantCoefficient neg(-1.);
-
-  //Dirichlet coefficients
-  FunctionCoefficient w_coeff(boundary_w);
-  VectorFunctionCoefficient w_grad(dim, boundary_gradw);
-
-  FunctionCoefficient psi_coeff(boundary_psi);
-  VectorFunctionCoefficient psi_grad(dim, boundary_gradpsi);
+  eta.SetGridFunction(theta);
 
   //Rotational coupled coefficients
-  ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
+  eta_r_inv_hat.SetACoef(eta);
 
-  ProductCoefficient neg_w(neg, w_coeff);
-  InnerProductCoefficient r_inv_hat_w_grad(r_inv_hat, w_grad);
-  ScalarVectorProductCoefficient neg_w_grad(neg, w_grad);
-
-  InnerProductCoefficient r_inv_hat_psi_grad(r_inv_hat, psi_grad);
-  InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
-  ScalarVectorProductCoefficient neg_psi_grad(neg, psi_grad);
-  ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
-  ScalarVectorProductCoefficient neg_eta_psi_grad(neg, eta_psi_grad);
+  eta_r_inv_hat_psi_grad.SetACoef(eta_r_inv_hat);
+  eta_psi_grad.SetACoef(eta);
+  neg_eta_psi_grad.SetBCoef(eta_psi_grad);
 
   //Define essential boundary conditions
     //
@@ -83,12 +71,10 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //            \------------/
     //                  0
 
-  Array<int> ess_tdof_list_w;
   ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
   ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
   fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
-  Array<int> ess_tdof_list_psi;
   ess_bdr_psi[0] = 0; ess_bdr_psi[1] = 0;
   ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
   fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
@@ -142,52 +128,24 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, 
   }
 
   //Define local coefficients
-  //
-  //Rotational coefficients
-  FunctionCoefficient r_invCoeff(r_inv);
-  VectorFunctionCoefficient r_hatCoeff(dim, r_hat);
-  ScalarVectorProductCoefficient r_inv_hat(r_invCoeff, r_hatCoeff);
-
   //Properties coefficients
-  GridFunctionCoefficient eta(theta);
-  ConstantCoefficient neg(-1.);
-
-  //Dirichlet coefficients
-  FunctionCoefficient w_coeff(boundary_w);
-  VectorFunctionCoefficient w_grad(dim, boundary_gradw);
-
-  FunctionCoefficient psi_coeff(boundary_psi);
-  VectorFunctionCoefficient psi_grad(dim, boundary_gradpsi);
+  eta.SetGridFunction(theta);
 
   //Rotational coupled coefficients
-  ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
+  eta_r_inv_hat.SetACoef(eta);
 
-  ProductCoefficient neg_w(neg, w_coeff);
-  InnerProductCoefficient r_inv_hat_w_grad(r_inv_hat, w_grad);
-  ScalarVectorProductCoefficient neg_w_grad(neg, w_grad);
+  eta_r_inv_hat_psi_grad.SetACoef(eta_r_inv_hat);
+  eta_psi_grad.SetACoef(eta);
+  neg_eta_psi_grad.SetBCoef(eta_psi_grad);
 
-  InnerProductCoefficient r_inv_hat_psi_grad(r_inv_hat, psi_grad);
-  InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
-  ScalarVectorProductCoefficient neg_psi_grad(neg, psi_grad);
-  ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
-  ScalarVectorProductCoefficient neg_eta_psi_grad(neg, eta_psi_grad);
-
+  if(x_T) delete x_T;
+  x_T = new ParGridFunction(&fespace);
   x_T->SetFromTrueDofs(*X_T);
-  ConstantCoefficient inv_mu(pow(config.viscosity, -1));
-  GradientGridFunctionCoefficient delta_T(x_T);
-  VectorFunctionCoefficient rcap(dim, r_hat);
-  InnerProductCoefficient r_deltaT(rcap, delta_T);
-  ProductCoefficient bg_deltaT(bg, r_deltaT);
-  FunctionCoefficient r(r_f);
-  ProductCoefficient rF(bg_deltaT, r);
-  ProductCoefficient inv_mu_TCoeff(inv_mu, rF);
-
-  Array<int> ess_tdof_list_w;
-  fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
-
-
-  Array<int> ess_tdof_list_psi;
-  fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
+  delta_T.SetGridFunction(x_T);
+  r_deltaT.SetBCoef(delta_T);
+  bg_deltaT.SetBCoef(r_deltaT);
+  rF.SetACoef(bg_deltaT);
+  inv_mu_TCoeff.SetBCoef(rF);
 
 
   if(f) delete f;
