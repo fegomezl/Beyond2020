@@ -22,9 +22,10 @@ int Artic_sea::solve_system(){
     blockCoeff(1, 1) = -1.;
 
     HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
-    
-    SuperLUSolver *superlu = new SuperLUSolver(MPI_COMM_WORLD);
-    Operator *SLU_A = new SuperLURowLocMatrix(*H);
+
+    std::unique_ptr<SuperLUSolver> superlu(new SuperLUSolver(MPI_COMM_WORLD));
+    std::unique_ptr<SuperLURowLocMatrix> SLU_A(new SuperLURowLocMatrix(*H));
+
     superlu->SetOperator(*SLU_A);
     superlu->SetPrintStatistics(true);
     superlu->SetSymmetricPattern(true);
@@ -71,6 +72,7 @@ int Artic_sea::solve_system(){
     v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
 
     //Delete used memory
+    delete H;
 
     return 0;
 }

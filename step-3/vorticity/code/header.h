@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <memory>
 #include "mfem.hpp"
 
 struct Config{
