@@ -29,12 +29,22 @@ void Artic_sea::run(const char *mesh_file){
 Artic_sea::~Artic_sea(){
     //Delete used memory
     delete pmesh;
-    delete fec, fec_v;
-    delete fespace, fespace_v;
-    delete w, psi, v;
-    delete w_aux, psi_aux, theta;
-    delete g, f;
-    delete m, d, c;
-    delete M, D, C;  
+    delete fec;
+    delete fec_v;
+    delete fespace;
+    delete fespace_v;
+    delete w;
+    delete psi;
+    delete v;
+    delete w_aux;
+    delete psi_aux;
+    delete theta;
+    delete g;
+    delete f;
+    delete m;
+    delete d;
+    delete c;
+    delete M;
+    delete D;
     if (config.master) cout << "Memory deleted!\n";
 }

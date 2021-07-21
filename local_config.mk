@@ -1,5 +1,5 @@
 #Computer parameters
-MFEM_INSTALL_DIR = ~/spackgcc/mymfem-4.2.0-h4kgyir56to4diecuv6jzvwzpurmxbec/
+MFEM_INSTALL_DIR = ~/spackgcc/mfem-4.2.0-memory-superlu-ck7pgi4afqck7k6dn2w4cisxfk7db3l6/
 SHARE_DIR = /media/sf_Shared_Folder_Arch2/
 PROCCESORS = 4
 
