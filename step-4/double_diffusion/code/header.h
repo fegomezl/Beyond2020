@@ -51,13 +51,13 @@ class Conduction_Operator : public TimeDependentOperator{
     protected:
         //Global parameters
         Config config;
-        double Scaled_dt;
 
         //Mesh objects
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
 
         mutable Array<int> newmann_bdr_theta, newmann_bdr_phi;
+        mutable Array<int> robin_bdr_theta, robin_bdr_phi;
 
         Array<int> ess_tdof_list_theta, ess_tdof_list_phi;
 
@@ -104,6 +104,17 @@ class Conduction_Operator : public TimeDependentOperator{
         ScalarVectorProductCoefficient dt_coeff_rCLV;
 
         mutable FunctionCoefficient newmann_theta, newmann_phi;
+        mutable ProductCoefficient r_newmann_theta, r_newmann_phi;
+        mutable ProductCoefficient dt_r_newmann_theta, dt_r_newmann_phi;
+
+        mutable FunctionCoefficient robin_h_theta, robin_h_phi;
+        mutable FunctionCoefficient robin_ref_theta, robin_ref_phi;
+        mutable ProductCoefficient neg_robin_h_theta, neg_robin_h_phi;
+        mutable ProductCoefficient neg_robin_h_ref_theta, neg_robin_h_ref_phi;
+        mutable ProductCoefficient neg_r_robin_h_theta, neg_r_robin_h_phi;
+        mutable ProductCoefficient neg_r_robin_h_ref_theta, neg_r_robin_h_ref_phi;
+        mutable ProductCoefficient neg_dt_r_robin_h_theta, neg_dt_r_robin_h_phi;
+        mutable ProductCoefficient neg_dt_r_robin_h_ref_theta, neg_dt_r_robin_h_ref_phi;
 };
 
 class Artic_sea{
