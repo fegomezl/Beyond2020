@@ -15,6 +15,9 @@ int main(int argc, char *argv[]){
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
+    //const char *petscrc_file = "stokes_fieldsplit";
+    //mfem::MFEMInitializePetsc(NULL,NULL,petscrc_file,NULL);
+
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
@@ -67,6 +70,7 @@ int main(int argc, char *argv[]){
         artic_sea.run(mesh_file);
     }
 
+    //mfem::MFEMFinalizePetsc();
     MPI_Finalize();
 
     return 0;

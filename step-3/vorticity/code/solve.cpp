@@ -2,7 +2,7 @@
 
 void rot_f(const Vector &x, DenseMatrix &f);
 
-void Artic_sea::solve_system(){
+int Artic_sea::solve_system(){
 
     //Create the complete bilinear operator:
     //
@@ -22,7 +22,7 @@ void Artic_sea::solve_system(){
     blockCoeff(1, 1) = -1.;
 
     HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
-
+    
     SuperLUSolver *superlu = new SuperLUSolver(MPI_COMM_WORLD);
     Operator *SLU_A = new SuperLURowLocMatrix(*H);
     superlu->SetOperator(*SLU_A);
@@ -31,9 +31,29 @@ void Artic_sea::solve_system(){
     superlu->SetColumnPermutation(superlu::PARMETIS);
     superlu->SetIterativeRefine(superlu::SLU_DOUBLE);
 
-    //Solve the linear system Ax=B
     X.Randomize();
     superlu->Mult(B, X);
+
+
+    /*PetscParMatrix *_A = new PetscParMatrix(pmesh->GetComm(), H, Operator::PETSC_MATAIJ);
+    PetscLinearSolver *solver = new PetscLinearSolver(pmesh->GetComm());
+    //PetscLinearSolver* solver = new PetscLinearSolver(pmesh->GetComm());
+    //PetscPreconditioner* prec = new PetscPreconditioner(A,"solver");
+    PetscPreconditioner *prec = new PetscFieldSplitSolver(pmesh->GetComm(),*_A,"prec_");
+    solver->SetOperator(*_A);
+    //solver->SetPreconditioner(*prec);
+    solver->SetAbsTol(1.e-6);
+    solver->SetRelTol(1.e-6);
+    solver->SetMaxIter(5000);
+    solver->SetPrintLevel(1);
+    solver->Mult(B, X);
+
+    PetscLinearSolver * petsc = new PetscLinearSolver(MPI_COMM_WORLD);
+    // Convert to PetscParMatrix
+    petsc->SetOperator(PetscParMatrix(H, Operator::PETSC_MATAIJ));
+    petsc->SetPrintLevel(2);
+    petsc->Mult(B, X);*/
+
 
     //Recover the solution on each proccesor
     w->Distribute(&(X.GetBlock(0)));
@@ -51,9 +71,8 @@ void Artic_sea::solve_system(){
     v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
 
     //Delete used memory
-    delete H;
-    delete superlu;
-    delete SLU_A;
+
+    return 0;
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
