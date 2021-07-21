@@ -16,7 +16,7 @@ void Artic_sea::assemble_system(){
     theta = new ParGridFunction(fespace);
     Theta = new HypreParVector(fespace);
 
-    cond_oper = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *Theta);
+    cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), *Theta);
     theta->SetFromTrueDofs(*Theta);
 
     //Define solution for psi
@@ -25,7 +25,7 @@ void Artic_sea::assemble_system(){
     flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), Theta);
     flow_oper->Solve(Theta);
     Psi = (flow_oper->psi)->GetTrueDofs();
-    cond_oper->UpdateVelocity(*Psi, flow_oper->v);
+    cond_oper->UpdateVelocity(flow_oper->v);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){

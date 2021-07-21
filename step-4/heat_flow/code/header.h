@@ -38,10 +38,10 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
+        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Vector &X);
 
         void SetParameters(const Vector &X);
-        void UpdateVelocity(const HypreParVector &psi, ParGridFunction *v);
+        void UpdateVelocity(const ParGridFunction *v_flow);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
@@ -74,6 +74,7 @@ class Conduction_Operator : public TimeDependentOperator{
         ParGridFunction aux_K;
 
         ParGridFunction psi;
+        ParGridFunction v;
 
         FunctionCoefficient r;
         VectorFunctionCoefficient zero;
@@ -84,9 +85,7 @@ class Conduction_Operator : public TimeDependentOperator{
         ProductCoefficient dt_coeff_rK;
 
         //GradientGridFunctionCoefficient rV;
-        MatrixFunctionCoefficient rot;
-        GradientGridFunctionCoefficient gradpsi;
-        MatrixVectorProductCoefficient rV;
+        VectorGridFunctionCoefficient rV;
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
 };
@@ -134,6 +133,7 @@ class Flow_Operator{
         //Boundary conditions
         ParGridFunction *w_aux;
         ParGridFunction *psi_aux;
+        ParGridFunction *v_aux;
         ParGridFunction *theta_aux;
         ParGridFunction *theta_eta;
         ParGridFunction *theta_rho;
@@ -143,10 +143,18 @@ class Flow_Operator{
         FunctionCoefficient r_inv;
         VectorFunctionCoefficient r_hat;
         ScalarVectorProductCoefficient r_inv_hat;
+        VectorFunctionCoefficient zero;
 
         //Boundary Coefficients
         VectorFunctionCoefficient w_grad; 
         VectorFunctionCoefficient psi_grad; 
+
+        //Construction rV
+        MatrixFunctionCoefficient rot;
+        GradientGridFunctionCoefficient gradpsi;
+        MatrixVectorProductCoefficient rot_psi_grad;
+        VectorGridFunctionCoefficient rV_aux;
+        MatrixVectorProductCoefficient rV;
 };
 
 class Artic_sea{

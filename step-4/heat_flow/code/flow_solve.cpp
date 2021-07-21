@@ -44,6 +44,17 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     for (int ii = 0; ii < psi->Size(); ii++)
         (*psi)(ii) += (*psi_aux)(ii);
 
+    //Calculate rV
+    v->Randomize();
+    v_aux->Randomize();
+    gradpsi.SetGridFunction(psi);
+    v_aux->ProjectDiscCoefficient(gradpsi, GridFunction::ARITHMETIC);
+    v_aux->ProjectBdrCoefficientNormal(psi_grad, ess_bdr_psi);
+    rV_aux.SetGridFunction(v_aux);
+    rV.SetBCoef(rV_aux);
+    v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
+    v->ProjectBdrCoefficientNormal(rot_psi_grad, ess_bdr_psi);
+
     //Free memory
     delete H;
 }

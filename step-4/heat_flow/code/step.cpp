@@ -10,7 +10,7 @@ void Artic_sea::time_step(){
     ode_solver->Step(*Theta, t, dt);
 
     Psi = (flow_oper->psi)->GetTrueDofs();
-    cond_oper->UpdateVelocity(*Psi, flow_oper->v);
+    cond_oper->UpdateVelocity(flow_oper->v);
 
     //Solve the flow problem
     flow_oper->Solve(Theta);
@@ -92,12 +92,9 @@ void Conduction_Operator::SetParameters(const Vector &X){
     k->Finalize();
 }
 
-void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi, ParGridFunction *v){
-    psi.SetFromTrueDofs(Psi);
-    gradpsi.SetGridFunction(&psi);
-    rV.SetBCoef(gradpsi);
-    v->Randomize();
-    v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
+void Conduction_Operator::UpdateVelocity(const ParGridFunction *v_flow){
+    v = *v_flow;
+    rV.SetGridFunction(&v);
     coeff_rCLV.SetBCoef(rV);
 }
 
@@ -120,8 +117,8 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     theta_rho->SetFromTrueDofs(*Theta);
     for (int ii = 0; ii < theta_rho->Size(); ii++){
         if ((*theta_rho)(ii) > config.T_f)
-            (*theta_rho)(ii) = 2.3417*pow((*theta_rho)(ii), 2)
-                             - 18.679*(*theta_rho)(ii);
+            (*theta_rho)(ii) = 0.0144*(*theta_rho)(ii)
+                             - 0.0574;
         else
             (*theta_rho)(ii) = 0.;
     }
@@ -143,9 +140,12 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     ScalarVectorProductCoefficient neg_eta_psi_grad(eta, neg_psi_grad);
   
     //RHS coefficients
-    GradientGridFunctionCoefficient grad_rho(theta_rho);
-    InnerProductCoefficient r_hat_grad_rho(r_hat, grad_rho);
-    ProductCoefficient rF(r, r_hat_grad_rho);
+    GridFunctionCoefficient grad_rho(theta_rho);
+    GradientGridFunctionCoefficient grad_theta(theta_aux);
+    InnerProductCoefficient r_hat_grad_theta(r_hat, grad_theta);
+    ProductCoefficient grad_rho_theta(grad_rho, r_hat_grad_theta);
+    ProductCoefficient F(344.4, grad_rho_theta);
+    ProductCoefficient rF(r, F);
     ProductCoefficient neg_rF(neg, rF);
   
     if(f) delete f;
