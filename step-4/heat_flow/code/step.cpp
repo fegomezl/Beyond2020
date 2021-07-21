@@ -150,7 +150,7 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
   
     if(f) delete f;
     f = new ParLinearForm(&fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
+    //f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
     f->AddDomainIntegrator(new DomainLFIntegrator(r_inv_hat_w_grad));
     f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(w_grad));

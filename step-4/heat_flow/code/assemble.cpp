@@ -102,8 +102,8 @@ double r_f(const Vector &x){
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.; f(0,1) = 1.;
-    f(1,0) = -1.; f(1,1) = 0.;
+    f(0,0) = 0.; f(0,1) = -1.;
+    f(1,0) = 1.; f(1,1) = 0.;
 }
 
 void zero_f(const Vector &x, Vector &f){
