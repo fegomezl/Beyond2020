@@ -23,17 +23,19 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
 
     HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
 
-    SuperLUSolver superlu = SuperLUSolver(MPI_COMM_WORLD);
-    SuperLURowLocMatrix SLU_A(*H);
-    superlu.SetOperator(SLU_A);
-    superlu.SetPrintStatistics(false);
-    superlu.SetSymmetricPattern(true);
-    superlu.SetColumnPermutation(superlu::PARMETIS);
-    superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
+    // SuperLUSolver superlu = SuperLUSolver(MPI_COMM_WORLD);
+    // SuperLURowLocMatrix SLU_A(*H);
+    std::unique_ptr<SuperLUSolver> superlu(new SuperLUSolver(MPI_COMM_WORLD));
+    std::unique_ptr<SuperLURowLocMatrix> SLU_A(new SuperLURowLocMatrix(*H));
+    superlu->SetOperator(*SLU_A);
+    superlu->SetPrintStatistics(false);
+    superlu->SetSymmetricPattern(true);
+    superlu->SetColumnPermutation(superlu::PARMETIS);
+    superlu->SetIterativeRefine(superlu::SLU_DOUBLE);
 
     //Solve the linear system Ax=B
     Y.Randomize();
-    superlu.Mult(B, Y);
+    superlu->Mult(B, Y);
 
     //Recover the solution on each proccesor
     w->Distribute(&(Y.GetBlock(0)));

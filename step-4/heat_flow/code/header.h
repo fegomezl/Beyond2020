@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <memory>
 #include "mfem.hpp"
 
 using namespace std;
