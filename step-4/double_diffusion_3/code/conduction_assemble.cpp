@@ -40,7 +40,9 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     neg_robin_h_theta(-1., robin_h_theta), neg_robin_h_phi(-1., robin_h_phi),
     neg_robin_h_ref_theta(neg_robin_h_theta, robin_ref_theta), neg_robin_h_ref_phi(neg_robin_h_phi, robin_ref_phi),
     neg_r_robin_h_theta(coeff_r, neg_robin_h_theta), neg_r_robin_h_phi(coeff_r, neg_robin_h_phi),
-    neg_r_robin_h_ref_theta(coeff_r, neg_robin_h_ref_theta), neg_r_robin_h_ref_phi(coeff_r, neg_robin_h_ref_phi)
+    neg_r_robin_h_ref_theta(coeff_r, neg_robin_h_ref_theta), neg_r_robin_h_ref_phi(coeff_r, neg_robin_h_ref_phi),
+    neg_dt_r_robin_h_theta(0., neg_r_robin_h_theta), neg_dt_r_robin_h_phi(0., neg_r_robin_h_phi),
+    neg_dt_r_robin_h_ref_theta(0., neg_r_robin_h_ref_theta), neg_dt_r_robin_h_ref_phi(0., neg_r_robin_h_ref_phi)
 {
     //Define essential boundary conditions
     //   

@@ -113,6 +113,8 @@ class Conduction_Operator : public TimeDependentOperator{
         mutable ProductCoefficient neg_robin_h_ref_theta, neg_robin_h_ref_phi;
         mutable ProductCoefficient neg_r_robin_h_theta, neg_r_robin_h_phi;
         mutable ProductCoefficient neg_r_robin_h_ref_theta, neg_r_robin_h_ref_phi;
+        mutable ProductCoefficient neg_dt_r_robin_h_theta, neg_dt_r_robin_h_phi;
+        mutable ProductCoefficient neg_dt_r_robin_h_ref_theta, neg_dt_r_robin_h_ref_phi;
 };
 
 class Artic_sea{
