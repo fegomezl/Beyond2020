@@ -1,8 +1,15 @@
 #include "header.h"
 
+//Rotational functions
 double r_f(const Vector &x);
 void rot_f(const Vector &x, DenseMatrix &f);
 void zero_f(const Vector &x, Vector &f);
+
+//Fusion temperature dependent of salinity
+double T_fun(const double &salinity);
+
+//Variation on solid heat capacity
+double delta_c_s_fun(const double &temperature, const double &salinity);
 
 void Artic_sea::assemble_system(){
     //Initialize the system
@@ -25,7 +32,7 @@ void Artic_sea::assemble_system(){
 
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++){
-        double T_f = config.T_f - (0.6037*(*phi)(ii) + 0.00058123*pow((*phi)(ii), 3));
+        double T_f = config.T_f + T_fun((*phi)(ii));
         (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
     }
 
@@ -111,4 +118,15 @@ void rot_f(const Vector &x, DenseMatrix &f){
 void zero_f(const Vector &x, Vector &f){
     f(0) = 0.;
     f(1) = 0.;
+}
+
+double T_fun(const double &salinity){
+    return -(0.6037*salinity + 0.00058123*pow(salinity, 3));
+}
+
+double delta_c_s_fun(const double &temperature, const double &salinity){
+    return -0.00313*salinity -
+           0.00704*temperature -
+           0.0000783*salinity*temperature +
+           16.9*salinity*pow(temperature, -2);
 }

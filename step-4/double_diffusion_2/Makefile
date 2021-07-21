@@ -1,7 +1,7 @@
 include ../../local_config.mk
 
 #Mesh parmeters
-SCRIPT=$(shell sed -n 2p settings/parameters.txt | cut -d '/#' -f 1)
+SCRIPT=$(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
 RMIN=$(shell sed -n 3p settings/parameters.txt | tr -d -c 0-9.-)
 RMAX=$(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.-)
 ZMIN=$(shell sed -n 5p settings/parameters.txt | tr -d -c 0-9.-)
@@ -29,7 +29,9 @@ C_L=$(shell sed -n 28p settings/parameters.txt | tr -d -c 0-9.)
 C_S=$(shell sed -n 29p settings/parameters.txt | tr -d -c 0-9.)
 K_L=$(shell sed -n 30p settings/parameters.txt | tr -d -c 0-9.)
 K_S=$(shell sed -n 31p settings/parameters.txt | tr -d -c 0-9.)
-L=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
+D_L=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
+D_S=$(shell sed -n 33p settings/parameters.txt | tr -d -c 0-9.)
+L=$(shell sed -n 34p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
@@ -40,14 +42,15 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all main mesh graph clean oclean
 
-all: main.x #results/mesh.msh
+all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
 						-dt $(DT) -t_f $(T_FI) -v_s $(VIS) \
 						-r $(REF) -o $(ORDER) -ode $(ODE) \
 						-abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 						-abstol_s $(ABST_S) -reltol_s $(RELT_S) \
-						-T_f $(T_FU) -DT $(DELTA_T) -c_l $(C_L) -c_s $(C_S) -k_l $(K_L) -k_s $(K_S) -L $(L) 
+						-T_f $(T_FU) -DT $(DELTA_T) -c_l $(C_L) -c_s $(C_S) \
+						-k_l $(K_L) -k_s $(K_S) -D_l $(D_L) -D_s $(D_S) -L $(L) 
 	@echo -e '\nDone!\n'
 
 main: main.x
