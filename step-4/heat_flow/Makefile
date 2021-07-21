@@ -8,30 +8,30 @@ ZMIN=$(shell sed -n 5p settings/parameters.txt | tr -d -c 0-9.-)
 ZMAX=$(shell sed -n 6p settings/parameters.txt | tr -d -c 0-9.-)
 
 #Simulation parameters
-DT=$(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.)
-T_FI=$(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.)
-VIS=$(shell sed -n 13p settings/parameters.txt | tr -d -c 0-9.)
+DT=$(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.)
+T_FI=$(shell sed -n 13p settings/parameters.txt | tr -d -c 0-9.)
+VIS=$(shell sed -n 14p settings/parameters.txt | tr -d -c 0-9.)
 
 #FE parameters
-REF=$(shell sed -n 16p settings/parameters.txt | tr -d -c 0-9.)
-ORDER=$(shell sed -n 17p settings/parameters.txt | tr -d -c 0-9.)
-ODE=$(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.)
-ABST_C=$(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
-RELT_C=$(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
-ITER_C=$(shell sed -n 21p settings/parameters.txt | tr -d -c 0-9.)
-ABST_S=$(shell sed -n 22p settings/parameters.txt | tr -d -c 0-9.)
-RELT_S=$(shell sed -n 23p settings/parameters.txt | tr -d -c 0-9.)
+REF=$(shell sed -n 17p settings/parameters.txt | tr -d -c 0-9.)
+ORDER=$(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.)
+ODE=$(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
+ABST_C=$(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
+RELT_C=$(shell sed -n 21p settings/parameters.txt | tr -d -c 0-9.)
+ITER_C=$(shell sed -n 22p settings/parameters.txt | tr -d -c 0-9.)
+ABST_S=$(shell sed -n 23p settings/parameters.txt | tr -d -c 0-9.)
+RELT_S=$(shell sed -n 24p settings/parameters.txt | tr -d -c 0-9.)
 
 #Physical parameters
-T_FU=$(shell sed -n 26p settings/parameters.txt | tr -d -c 0-9.-)
-DELTA_T=$(shell sed -n 27p settings/parameters.txt | tr -d -c 0-9.)
-C_L=$(shell sed -n 28p settings/parameters.txt | tr -d -c 0-9.)
-C_S=$(shell sed -n 29p settings/parameters.txt | tr -d -c 0-9.)
-K_L=$(shell sed -n 30p settings/parameters.txt | tr -d -c 0-9.)
-K_S=$(shell sed -n 31p settings/parameters.txt | tr -d -c 0-9.)
-D_L=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
-D_S=$(shell sed -n 33p settings/parameters.txt | tr -d -c 0-9.)
-L=$(shell sed -n 34p settings/parameters.txt | tr -d -c 0-9.)
+T_FU=$(shell sed -n 27p settings/parameters.txt | tr -d -c 0-9.-)
+DELTA_T=$(shell sed -n 28p settings/parameters.txt | tr -d -c 0-9.)
+C_L=$(shell sed -n 29p settings/parameters.txt | tr -d -c 0-9.)
+C_S=$(shell sed -n 30p settings/parameters.txt | tr -d -c 0-9.)
+K_L=$(shell sed -n 31p settings/parameters.txt | tr -d -c 0-9.)
+K_S=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
+L=$(shell sed -n 33p settings/parameters.txt | tr -d -c 0-9.)
+EPSILON_ETA=$(shell sed -n 34p settings/parameters.txt | tr -d -c 0-9.)
+EPSILON_R=$(shell sed -n 35p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
@@ -49,8 +49,8 @@ all: main.x results/mesh.msh
 						-r $(REF) -o $(ORDER) -ode $(ODE) \
 						-abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 						-abstol_s $(ABST_S) -reltol_s $(RELT_S) \
-						-T_f $(T_FU) -DT $(DELTA_T) -c_l $(C_L) -c_s $(C_S) \
-						-k_l $(K_L) -k_s $(K_S) -D_l $(D_L) -D_s $(D_S) -L $(L) 
+						-T_f $(T_FU) -DT $(DELTA_T) -c_l $(C_L) -c_s $(C_S) -k_l $(K_L) -k_s $(K_S) -L $(L) \
+						-e_eta $(EPSILON_ETA) -e_r $(EPSILON_R)
 	@echo -e '\nDone!\n'
 
 main: main.x
@@ -87,7 +87,7 @@ results/mesh.msh: settings/parameters.txt
 	@echo -e 'Done!\n'
 
 clean:
-	@rm -rf *.x results/*
+	@rm -rf *.x results/graph/*
 
 oclean:
 	@rm -rf .objects/*.o

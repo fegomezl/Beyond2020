@@ -9,6 +9,15 @@ void Artic_sea::time_step(){
     oper_T->SetParameters(X);
     ode_solver->Step(X, t, dt);
 
+    //Solve the flow problem
+    X_Psi = (flow_oper->psi)->GetTrueDofs();
+    theta->Distribute(&(X.GetBlock(0)));
+    Theta = theta->GetTrueDofs();
+
+    oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
+
+    flow_oper->Solve(config, X_Psi, x_psi, Theta, dim, pmesh->bdr_attributes.Max());
+
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
 
@@ -17,17 +26,8 @@ void Artic_sea::time_step(){
         vis_iteration = 0;
         vis_impressions++;
 
-        //Read system state
-        theta->Distribute(&(X.GetBlock(0)));
-        phi->Distribute(&(X.GetBlock(1)));
-
-        //Calculate phases
-        for (int ii = 0; ii < phase->Size(); ii++){
-            double T_f = config.T_f + T_fun((*phi)(ii));
-            (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
-        }
-
         //Graph
+        phi->Distribute(&(X.GetBlock(1)));
         paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);
         paraview_out->Save();
@@ -54,17 +54,17 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux_phi.Size(); ii++){
-        double T_f = config.T_f + T_fun(aux_phi(ii));
-        if (aux_theta(ii) > T_f){
+        if (aux_theta(ii) > config.T_f){
             aux_C(ii) = config.c_l;
             aux_K(ii) = config.k_l;
-            aux_D(ii) = config.D_l;
+            aux_D(ii) = 10;
         } else {
-            aux_C(ii) = config.c_s + delta_c_s_fun(aux_theta(ii), aux_phi(ii));
+            aux_C(ii) = config.c_s;
             aux_K(ii) = config.k_s;
-            aux_D(ii) = config.D_s;
+            aux_D(ii) = 1e-6;
         }
-        aux_theta(ii) = config.L*config.invDeltaT*exp(-M_PI*pow(config.invDeltaT*(aux_theta(ii) - T_f), 2));
+
+        aux_theta(ii) = config.L*config.invDeltaT*exp(-M_PI*pow(config.invDeltaT*(aux_theta(ii) - config.T_f), 2));
     }
 
     //Set the associated coefficients
@@ -76,9 +76,9 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     SumCoefficient coeff_CL(coeff_C, coeff_L);
     coeff_rCL.SetBCoef(coeff_CL);
 
-    coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK); 
+    coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK);
 
-    coeff_rD.SetBCoef(coeff_D); dt_coeff_rD.SetBCoef(coeff_rD); 
+    coeff_rD.SetBCoef(coeff_D); dt_coeff_rD.SetBCoef(coeff_rD);
 
     coeff_rCLV.SetACoef(coeff_CL);
     dt_coeff_rCLV.SetBCoef(coeff_rCLV);
@@ -102,7 +102,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCLV));
-    k_theta->AddBoundaryIntegrator(new MassIntegrator(neg_r_robin_h_theta), robin_bdr_theta);
     k_theta->Assemble();
     k_theta->Finalize();
 
@@ -110,15 +109,16 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
     k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi->AddBoundaryIntegrator(new MassIntegrator(neg_r_robin_h_phi), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
 }
 
-void Conduction_Operator::UpdateVelocity(const Vector &Psi){
+void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi, ParGridFunction *v){
     psi.SetFromTrueDofs(Psi);
     gradpsi.SetGridFunction(&psi);
     coeff_rV.SetBCoef(gradpsi);
+    v->Randomize();
+    v->ProjectDiscCoefficient(coeff_rV, GridFunction::ARITHMETIC);
     dt_coeff_rV.SetBCoef(coeff_rV);
     coeff_rCLV.SetBCoef(coeff_rV);
 }

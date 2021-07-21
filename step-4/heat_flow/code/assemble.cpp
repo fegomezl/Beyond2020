@@ -1,15 +1,8 @@
 #include "header.h"
 
-//Rotational functions
 double r_f(const Vector &x);
 void rot_f(const Vector &x, DenseMatrix &f);
 void zero_f(const Vector &x, Vector &f);
-
-//Fusion temperature dependent of salinity
-double T_fun(const double &salinity);
-
-//Variation on solid heat capacity
-double delta_c_s_fun(const double &temperature, const double &salinity);
 
 void Artic_sea::assemble_system(){
     //Initialize the system
@@ -19,22 +12,20 @@ void Artic_sea::assemble_system(){
     vis_steps = config.vis_steps_max;
     vis_impressions = 0;
 
-    //Define solution x
+    //Define solution for theta
     theta = new ParGridFunction(fespace);
-    phi = new ParGridFunction(fespace);
-    phase = new ParGridFunction(fespace);
+    Theta = new HypreParVector(fespace);
 
-    oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
+    cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), *Theta);
+    theta->SetFromTrueDofs(*Theta);
 
-    //Recover initial conditions
-    theta->Distribute(&(X.GetBlock(0)));
-    phi->Distribute(&(X.GetBlock(1)));
+    //Define solution for psi
+    Psi = new HypreParVector(fespace);
 
-    //Calculate phases
-    for (int ii = 0; ii < phase->Size(); ii++){
-        double T_f = config.T_f + T_fun((*phi)(ii));
-        (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
-    }
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), Theta);
+    flow_oper->Solve(Theta);
+    Psi = (flow_oper->psi)->GetTrueDofs();
+    cond_oper->UpdateVelocity(flow_oper->v);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -63,16 +54,16 @@ void Artic_sea::assemble_system(){
 
     // Initialize ODE solver
     if (config.ode_solver_type < 8)
-        ode_solver->Init(*oper_T);
+        ode_solver->Init(*cond_oper);
     else if (cvode){
-        cvode->Init(*oper_T);
+        cvode->Init(*cond_oper);
         cvode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         cvode->SetMaxStep(dt);
         cvode->SetStepMode(CV_ONE_STEP);
         ode_solver = cvode;
     }
     else if (arkode){
-        arkode->Init(*oper_T);
+        arkode->Init(*cond_oper);
         arkode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         arkode->SetMaxStep(dt);
         arkode->SetStepMode(ARK_ONE_STEP);
@@ -86,8 +77,9 @@ void Artic_sea::assemble_system(){
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", theta);
-    paraview_out->RegisterField("Salinity", phi);
-    paraview_out->RegisterField("Phase", phase);
+    paraview_out->RegisterField("Stream_Function(r)", flow_oper->psi);
+    paraview_out->RegisterField("Velocity(r)", flow_oper->v);
+    paraview_out->RegisterField("Vorticity(r)", flow_oper->w);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();
@@ -103,7 +95,6 @@ void Artic_sea::assemble_system(){
              << "Progress"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
-
 }
 
 double r_f(const Vector &x){
@@ -118,15 +109,4 @@ void rot_f(const Vector &x, DenseMatrix &f){
 void zero_f(const Vector &x, Vector &f){
     f(0) = 0.;
     f(1) = 0.;
-}
-
-double T_fun(const double &salinity){
-    return -(0.6037*salinity + 0.00058123*pow(salinity, 3));
-}
-
-double delta_c_s_fun(const double &temperature, const double &salinity){
-    return -0.00313*salinity -
-           0.00704*temperature -
-           0.0000783*salinity*temperature +
-           16.9*salinity*pow(temperature, -2);
 }

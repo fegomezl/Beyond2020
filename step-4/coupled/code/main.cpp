@@ -5,8 +5,10 @@ double Rmin;
 double Zmin;
 double Rmax;
 double Zmax;
+double height;
 
-double mid;
+//Size of the BC border
+double epsilon_r;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -18,7 +20,7 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-    int nDeltaT = 0;
+    int nDeltaT, nEpsilon_eta, nEpsilon_r;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -69,12 +71,15 @@ int main(int argc, char *argv[]){
                    "Liquid thermal conductivity.");
     args.AddOption(&config.k_s, "-k_s", "--k_s",
                    "Solid thermal conductivity.");
-    args.AddOption(&config.D_l, "-D_l", "--D_l",
-                   "Liquid diffusion constant.");
-    args.AddOption(&config.D_s, "-D_s", "--D_s",
-                   "Solid diffusion constant.");
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
+    args.AddOption(&config.viscosity, "-v", "--viscosity",
+                   "Kinematic viscosity of the material.");
+    args.AddOption(&nEpsilon_eta, "-e_eta", "--epsilon_eta",
+                   "Value of constatn epsilon for (1-phi)^2/(phi^3 + epsilon)(10^(-n)).");
+    args.AddOption(&nEpsilon_r, "-e_r", "--epsilon_r",
+                   "Value of constant epsilon for 1/(r + epsilon) (10^(-n)).");
+
 
     //Check if parameters were read correctly
     args.Parse();
@@ -85,12 +90,12 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-    //Run the program for different refinements
-    mid = Zmax*config.k_s/(config.k_s + config.k_l);
-    
+    height = Zmax - Zmin;
     config.invDeltaT = pow(10, nDeltaT);
+    config.epsilon_eta = pow(10, -nEpsilon_eta);
+    epsilon_r = pow(10, -nEpsilon_r);
     Artic_sea artic_sea(config);
-    artic_sea.run(mesh_file); 
+    artic_sea.run(mesh_file);
 
     MPI_Finalize();
 

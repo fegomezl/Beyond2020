@@ -7,10 +7,9 @@ Config::Config(bool master, int nproc):
 
 Artic_sea::Artic_sea(Config config):
     config(config),
-    pmesh(NULL), fec(NULL), fespace(NULL),
-    block_true_offsets(3),
-    theta(NULL), phi(NULL), phase(NULL),
-    oper_T(NULL),
+    pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
+    theta(NULL), Theta(NULL), Psi(NULL),
+    cond_oper(NULL), flow_oper(NULL),
     ode_solver(NULL), cvode(NULL), arkode(NULL),
     paraview_out(NULL)
 {}
@@ -26,22 +25,41 @@ void Artic_sea::run(const char *mesh_file){
 
 Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
-    delete m_theta; 
-    delete m_phi;
-    delete k_theta;
-    delete k_phi;
-    delete t_theta; 
-    delete t_phi;
+    delete m;
+    delete k;
+    delete t;
+}
+
+Flow_Operator::~Flow_Operator(){
+    delete f;
+    delete g;
+    delete m;
+    delete d;
+    delete c;
+    delete M;
+    delete D;
+    delete psi;
+    delete w;
+    delete v;
+    delete psi_aux;
+    delete w_aux;
+    delete v_aux;
+    delete theta_aux;
+    delete theta_eta;
+    delete theta_rho;
 }
 
 Artic_sea::~Artic_sea(){
     delete pmesh;
     delete fec;
     delete fespace;
+    delete fec_v;
+    delete fespace_v;
     delete theta;
-    delete phi;
-    delete phase;
-    delete oper_T;
+    delete Theta;
+    delete Psi;
+    delete cond_oper;
+    delete flow_oper;
     delete ode_solver;
     delete paraview_out;
     if (config.master) cout << "Memory deleted \n";

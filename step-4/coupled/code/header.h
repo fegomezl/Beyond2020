@@ -32,8 +32,9 @@ struct Config{
     double invDeltaT;
     double c_l, c_s;
     double k_l, k_s;
-    double D_l, D_s;
     double L;
+    double viscosity;
+    double epsilon_eta;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
@@ -41,9 +42,10 @@ class Conduction_Operator : public TimeDependentOperator{
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
 
         void SetParameters(const BlockVector &X);
-        void UpdateVelocity(const Vector &psi);
+        void UpdateVelocity(const HypreParVector &psi, ParGridFunction *v);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
+        //virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
 	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
@@ -52,13 +54,8 @@ class Conduction_Operator : public TimeDependentOperator{
         //Global parameters
         Config config;
 
-        //Mesh objects
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
-
-        mutable Array<int> newmann_bdr_theta, newmann_bdr_phi;
-        mutable Array<int> robin_bdr_theta, robin_bdr_phi;
-
         Array<int> ess_tdof_list_theta, ess_tdof_list_phi;
 
         //System objects
@@ -66,8 +63,9 @@ class Conduction_Operator : public TimeDependentOperator{
         ParBilinearForm *k_theta, *k_phi;        //Difussion operators
         ParBilinearForm *t_theta, *t_phi;        //m + dt*k
 
+
         HypreParMatrix M_theta, M_phi;
-        HypreParMatrix T_theta, T_phi;   
+        HypreParMatrix T_theta, T_phi;
 
         //Solver objects
         CGSolver M_theta_solver, M_phi_solver;
@@ -84,7 +82,7 @@ class Conduction_Operator : public TimeDependentOperator{
         ParGridFunction psi;
 
         //Coefficients
-        mutable FunctionCoefficient coeff_r;
+        FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
         MatrixFunctionCoefficient rot;
 
@@ -97,24 +95,53 @@ class Conduction_Operator : public TimeDependentOperator{
         ProductCoefficient coeff_rK; 
         ProductCoefficient dt_coeff_rK;
 
-        ProductCoefficient coeff_rD; 
+        ProductCoefficient coeff_rD;
         ProductCoefficient dt_coeff_rD;
 
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
+};
 
-        mutable FunctionCoefficient newmann_theta, newmann_phi;
-        mutable ProductCoefficient r_newmann_theta, r_newmann_phi;
-        mutable ProductCoefficient dt_r_newmann_theta, dt_r_newmann_phi;
+class Flow_Operator{
+  public:
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const HypreParVector *X_T);
+    void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim, int attributes);
+    void Update_T(Config config, const HypreParVector *X_T, int dim, int attributes);
+    ParGridFunction *psi;
+    ParGridFunction *w;
+    ParGridFunction *v;
+    ~Flow_Operator();
 
-        mutable FunctionCoefficient robin_h_theta, robin_h_phi;
-        mutable FunctionCoefficient robin_ref_theta, robin_ref_phi;
-        mutable ProductCoefficient neg_robin_h_theta, neg_robin_h_phi;
-        mutable ProductCoefficient neg_robin_h_ref_theta, neg_robin_h_ref_phi;
-        mutable ProductCoefficient neg_r_robin_h_theta, neg_r_robin_h_phi;
-        mutable ProductCoefficient neg_r_robin_h_ref_theta, neg_r_robin_h_ref_phi;
-        mutable ProductCoefficient neg_dt_r_robin_h_theta, neg_dt_r_robin_h_phi;
-        mutable ProductCoefficient neg_dt_r_robin_h_ref_theta, neg_dt_r_robin_h_ref_phi;
+  protected:
+
+        //Mesh objects
+        ParFiniteElementSpace &fespace;
+
+        //System objects
+        ParLinearForm *f;
+        ParLinearForm *g;
+        ParBilinearForm *m;
+        ParBilinearForm *d;
+        ParMixedBilinearForm *c;
+        ParMixedBilinearForm *ct;
+        Array<int> ess_bdr_psi;
+        Array<int> ess_bdr_w;
+
+        //Solver objects
+        BlockVector Y;
+        BlockVector B;
+        HypreParMatrix *M;
+        HypreParMatrix *D;
+        HypreParMatrix *C;
+
+       //Boundary conditions
+       ParGridFunction *w_aux;
+       ParGridFunction *psi_aux;
+       ParGridFunction *theta;
+
+       ConstantCoefficient bg;
+       ParGridFunction *x_T;
+
 };
 
 class Artic_sea{
@@ -140,19 +167,23 @@ class Artic_sea{
         int vis_impressions;
 
         int dim;
+        double h_min;
         int serial_refinements;
         HYPRE_Int size;
+        HYPRE_Int size_v;
 
         ParMesh *pmesh;
         FiniteElementCollection *fec;
+        FiniteElementCollection *fec_v;
         ParFiniteElementSpace *fespace;
+        ParFiniteElementSpace *fespace_v;
 
         Array<int> block_true_offsets;
 
         //System objects
         ParGridFunction *theta;
+        HypreParVector *Theta;
         ParGridFunction *phi;
-        ParGridFunction *phase;
 
         BlockVector X;
         Conduction_Operator *oper_T;
@@ -163,16 +194,16 @@ class Artic_sea{
         ARKStepSolver *arkode;
 
         ParaViewDataCollection *paraview_out;
+
+        //Flow_Operator objects
+        Flow_Operator *flow_oper;
+        ParGridFunction *x_psi;
+        HypreParVector *X_Psi;
 };
 
 extern double r_f(const Vector &x);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
-extern double T_fun(const double &salinity);
-
-extern double delta_c_s_fun(const double &temperature, const double &salinity);
-
-extern double Rmin, Rmax, Zmin, Zmax;
-
-extern double mid;
+extern double Rmin, Rmax, Zmin, Zmax, height;
+extern double epsilon_r;

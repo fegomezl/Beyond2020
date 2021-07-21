@@ -3,49 +3,33 @@
 double initial_theta_f(const Vector &x);
 double initial_phi_f(const Vector &x);
 
-double newmann_theta_f(const Vector &x);
-double newmann_phi_f(const Vector &x);
+//Temperature field
+double temperature_f(const Vector &x);
 
-double robin_h_theta_f(const Vector &x);
-double robin_h_phi_f(const Vector &x);
-double robin_ref_theta_f(const Vector &x);
-double robin_ref_phi_f(const Vector &x);
+double r_inv(const Vector &x);
 
 Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
     TimeDependentOperator(2*fespace.GetTrueVSize(), 0.),
     config(config),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
-    newmann_bdr_theta(attributes), newmann_bdr_phi(attributes),
-    robin_bdr_theta(attributes), robin_bdr_phi(attributes),
     m_theta(NULL), m_phi(NULL),
     k_theta(NULL), k_phi(NULL),
     t_theta(NULL), t_phi(NULL),
     M_theta_solver(fespace.GetComm()), M_phi_solver(fespace.GetComm()),
     T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
-    aux_theta(&fespace), aux_phi(&fespace), 
+    aux_theta(&fespace), aux_phi(&fespace),
     aux_C(&fespace), aux_K(&fespace), aux_D(&fespace),
     psi(&fespace),
-    coeff_r(r_f), zero(dim, zero_f), rot(dim, rot_f), 
+    coeff_r(r_f), zero(dim, zero_f), rot(dim, rot_f),
     gradpsi(&psi), coeff_rV(rot, zero), dt_coeff_rV(0., coeff_rV),
     coeff_rCL(coeff_r, coeff_r),
     coeff_rK(coeff_r, coeff_r), dt_coeff_rK(0., coeff_rK),
     coeff_rD(coeff_r, coeff_r), dt_coeff_rD(0., coeff_rD),
-    coeff_rCLV(coeff_r, zero), dt_coeff_rCLV(0., zero),
-    newmann_theta(newmann_theta_f), newmann_phi(newmann_phi_f),
-    r_newmann_theta(coeff_r, newmann_theta), r_newmann_phi(coeff_r, newmann_phi),
-    dt_r_newmann_theta(0., r_newmann_theta), dt_r_newmann_phi(0., r_newmann_phi),
-    robin_h_theta(robin_h_theta_f), robin_h_phi(robin_h_phi_f),
-    robin_ref_theta(robin_ref_theta_f), robin_ref_phi(robin_ref_phi_f),
-    neg_robin_h_theta(-1., robin_h_theta), neg_robin_h_phi(-1., robin_h_phi),
-    neg_robin_h_ref_theta(neg_robin_h_theta, robin_ref_theta), neg_robin_h_ref_phi(neg_robin_h_phi, robin_ref_phi),
-    neg_r_robin_h_theta(coeff_r, neg_robin_h_theta), neg_r_robin_h_phi(coeff_r, neg_robin_h_phi),
-    neg_r_robin_h_ref_theta(coeff_r, neg_robin_h_ref_theta), neg_r_robin_h_ref_phi(coeff_r, neg_robin_h_ref_phi),
-    neg_dt_r_robin_h_theta(0., neg_r_robin_h_theta), neg_dt_r_robin_h_phi(0., neg_r_robin_h_phi),
-    neg_dt_r_robin_h_ref_theta(0., neg_r_robin_h_ref_theta), neg_dt_r_robin_h_ref_phi(0., neg_r_robin_h_ref_phi)
+    coeff_rCLV(coeff_r, zero), dt_coeff_rCLV(0., zero)
 {
-    //Define essential boundary conditions
-    //   
+    //Set boundary conditions
+    //
     //                  1
     //            /------------\
     //            |            |
@@ -53,36 +37,35 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //            |            |
     //            \------------/
     //                  0
-
     Array<int> ess_bdr_theta(attributes);
-    ess_bdr_theta[0] = 0;     ess_bdr_theta[1] = 0;     ess_bdr_theta[3] = 1;
-    newmann_bdr_theta[0] = 0; newmann_bdr_theta[1] = 0; newmann_bdr_theta[3] = 0;
-    robin_bdr_theta[0] = 0;   robin_bdr_theta[1] = 1;   robin_bdr_theta[3] = 0;
+    ess_bdr_theta[0] = 1; ess_bdr_theta[1] = 1;
+    ess_bdr_theta[2] = 0; ess_bdr_theta[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_list_theta);
 
     Array<int> ess_bdr_phi(attributes);
-    ess_bdr_phi[0] = 0;       ess_bdr_phi[1] = 0;       ess_bdr_phi[3] = 1; 
-    newmann_bdr_phi[0] = 0;   newmann_bdr_phi[1] = 0;   newmann_bdr_phi[3] = 0;
-    robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 1;     robin_bdr_phi[3] = 0;
+    ess_bdr_phi[0] = 1; ess_bdr_phi[1] = 1;
+    ess_bdr_phi[2] = 0; ess_bdr_phi[3] = 1;
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_list_phi);
-
-    //Check that the internal boundaries is always zero.
-    ess_bdr_theta[2] = 0;     ess_bdr_phi[2] = 0; 
-    newmann_bdr_theta[2] = 0; newmann_bdr_phi[2] = 0;
-    robin_bdr_theta[2] = 0;   robin_bdr_phi[2] = 0;
 
     //Apply initial conditions
     ParGridFunction theta(&fespace);
+    //HypreParVector Theta(&fespace);
     FunctionCoefficient initial_theta(initial_theta_f);
     theta.ProjectCoefficient(initial_theta);
     theta.ProjectBdrCoefficient(initial_theta, ess_bdr_theta);
     theta.GetTrueDofs(X.GetBlock(0));
 
     ParGridFunction phi(&fespace);
+    //HypreParVector Phi(&fespace);
     FunctionCoefficient initial_phi(initial_phi_f);
     phi.ProjectCoefficient(initial_phi);
     phi.ProjectBdrCoefficient(initial_phi, ess_bdr_phi);
     phi.GetTrueDofs(X.GetBlock(1));
+
+    /*for (int ii = block_true_offsets[0]; ii < block_true_offsets[1]; ii++)
+        X(ii) = Theta(ii);
+    for (int ii = block_true_offsets[1]; ii < block_true_offsets[2]; ii++)
+        X(ii) = Phi(ii - block_true_offsets[1]);*/
 
     //Configure M solvers
     M_theta_solver.iterative_mode = false;
@@ -119,46 +102,28 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     SetParameters(X);
 }
 
-double theta_in = -1.8, theta_out = -20;
-double phi_in = 3.5, phi_out = 22.5;
-double vel = 250;
-double entrance = 1.5;
-
 //Initial conditions
 double initial_theta_f(const Vector &x){
-    return theta_in;
+    //return 0.001*(x(1) - Zmin)*(Zmax - x(1))*(x(0) + Rmax - 2*Rmin)*(Rmax - x(0));
+    double mid = 0.6*Zmax;
+    if (x(1) <= mid)
+        return -10*(1 - x(1)/mid);
+    else
+        return 10*(x(1) - mid)/(Zmax - mid);
 }
 
 double initial_phi_f(const Vector &x){
-    return phi_in;
+    return 0.002*(x(1) - Zmin)*(Zmax - x(1))*(x(0) + Rmax - 2*Rmin)*(Rmax - x(0));
 }
 
-double newmann_theta_f(const Vector &x){
-    return 0.;
-}
+double temperature_f(const Vector &x){
+    double mid_x = (Rmax + Rmin)/2;
+    double mid_y = height/2;
+    double sigma = (Rmax - Rmin)/10;
 
-double newmann_phi_f(const Vector &x){
-    return 0;
-}
-
-double robin_h_theta_f(const Vector &x){
-    if (x(0) < entrance)
-        return -3.88*vel;
+    double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
+    if (r_2 < pow(sigma, 2))
+        return -10;
     else
-        return 0.;
-}
-
-double robin_h_phi_f(const Vector &x){
-    if (x(0) < entrance)
-        return -vel;
-    else
-        return 0.;
-}
-
-double robin_ref_theta_f(const Vector &x){
-    return theta_out;
-}
-
-double robin_ref_phi_f(const Vector &x){
-    return phi_out;
+        return 10;
 }
