@@ -120,8 +120,8 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     theta_rho->SetFromTrueDofs(*Theta);
     for (int ii = 0; ii < theta_rho->Size(); ii++){
         if ((*theta_rho)(ii) > config.T_f)
-            (*theta_rho)(ii) = 2.3417*pow((*theta_rho)(ii), 2)
-                             - 18.679*(*theta_rho)(ii);
+            (*theta_rho)(ii) = 4.6834*(*theta_rho)(ii)
+                             - 18.679;
         else
             (*theta_rho)(ii) = 0.;
     }
@@ -143,9 +143,11 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     ScalarVectorProductCoefficient neg_eta_psi_grad(eta, neg_psi_grad);
   
     //RHS coefficients
-    GradientGridFunctionCoefficient grad_rho(theta_rho);
-    InnerProductCoefficient r_hat_grad_rho(r_hat, grad_rho);
-    ProductCoefficient rF(r, r_hat_grad_rho);
+    GridFunctionCoefficient grad_rho(theta_rho);
+    GradientGridFunctionCoefficient grad_theta(theta_aux);
+    InnerProductCoefficient r_hat_grad_rho(r_hat, grad_theta);
+    ProductCoefficient grad_rho_theta(grad_rho, r_hat_grad_rho);
+    ProductCoefficient rF(r, grad_rho_theta);
     ProductCoefficient neg_rF(neg, rF);
   
     if(f) delete f;
