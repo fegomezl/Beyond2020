@@ -120,11 +120,8 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     theta_rho->SetFromTrueDofs(*Theta);
     for (int ii = 0; ii < theta_rho->Size(); ii++){
         if ((*theta_rho)(ii) > config.T_f)
-            (*theta_rho)(ii) = 0.044*pow((*theta_rho)(ii), 2)
-                             - 5.265*(*theta_rho)(ii)
-                             + 19.886;
-            /*(*theta_rho)(ii) = - 5.265*(*theta_rho)(ii)
-                             + 19.886;*/
+            (*theta_rho)(ii) = 2.3417*pow((*theta_rho)(ii), 2)
+                             - 18.679*(*theta_rho)(ii);
         else
             (*theta_rho)(ii) = 0.;
     }
@@ -146,16 +143,14 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     ScalarVectorProductCoefficient neg_eta_psi_grad(eta, neg_psi_grad);
   
     //RHS coefficients
-    GridFunctionCoefficient grad_rho(theta_rho);
-    GradientGridFunctionCoefficient theta_grad(theta_aux);
-    InnerProductCoefficient r_hat_theta_grad(r_hat, theta_grad);
-    ProductCoefficient grad_rho_theta(grad_rho, r_hat_theta_grad);
-    ProductCoefficient rF(r, grad_rho_theta);
+    GradientGridFunctionCoefficient grad_rho(theta_rho);
+    InnerProductCoefficient r_hat_grad_rho(r_hat, grad_rho);
+    ProductCoefficient rF(r, r_hat_grad_rho);
     ProductCoefficient neg_rF(neg, rF);
   
     if(f) delete f;
     f = new ParLinearForm(&fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
+    //f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
     f->AddDomainIntegrator(new DomainLFIntegrator(r_inv_hat_w_grad));
     f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(w_grad));
