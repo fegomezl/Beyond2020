@@ -23,8 +23,8 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
 
     HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
 
-    // SuperLUSolver superlu = SuperLUSolver(MPI_COMM_WORLD);
-    // SuperLURowLocMatrix SLU_A(*H);
+    //SuperLUSolver superlu = SuperLUSolver(MPI_COMM_WORLD);
+    //SuperLURowLocMatrix SLU_A(*H);
     std::unique_ptr<SuperLUSolver> superlu(new SuperLUSolver(MPI_COMM_WORLD));
     std::unique_ptr<SuperLURowLocMatrix> SLU_A(new SuperLURowLocMatrix(*H));
     superlu->SetOperator(*SLU_A);
@@ -35,6 +35,7 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
 
     //Solve the linear system Ax=B
     Y.Randomize();
+    superlu->DismantleGrid();
     superlu->Mult(B, Y);
 
     //Recover the solution on each proccesor

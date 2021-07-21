@@ -21,10 +21,13 @@ int Artic_sea::solve_system(){
     blockCoeff(1, 0) = -1.;
     blockCoeff(1, 1) = -1.;
 
-    HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
+     HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
+    // std::unique_ptr<HypreParMatrix> H(new HypreParMatrixFromBlocks(hBlocks, &blockCoeff));
 
-    std::unique_ptr<SuperLUSolver> superlu(new SuperLUSolver(MPI_COMM_WORLD));
-    std::unique_ptr<SuperLURowLocMatrix> SLU_A(new SuperLURowLocMatrix(*H));
+    //std::unique_ptr<SuperLUSolver> superlu = std::make_unique<SuperLUSolver>(MPI_COMM_WORLD);
+    //std::unique_ptr<SuperLURowLocMatrix> SLU_A = std::make_unique<SuperLURowLocMatrix>(H);
+    SuperLUSolver *superlu = new SuperLUSolver(MPI_COMM_WORLD);
+    SuperLURowLocMatrix *SLU_A = new SuperLURowLocMatrix(*H);
 
     superlu->SetOperator(*SLU_A);
     superlu->SetPrintStatistics(true);
@@ -34,6 +37,7 @@ int Artic_sea::solve_system(){
 
     X.Randomize();
     superlu->Mult(B, X);
+    superlu ->DismantleGrid();
 
 
     /*PetscParMatrix *_A = new PetscParMatrix(pmesh->GetComm(), H, Operator::PETSC_MATAIJ);
@@ -73,6 +77,8 @@ int Artic_sea::solve_system(){
 
     //Delete used memory
     delete H;
+    delete superlu;
+    delete SLU_A;
 
     return 0;
 }
