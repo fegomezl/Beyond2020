@@ -38,31 +38,18 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //                  0
 
     Array<int> ess_bdr_theta(attributes);
-    ess_bdr_theta[0] = 1; ess_bdr_theta[1] = 1; ess_bdr_theta[3] = 0;
+    ess_bdr_theta[0] = 1;     ess_bdr_theta[1] = 1;     ess_bdr_theta[3] = 0;
     newmann_bdr_theta[0] = 0; newmann_bdr_theta[1] = 0; newmann_bdr_theta[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_list_theta);
 
     Array<int> ess_bdr_phi(attributes);
-    ess_bdr_phi[0] = 0; ess_bdr_phi[1] = 0; ess_bdr_phi[3] = 0; 
-    newmann_bdr_phi[0] = 1; newmann_bdr_phi[1] = 1; newmann_bdr_phi[3] = 0;
+    ess_bdr_phi[0] = 0;     ess_bdr_phi[1] = 0;     ess_bdr_phi[3] = 0; 
+    newmann_bdr_phi[0] = 0; newmann_bdr_phi[1] = 0; newmann_bdr_phi[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_list_phi);
 
-    //Check that the boundary conditions dont overlap,
-    //and that the internal boundaries is always zero.
-    //Standard: set ess to 1 and newmann to 0.
-    ess_bdr_theta[2] = 0; newmann_bdr_theta[2] = 0;
-    ess_bdr_phi[2] = 0; newmann_bdr_phi[2] = 0;
-
-    for (int ii = 0; ii < attributes; ii++){
-        if (ess_bdr_theta[ii]*newmann_bdr_theta[ii] == 1){
-            ess_bdr_theta[ii] = 1;
-            newmann_bdr_theta[ii] = 0;
-        }
-        if (ess_bdr_phi[ii]*newmann_bdr_phi[ii] == 1){
-            ess_bdr_phi[ii] = 1;
-            newmann_bdr_phi[ii] = 0;
-        } 
-    }
+    //Check that the internal boundaries is always zero.
+    ess_bdr_theta[2] = 0;     ess_bdr_phi[2] = 0; 
+    newmann_bdr_theta[2] = 0; newmann_bdr_phi[2] = 0;
 
     //Apply initial conditions
     ParGridFunction theta(&fespace);
@@ -114,14 +101,18 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 
 //Initial conditions
 double initial_theta_f(const Vector &x){
+    double interval = 2;
     if (x(1) <= mid)
-        return -10*(1 - x(1)/mid);
+        return T_fun(3.5) - interval*(mid - x(1))/mid;
     else
-        return 10*(x(1) - mid)/(Zmax - mid);
+        return T_fun(3.5) + interval*(x(1) - mid)/(Zmax - mid);
 }
 
 double initial_phi_f(const Vector &x){
-    return 0.;
+    if (x(1) >= mid + 0.5*(Zmax-mid))
+        return 20.;
+    else
+        return 3.5;
 }
 
 double newmann_theta_f(const Vector &x){
@@ -129,5 +120,5 @@ double newmann_theta_f(const Vector &x){
 }
 
 double newmann_phi_f(const Vector &x){
-    return 100.;
+    return 0.;
 }

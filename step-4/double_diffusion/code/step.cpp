@@ -23,7 +23,7 @@ void Artic_sea::time_step(){
 
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++){
-            double T_f = T_fun((*phi)(ii));
+            double T_f = config.T_f + T_fun((*phi)(ii));
             (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
         }
 
@@ -54,15 +54,15 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux_phi.Size(); ii++){
-        double T_f = T_fun(aux_phi(ii));
+        double T_f = config.T_f + T_fun(aux_phi(ii));
         if (aux_theta(ii) > T_f){
             aux_C(ii) = config.c_l;
             aux_K(ii) = config.k_l;
-            aux_D(ii) = 6;
+            aux_D(ii) = config.D_l;
         } else {
-            aux_C(ii) = config.c_s;
+            aux_C(ii) = config.c_s + delta_c_s_fun(aux_theta(ii), aux_phi(ii));
             aux_K(ii) = config.k_s;
-            aux_D(ii) = 0.;
+            aux_D(ii) = config.D_s;
         }
         aux_theta(ii) = config.L*config.invDeltaT*exp(-M_PI*pow(config.invDeltaT*(aux_theta(ii) - T_f), 2));
     }

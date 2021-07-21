@@ -32,6 +32,7 @@ struct Config{
     double invDeltaT;
     double c_l, c_s;
     double k_l, k_s;
+    double D_l, D_s;
     double L;
 };
 
@@ -158,6 +159,8 @@ extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
 extern double T_fun(const double &salinity);
+
+extern double delta_c_s_fun(const double &temperature, const double &salinity);
 
 extern double Rmin, Rmax, Zmin, Zmax;
 

@@ -26,14 +26,21 @@ void Artic_sea::run(const char *mesh_file){
 
 Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
-    delete m_theta, m_phi;
-    delete k_theta, k_phi;
-    delete t_theta, t_phi;
+    delete m_theta; 
+    delete m_phi;
+    delete k_theta;
+    delete k_phi;
+    delete t_theta; 
+    delete t_phi;
 }
 
 Artic_sea::~Artic_sea(){
-    delete pmesh, fec, fespace;
-    delete theta, phi, phase;
+    delete pmesh;
+    delete fec;
+    delete fespace;
+    delete theta;
+    delete phi;
+    delete phase;
     delete oper_T;
     delete ode_solver;
     delete paraview_out;
