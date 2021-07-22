@@ -135,6 +135,7 @@ class Flow_Operator{
         ParGridFunction *psi_aux;
         ParGridFunction *v_aux;
         ParGridFunction *theta_aux;
+        ParGridFunction *theta_grad_aux;
         ParGridFunction *theta_eta;
         ParGridFunction *theta_rho;
 
@@ -150,6 +151,7 @@ class Flow_Operator{
         VectorFunctionCoefficient psi_grad; 
 
         //Construction rV
+        DiscreteLinearOperator grad;
         MatrixFunctionCoefficient rot;
         GradientGridFunctionCoefficient gradpsi;
         MatrixVectorProductCoefficient rot_psi_grad;

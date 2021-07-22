@@ -45,6 +45,7 @@ Flow_Operator::~Flow_Operator(){
     delete w_aux;
     delete v_aux;
     delete theta_aux;
+    delete theta_grad_aux;
     delete theta_eta;
     delete theta_rho;
 }

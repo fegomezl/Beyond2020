@@ -140,8 +140,9 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     ScalarVectorProductCoefficient neg_eta_psi_grad(eta, neg_psi_grad);
   
     //RHS coefficients
+    grad.Mult(*theta_aux, *theta_grad_aux);
+    VectorGridFunctionCoefficient grad_theta(theta_grad_aux);
     GridFunctionCoefficient grad_rho(theta_rho);
-    GradientGridFunctionCoefficient grad_theta(theta_aux);
     InnerProductCoefficient r_hat_grad_theta(r_hat, grad_theta);
     ProductCoefficient grad_rho_theta(grad_rho, r_hat_grad_theta);
     ProductCoefficient F(344.4, grad_rho_theta);
@@ -150,7 +151,7 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
   
     if(f) delete f;
     f = new ParLinearForm(&fespace);
-    //f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
+    f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
     f->AddDomainIntegrator(new DomainLFIntegrator(r_inv_hat_w_grad));
     f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
     f->AddDomainIntegrator(new DomainLFGradIntegrator(w_grad));
