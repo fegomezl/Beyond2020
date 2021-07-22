@@ -134,10 +134,7 @@ class Flow_Operator{
         ParGridFunction *w_aux;
         ParGridFunction *psi_aux;
         ParGridFunction *v_aux;
-        ParGridFunction *theta_aux;
-        ParGridFunction *theta_grad_aux;
         ParGridFunction *theta_eta;
-        ParGridFunction *theta_rho;
 
         //Rotational coefficients
         FunctionCoefficient r;

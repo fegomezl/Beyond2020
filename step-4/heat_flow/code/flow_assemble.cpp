@@ -26,7 +26,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     M(NULL), D(NULL), C(NULL),
     psi(NULL), w(NULL), v(NULL),
     w_aux(NULL), psi_aux(NULL), v_aux(NULL),
-    theta_aux(NULL), theta_grad_aux(NULL), theta_eta(NULL), theta_rho(NULL),
+    theta_eta(NULL), 
     r(r_f), r_inv(r_inv_f),
     r_hat(dim, r_hat_f), r_inv_hat(r_inv, r_hat),
     zero(dim, zero_f),
@@ -87,7 +87,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   
     v = new ParGridFunction(&fespace_v);
     v_aux = new ParGridFunction(&fespace_v);
-    theta_grad_aux = new ParGridFunction(&fespace);
 
     grad.AddDomainIntegrator(new GradientInterpolator);
     grad.Assemble();
