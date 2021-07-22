@@ -26,6 +26,7 @@ void Flow_Operator::Solve(Config config, const HypreParVector *X_T, int dim, int
     if(superlu) delete superlu;
     superlu = new SuperLUSolver(MPI_COMM_WORLD);
     if(SLU_A) delete SLU_A;
+    SLU_A = new SuperLURowLocMatrix(*H);
     superlu->SetOperator(*SLU_A);
     superlu->SetPrintStatistics(true);
     superlu->SetSymmetricPattern(true);
