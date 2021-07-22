@@ -67,6 +67,7 @@ class Artic_sea{
 
         ParGridFunction *w_aux;
         ParGridFunction *psi_aux;
+        ParGridFunction *v_aux;
         ParGridFunction *theta;
 
         ParLinearForm *g;

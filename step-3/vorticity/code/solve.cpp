@@ -45,7 +45,13 @@ void Artic_sea::solve_system(){
         (*psi)(ii) += (*psi_aux)(ii); 
 
     v = new ParGridFunction(fespace_v);
-    GradientGridFunctionCoefficient psi_grad(psi);
+    v_aux = new ParGridFunction(fespace_v);
+    DiscreteLinearOperator grad(fespace, fespace_v);
+    grad.AddDomainIntegrator(new GradientInterpolator);
+    grad.Assemble();
+    grad.Finalize();
+    grad.Mult(*psi, *v_aux);
+    VectorGridFunctionCoefficient psi_grad(v_aux);
     MatrixFunctionCoefficient rot(dim, rot_f);
     MatrixVectorProductCoefficient rV(rot, psi_grad);
     v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
