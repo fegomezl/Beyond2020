@@ -27,7 +27,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   M(NULL), D(NULL), C(NULL), hBlocks(2,2), H(NULL),
   psi(NULL), w(NULL), v(NULL),
   w_aux(NULL), psi_aux(NULL), theta(NULL),
-  bg(0.002), r_invCoeff(r_inv), r_hatCoeff(dim, r_hat), r_inv_hat(r_invCoeff, r_hatCoeff),
+  bg(1.), r_invCoeff(r_inv), r_hatCoeff(dim, r_hat), r_inv_hat(r_invCoeff, r_hatCoeff),
   neg(-1.), w_coeff(boundary_w), w_grad(dim, boundary_gradw), psi_coeff(boundary_psi),
   psi_grad(dim, boundary_gradpsi), eta_r_inv_hat(neg, r_inv_hat), neg_w(neg, w_coeff),
   r_inv_hat_w_grad(r_inv_hat, w_grad), neg_w_grad(neg, w_grad), r_inv_hat_psi_grad(r_inv_hat, psi_grad),
