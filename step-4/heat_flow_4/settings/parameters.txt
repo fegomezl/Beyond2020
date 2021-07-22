@@ -9,16 +9,16 @@ settings/square.geo #Mesh_script
 
 
 Simulation parameters
-0.00005   #Dt
-0.1     #Final_time
+0.001    #Dt
+6         #Final_time
 100       #Visualization_steps
 
 FE parameters
-3          #Refinements
+2          #Refinements
 1          #Order
 12         #ODE_solver_type
 0          #abstol(Conduction)
-0.00000001 #reltol(Conduction)
+0.0000001 #reltol(Conduction)
 100        #iter(Conduction)
 0.00001    #abstol(SUNDIALS)
 0.00001    #reltol(SUNDIALS)
@@ -28,8 +28,8 @@ Physical parameters
 9       #n_DeltaT
 4.22    #Liquid_volumetric_heat_capacity
 1.88    #Solid_volumetric_heat_capacity
-33.3    #Liquid_thermal_conductivity
-133.2   #Solid_thermal_conductivity
+0.55    #Liquid_thermal_conductivity
+2.22   #Solid_thermal_conductivity
 320.0   #Volumetric_latent_heat
 4       #n_epsilon_eta
 2       #n_epsilon_r

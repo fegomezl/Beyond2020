@@ -27,7 +27,7 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     SuperLURowLocMatrix SLU_A(*H);
     superlu.SetOperator(SLU_A);
     superlu.SetPrintStatistics(false);
-    superlu.SetSymmetricPattern(true);
+    superlu.SetSymmetricPattern(false);
     superlu.SetColumnPermutation(superlu::PARMETIS);
     superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
 

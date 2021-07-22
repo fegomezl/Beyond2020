@@ -61,10 +61,11 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 double initial_f(const Vector &x){
     double mid_x = (Rmax + Rmin)/2;
     double mid_y = height/2;
+	
 
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     if (r_2 < pow(Rad, 2))
-        return -5;
+      return -1;
     else
-        return 5;
+      return 3;
 }

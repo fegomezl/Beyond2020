@@ -68,8 +68,8 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //            \------------/
     //                  0
   
-    ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
-    ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
+    ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
+    ess_bdr_w[2] = 0; ess_bdr_w[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
   
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
@@ -141,10 +141,10 @@ void boundary_gradw(const Vector &x, Vector &f){
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return Vel*0.5*pow(x(0), 2);
+  return 0.1*x(1);
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = Vel*x(0);
-    f(1) = 0;
+  f(0) = 0;
+  f(1) = 0.1;
 }

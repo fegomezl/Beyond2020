@@ -149,7 +149,7 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     ProductCoefficient rF(r, F);
     ProductCoefficient neg_rF(neg, rF);*/
 
-    double a = 0.1; //19.77
+    double a = -0.31; //19.77
     GradientGridFunctionCoefficient grad_theta(theta_aux);
     InnerProductCoefficient r_hat_grad_theta(r_hat, grad_theta);
     ProductCoefficient F(-a, r_hat_grad_theta);

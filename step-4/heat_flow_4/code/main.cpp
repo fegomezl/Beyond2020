@@ -11,7 +11,7 @@ double height;
 double epsilon_r;
 
 //Velocity
-double Vel = 10;
+double Vel = 0.16;
 double Rad = 2.5;
 
 int main(int argc, char *argv[]){
