@@ -7,6 +7,8 @@ double Rmax;
 double Zmax;
 double height;
 
+double mid;
+
 //Size of the BC border
 double epsilon_r;
 
@@ -71,6 +73,10 @@ int main(int argc, char *argv[]){
                    "Liquid thermal conductivity.");
     args.AddOption(&config.k_s, "-k_s", "--k_s",
                    "Solid thermal conductivity.");
+    args.AddOption(&config.D_l, "-D_l", "--D_l",
+                   "Liquid diffusion constant.");
+    args.AddOption(&config.D_s, "-D_s", "--D_s",
+                   "Solid diffusion constant.");
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
     args.AddOption(&config.viscosity, "-v", "--viscosity",
@@ -94,6 +100,7 @@ int main(int argc, char *argv[]){
     config.invDeltaT = pow(10, nDeltaT);
     config.epsilon_eta = pow(10, -nEpsilon_eta);
     epsilon_r = pow(10, -nEpsilon_r);
+    mid = Zmax*config.k_s/(config.k_s + config.k_l);
     Artic_sea artic_sea(config);
     artic_sea.run(mesh_file);
 

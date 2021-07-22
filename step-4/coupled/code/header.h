@@ -32,6 +32,7 @@ struct Config{
     double invDeltaT;
     double c_l, c_s;
     double k_l, k_s;
+    double D_l, D_s;
     double L;
     double viscosity;
     double epsilon_eta;
@@ -45,7 +46,6 @@ class Conduction_Operator : public TimeDependentOperator{
         void UpdateVelocity(const HypreParVector &psi, ParGridFunction *v);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        //virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
 	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
@@ -56,6 +56,10 @@ class Conduction_Operator : public TimeDependentOperator{
 
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
+
+        mutable Array<int> newmann_bdr_theta, newmann_bdr_phi;
+        mutable Array<int> robin_bdr_theta, robin_bdr_phi;
+
         Array<int> ess_tdof_list_theta, ess_tdof_list_phi;
 
         //System objects
@@ -82,7 +86,7 @@ class Conduction_Operator : public TimeDependentOperator{
         ParGridFunction psi;
 
         //Coefficients
-        FunctionCoefficient coeff_r;
+        mutable FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
         MatrixFunctionCoefficient rot;
 
@@ -100,6 +104,19 @@ class Conduction_Operator : public TimeDependentOperator{
 
         ScalarVectorProductCoefficient coeff_rCLV;
         ScalarVectorProductCoefficient dt_coeff_rCLV;
+
+        mutable FunctionCoefficient newmann_theta, newmann_phi;
+        mutable ProductCoefficient r_newmann_theta, r_newmann_phi;
+        mutable ProductCoefficient dt_r_newmann_theta, dt_r_newmann_phi;
+
+        mutable FunctionCoefficient robin_h_theta, robin_h_phi;
+        mutable FunctionCoefficient robin_ref_theta, robin_ref_phi;
+        mutable ProductCoefficient neg_robin_h_theta, neg_robin_h_phi;
+        mutable ProductCoefficient neg_robin_h_ref_theta, neg_robin_h_ref_phi;
+        mutable ProductCoefficient neg_r_robin_h_theta, neg_r_robin_h_phi;
+        mutable ProductCoefficient neg_r_robin_h_ref_theta, neg_r_robin_h_ref_phi;
+        mutable ProductCoefficient neg_dt_r_robin_h_theta, neg_dt_r_robin_h_phi;
+        mutable ProductCoefficient neg_dt_r_robin_h_ref_theta, neg_dt_r_robin_h_ref_phi;
 };
 
 class Flow_Operator{
@@ -229,6 +246,7 @@ class Artic_sea{
         ParGridFunction *theta;
         HypreParVector *Theta;
         ParGridFunction *phi;
+        ParGridFunction *phase;
 
         BlockVector X;
         Conduction_Operator *oper_T;
@@ -252,5 +270,11 @@ extern double r_f(const Vector &x);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
+extern double T_fun(const double &salinity);
+
+extern double delta_c_s_fun(const double &temperature, const double &salinity);
+
 extern double Rmin, Rmax, Zmin, Zmax, height;
 extern double epsilon_r;
+
+extern double mid;

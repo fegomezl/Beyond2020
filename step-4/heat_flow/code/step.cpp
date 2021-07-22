@@ -100,27 +100,12 @@ void Conduction_Operator::UpdateVelocity(const ParGridFunction *v_flow){
 
 void Flow_Operator::Update_T(const HypreParVector *Theta){
     //Update temperature coefficients
-    if (theta_aux) delete theta_aux;
-    theta_aux = new ParGridFunction(&fespace);
-    theta_aux->SetFromTrueDofs(*Theta);
-  
     if (theta_eta) delete theta_eta;
     theta_eta = new ParGridFunction(&fespace);
     theta_eta->SetFromTrueDofs(*Theta);
     for (int ii = 0; ii < theta_eta->Size(); ii++){
         (*theta_eta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta_eta)(ii) - config.T_f)));
         (*theta_eta)(ii) = config.epsilon_eta + pow(1-(*theta_eta)(ii), 2)/(pow((*theta_eta)(ii), 3) + config.epsilon_eta);
-    }
-    
-    if (theta_rho) delete theta_rho;
-    theta_rho = new ParGridFunction(&fespace);
-    theta_rho->SetFromTrueDofs(*Theta);
-    for (int ii = 0; ii < theta_rho->Size(); ii++){
-        if ((*theta_rho)(ii) > config.T_f)
-            (*theta_rho)(ii) = 0.0144*(*theta_rho)(ii)
-                             - 0.0574;
-        else
-            (*theta_rho)(ii) = 0.;
     }
 
     //Define local coefficients
@@ -138,15 +123,6 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     InnerProductCoefficient eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad);
     ScalarVectorProductCoefficient eta_psi_grad(eta, psi_grad);
     ScalarVectorProductCoefficient neg_eta_psi_grad(eta, neg_psi_grad);
-  
-    //RHS coefficients
-    GridFunctionCoefficient grad_rho(theta_rho);
-    GradientGridFunctionCoefficient grad_theta(theta_aux);
-    InnerProductCoefficient r_hat_grad_theta(r_hat, grad_theta);
-    ProductCoefficient grad_rho_theta(grad_rho, r_hat_grad_theta);
-    ProductCoefficient F(344.4, grad_rho_theta);
-    ProductCoefficient rF(r, F);
-    ProductCoefficient neg_rF(neg, rF);
   
     if(f) delete f;
     f = new ParLinearForm(&fespace);

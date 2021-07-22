@@ -26,12 +26,12 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     M(NULL), D(NULL), C(NULL),
     psi(NULL), w(NULL), v(NULL),
     w_aux(NULL), psi_aux(NULL), v_aux(NULL),
-    theta_aux(NULL), theta_eta(NULL), theta_rho(NULL),
+    theta_eta(NULL), 
     r(r_f), r_inv(r_inv_f),
     r_hat(dim, r_hat_f), r_inv_hat(r_inv, r_hat),
     zero(dim, zero_f),
     w_grad(dim, boundary_gradw), psi_grad(dim, boundary_gradpsi), 
-    rot(dim, rot_f), gradpsi(psi),
+    grad(&fespace, &fespace_v), rot(dim, rot_f), gradpsi(psi),
     rot_psi_grad(rot, psi_grad), rV_aux(v_aux), rV(rot, zero)
 {
     //Create the block offsets
@@ -87,6 +87,10 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   
     v = new ParGridFunction(&fespace_v);
     v_aux = new ParGridFunction(&fespace_v);
+
+    grad.AddDomainIntegrator(new GradientInterpolator);
+    grad.Assemble();
+    grad.Finalize();
   
     g = new ParLinearForm(&fespace);
     g->AddDomainIntegrator(new DomainLFIntegrator(neg_w));

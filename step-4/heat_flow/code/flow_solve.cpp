@@ -34,6 +34,7 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     //Solve the linear system Ax=B
     Y.Randomize();
     superlu.Mult(B, Y);
+    superlu.DismantleGrid();
 
     //Recover the solution on each proccesor
     w->Distribute(&(Y.GetBlock(0)));
@@ -47,13 +48,12 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     //Calculate rV
     v->Randomize();
     v_aux->Randomize();
-    gradpsi.SetGridFunction(psi);
-    v_aux->ProjectDiscCoefficient(gradpsi, GridFunction::ARITHMETIC);
-    v_aux->ProjectBdrCoefficientNormal(psi_grad, ess_bdr_psi);
+
+    //gradpsi.SetGridFunction(psi);
+    grad.Mult(*psi, *v_aux);
     rV_aux.SetGridFunction(v_aux);
     rV.SetBCoef(rV_aux);
     v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
-    v->ProjectBdrCoefficientNormal(rot_psi_grad, ess_bdr_psi);
 
     //Free memory
     delete H;
