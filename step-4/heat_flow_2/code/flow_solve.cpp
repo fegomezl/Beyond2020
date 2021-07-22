@@ -34,6 +34,7 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     //Solve the linear system Ax=B
     Y.Randomize();
     superlu.Mult(B, Y);
+    superlu.DismantleGrid();
 
     //Recover the solution on each proccesor
     w->Distribute(&(Y.GetBlock(0)));
