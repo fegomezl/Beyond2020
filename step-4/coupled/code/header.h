@@ -105,11 +105,11 @@ class Conduction_Operator : public TimeDependentOperator{
 class Flow_Operator{
   public:
     Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const HypreParVector *X_T);
-    void Solve(Config config, HypreParVector *X_Psi, ParGridFunction *x_psi, const HypreParVector *X_T, int dim, int attributes);
+    void Solve(Config config, const HypreParVector *X_T, int dim, int attributes);
     void Update_T(Config config, const HypreParVector *X_T, int dim, int attributes);
-    ParGridFunction *psi;
-    ParGridFunction *w;
-    ParGridFunction *v;
+    ParGridFunction GetStream(){return *psi;}
+    ParGridFunction GetVelocity(){return *v;}
+    ParGridFunction GetVorticity(){return *w;}
     ~Flow_Operator();
 
   protected:
@@ -126,13 +126,20 @@ class Flow_Operator{
         ParMixedBilinearForm *ct;
         Array<int> ess_bdr_psi;
         Array<int> ess_bdr_w;
+        Array<int> ess_tdof_list_w;
+        Array<int> ess_tdof_list_psi;
 
         //Solver objects
+        ParGridFunction *psi;
+        ParGridFunction *w;
+        ParGridFunction *v;
         BlockVector Y;
         BlockVector B;
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
+        Array2D<HypreParMatrix*> hBlocks;
+        HypreParMatrix *H;
 
        //Boundary conditions
        ParGridFunction *w_aux;
@@ -140,7 +147,45 @@ class Flow_Operator{
        ParGridFunction *theta;
 
        ConstantCoefficient bg;
+       //Rotational coefficients
+       FunctionCoefficient r_invCoeff;
+       VectorFunctionCoefficient r_hatCoeff;
+       ScalarVectorProductCoefficient r_inv_hat;
+       //Properties coefficients
+       GridFunctionCoefficient eta;
+       ConstantCoefficient neg;
+       //Dirichlet coefficients
+       FunctionCoefficient w_coeff;
+       VectorFunctionCoefficient w_grad;
+
+       FunctionCoefficient psi_coeff;
+       VectorFunctionCoefficient psi_grad;
+       //Rotational coupled coefficients
+       ScalarVectorProductCoefficient eta_r_inv_hat;
+
+       ProductCoefficient neg_w;
+       InnerProductCoefficient r_inv_hat_w_grad;
+       ScalarVectorProductCoefficient neg_w_grad;
+
+       InnerProductCoefficient r_inv_hat_psi_grad;
+       InnerProductCoefficient eta_r_inv_hat_psi_grad;
+       ScalarVectorProductCoefficient neg_psi_grad;
+       ScalarVectorProductCoefficient eta_psi_grad;
+       ScalarVectorProductCoefficient neg_eta_psi_grad;
+       //Temperature coefficients
+       ConstantCoefficient inv_mu;
        ParGridFunction *x_T;
+       GradientGridFunctionCoefficient delta_T;
+       VectorFunctionCoefficient rcap;
+       InnerProductCoefficient r_deltaT;
+       ProductCoefficient bg_deltaT;
+       FunctionCoefficient r;
+       ProductCoefficient rF;
+       ProductCoefficient inv_mu_TCoeff;
+
+       //Solver objects
+       SuperLUSolver *superlu;
+       Operator *SLU_A;
 
 };
 
@@ -198,6 +243,8 @@ class Artic_sea{
         //Flow_Operator objects
         Flow_Operator *flow_oper;
         ParGridFunction *x_psi;
+        ParGridFunction *x_v;
+        ParGridFunction *x_w;
         HypreParVector *X_Psi;
 };
 

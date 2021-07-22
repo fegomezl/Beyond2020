@@ -23,12 +23,16 @@ void Artic_sea::assemble_system(){
 
     //Define solution psi
     x_psi = new ParGridFunction(fespace);
+    x_v = new ParGridFunction(fespace_v);
+    x_w = new ParGridFunction(fespace);
     X_Psi = new HypreParVector(fespace);
 
     flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, Theta);
-    flow_oper->Solve(config, X_Psi, x_psi, Theta, dim, pmesh->bdr_attributes.Max());
-    X_Psi = (flow_oper->psi)->GetTrueDofs();
-    oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
+    flow_oper->Solve(config, Theta, dim, pmesh->bdr_attributes.Max());
+    X_Psi = (flow_oper->GetStream()).GetTrueDofs();
+    (*x_psi) = flow_oper->GetStream();
+    (*x_w) = flow_oper->GetVorticity();
+    oper_T->UpdateVelocity(*X_Psi, x_v);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -81,9 +85,9 @@ void Artic_sea::assemble_system(){
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", theta);
     paraview_out->RegisterField("Salinity", phi);
-    paraview_out->RegisterField("Stream_Function(r)", flow_oper->psi);
-    paraview_out->RegisterField("Velocity(r)", flow_oper->v);
-    paraview_out->RegisterField("Vorticity(r)", flow_oper->w);
+    paraview_out->RegisterField("Stream_Function(r)", x_psi);
+    paraview_out->RegisterField("Velocity(r)", x_v);
+    paraview_out->RegisterField("Vorticity(r)", x_w);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();

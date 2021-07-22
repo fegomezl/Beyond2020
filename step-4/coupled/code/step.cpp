@@ -10,13 +10,15 @@ void Artic_sea::time_step(){
     ode_solver->Step(X, t, dt);
 
     //Solve the flow problem
-    X_Psi = (flow_oper->psi)->GetTrueDofs();
+    X_Psi = (flow_oper->GetStream()).GetTrueDofs();
     theta->Distribute(&(X.GetBlock(0)));
     Theta = theta->GetTrueDofs();
 
-    oper_T->UpdateVelocity(*X_Psi, flow_oper->v);
+    flow_oper->Solve(config, Theta, dim, pmesh->bdr_attributes.Max());
+    (*x_psi) = flow_oper->GetStream();
+    (*x_w) = flow_oper->GetVorticity();
 
-    flow_oper->Solve(config, X_Psi, x_psi, Theta, dim, pmesh->bdr_attributes.Max());
+    oper_T->UpdateVelocity(*X_Psi, x_v);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
