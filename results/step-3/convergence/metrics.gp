@@ -47,6 +47,8 @@ set o "order_step3.pdf"
 set key t l
 set title 'Total mean error vs Order'
 unset logscale x
+unset xl
+set xl 'Order'
 set xtics 1
 
 plot 'order.txt' u 1:3 t 'W error' ls 1, \
