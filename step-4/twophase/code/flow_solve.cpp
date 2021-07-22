@@ -8,7 +8,6 @@ void Flow_Operator::Solve(Config config, const HypreParVector *X_T, int dim, int
     //
     //   H = [ M    C ]
     //       [ C^t  D ]
-
     //Array2D<HypreParMatrix*> hBlocks(2,2);
     //hBlocks = NULL;
     hBlocks(0, 0) = M;
