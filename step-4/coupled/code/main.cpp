@@ -11,11 +11,12 @@ double height;
 double epsilon_r;
 
 double vel = 10;
-double entrance = 2;
+double entrance = 1.5;
 
-double theta_in = -1.8, theta_out = -7;
-double phi_in = 3.5, phi_out = 24;
-double rad = 0., h = 0.1;
+double theta_in = -2, theta_out = -20;
+double phi_in = 3.5, phi_out = 20;
+double theta_nu = -3, phi_nu = 3.5;
+double rad = 1, h = 1;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters

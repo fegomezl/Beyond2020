@@ -142,7 +142,37 @@ void Flow_Operator::Update_T(const BlockVector X){
     (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_fun((*phi)(ii)))));
     (*theta)(ii) = config.epsilon_eta + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.epsilon_eta);
   }
+  T = new ParGridFunction(&fespace);
+  T->SetFromTrueDofs(X.GetBlock(0));
+  S = new ParGridFunction(&fespace);
+  S->SetFromTrueDofs(X.GetBlock(1));
 
+  double a0=8.246121,a1=-4.109344e-2,a2=7.731839e-4,a3=-8.323176e-6,a4=5.516023e-8;
+  double b0=-1.827390e-1,b1=3.327135e-3,b2=-5.600674e-5;
+  double C=4.886169-2,A,BB;
+
+  Rho = new ParGridFunction(&fespace);
+  Rho->SetFromTrueDofs(X.GetBlock(0));
+  
+  for (int ii = 0; ii < T->Size(); ii++){
+    if ((*Rho)(ii) > config.T_f)
+      {
+	A=a0+a1*(*T)(ii)+a2*pow((*T)(ii),2)+a3*pow((*T)(ii),3)+a4*pow((*T)(ii),4);
+	BB=b0+b1*pow((*T)(ii),1)+b2*pow((*T)(ii),2);
+	(*Rho)(ii) = A*(*S)(ii)+BB*pow((*S)(ii),1.5)+C*pow((*S)(ii),2);
+      }
+    else
+      (*Rho)(ii) = 0.1;
+  }
+
+  //RHS coefficients
+  GradientGridFunctionCoefficient grad_theta(T);
+  GridFunctionCoefficient grad_rho(Rho);
+  InnerProductCoefficient r_hat_grad_theta(r_hatCoeff, grad_theta);
+  ProductCoefficient grad_rho_theta(grad_rho, r_hat_grad_theta);
+  ProductCoefficient F(-0.31, grad_rho_theta);
+  ProductCoefficient rF(r, F);
+  ProductCoefficient neg_rF(neg, rF);
   //Define local coefficients
   //Properties coefficients
   eta.SetGridFunction(theta);
@@ -156,7 +186,7 @@ void Flow_Operator::Update_T(const BlockVector X){
 
   if (f) delete f;
   f = new ParLinearForm(&fespace);
-  //f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
+  f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
   f->AddDomainIntegrator(new DomainLFIntegrator(r_inv_hat_w_grad));
   f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
   f->AddDomainIntegrator(new DomainLFGradIntegrator(w_grad));

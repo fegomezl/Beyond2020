@@ -49,6 +49,9 @@ Flow_Operator::~Flow_Operator(){
     delete w_aux;
     delete v_aux;
     delete theta;
+    delete T;
+    delete S;
+    delete Rho;
    // delete H;
 }
 
