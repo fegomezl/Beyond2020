@@ -21,7 +21,7 @@ INV_R=$(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
 #Compiling parameters
 CXX=mpic++
 FLAGS=-std=c++11 -O3 $(MFEM_FLAGS)
-RUN=mpirun -np $(PROCCESORS) ./
+RUN=mpirun --use-hwthread-cpus -np $(PROCCESORS) ./
 SOURCES=$(wildcard code/*.cpp)
 DEPENDENCIES=$(SOURCES:code/%.cpp=.objects/%.o)
 

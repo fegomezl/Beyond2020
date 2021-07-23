@@ -27,7 +27,7 @@ void Artic_sea::solve_system(){
     Operator *SLU_A = new SuperLURowLocMatrix(*H);
     superlu->SetOperator(*SLU_A);
     superlu->SetPrintStatistics(true);
-    superlu->SetSymmetricPattern(true);
+    superlu->SetSymmetricPattern(false);
     superlu->SetColumnPermutation(superlu::PARMETIS);
     superlu->SetIterativeRefine(superlu::SLU_DOUBLE);
 
