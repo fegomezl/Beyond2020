@@ -27,7 +27,7 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     SuperLURowLocMatrix SLU_A(*H);
     superlu.SetOperator(SLU_A);
     superlu.SetPrintStatistics(false);
-    superlu.SetSymmetricPattern(false);
+    superlu.SetSymmetricPattern(true);
     superlu.SetColumnPermutation(superlu::PARMETIS);
     superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
 
@@ -48,13 +48,12 @@ void Flow_Operator::Solve(const HypreParVector *Theta){
     //Calculate rV
     v->Randomize();
     v_aux->Randomize();
-    gradpsi.SetGridFunction(psi);
-    v_aux->ProjectDiscCoefficient(gradpsi, GridFunction::ARITHMETIC);
-    v_aux->ProjectBdrCoefficientNormal(psi_grad, ess_bdr_psi);
+
+    //gradpsi.SetGridFunction(psi);
+    grad.Mult(*psi, *v_aux);
     rV_aux.SetGridFunction(v_aux);
     rV.SetBCoef(rV_aux);
     v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
-    v->ProjectBdrCoefficientNormal(rot_psi_grad, ess_bdr_psi);
 
     //Free memory
     delete H;

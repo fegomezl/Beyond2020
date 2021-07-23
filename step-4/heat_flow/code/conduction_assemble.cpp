@@ -9,7 +9,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     fespace(fespace),
     m(NULL), k(NULL), t(NULL),
     aux(&fespace), aux_C(&fespace), aux_K(&fespace),
-    psi(&fespace), v(&fespace),
+    psi(&fespace), v(&fespace_v),
     r(r_f), zero(dim, zero_f),
     coeff_rCL(r, r),
     coeff_rK(r, r), dt_coeff_rK(0., coeff_rK),

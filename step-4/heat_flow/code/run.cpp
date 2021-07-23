@@ -44,9 +44,7 @@ Flow_Operator::~Flow_Operator(){
     delete psi_aux;
     delete w_aux;
     delete v_aux;
-    delete theta_aux;
     delete theta_eta;
-    delete theta_rho;
 }
 
 Artic_sea::~Artic_sea(){
