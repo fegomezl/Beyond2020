@@ -276,4 +276,5 @@ extern double delta_c_s_fun(const double &temperature, const double &salinity);
 extern double Rmin, Rmax, Zmin, Zmax, height;
 extern double epsilon_r;
 
-extern double mid;
+extern double vel;
+extern double entrance;

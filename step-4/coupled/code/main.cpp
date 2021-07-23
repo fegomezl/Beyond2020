@@ -7,10 +7,11 @@ double Rmax;
 double Zmax;
 double height;
 
-double mid;
-
 //Size of the BC border
 double epsilon_r;
+
+double vel = 0.1;
+double entrance = 1.5;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -98,7 +99,6 @@ int main(int argc, char *argv[]){
     config.invDeltaT = pow(10, nDeltaT);
     config.epsilon_eta = pow(10, -nEpsilon_eta);
     epsilon_r = pow(10, -nEpsilon_r);
-    mid = Zmax*config.k_s/(config.k_s + config.k_l);
     Artic_sea artic_sea(config);
     artic_sea.run(mesh_file);
 
