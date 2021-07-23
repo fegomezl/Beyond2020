@@ -125,7 +125,7 @@ double initial_theta_f(const Vector &x){
     if (r_2 > pow(rad, 2))
         return theta_in;
     else
-        return theta_out;
+        return theta_nu;
 }
 
 double initial_phi_f(const Vector &x){
@@ -134,7 +134,7 @@ double initial_phi_f(const Vector &x){
         if (r_2 > pow(rad, 2))
             return phi_in;
         else
-            return 0.;
+            return phi_nu;
     } else 
         return phi_out;
 }
