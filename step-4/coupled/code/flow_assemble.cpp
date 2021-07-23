@@ -205,7 +205,7 @@ double boundary_psi(const Vector &x){
 
 void boundary_gradpsi(const Vector &x, Vector &f){
     if (x(0) < entrance){
-        f(0) = 0.5*vel*x(0)*x(1)/Zmax;
+        f(0) = vel*x(0)*x(1)/Zmax;
         f(1) = 0.5*vel*pow(x(0), 2)/Zmax;
     } else {
         f(0) = 0.;

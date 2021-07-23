@@ -282,4 +282,4 @@ extern double entrance;
 
 extern double theta_in, theta_out;
 extern double phi_in, phi_out;
-extern double rad;
+extern double rad, h;

@@ -122,18 +122,21 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 //Initial conditions
 double initial_theta_f(const Vector &x){
     double r_2 = pow(x(0) - (entrance + rad), 2) + pow(x(1) - Zmax, 2);
-    if (r_2 < pow(rad, 2))
-        return theta_out;
-    else
+    if (r_2 > pow(rad, 2))
         return theta_in;
+    else
+        return theta_out;
 }
 
 double initial_phi_f(const Vector &x){
     double r_2 = pow(x(0) - (entrance + rad), 2) + pow(x(1) - Zmax, 2);
-    if (r_2 < pow(rad, 2))
-        return 0.;
-    else
-        return phi_in;
+    if (x(0) > entrance || Zmax - x(1) > h){
+        if (r_2 > pow(rad, 2))
+            return phi_in;
+        else
+            return 0.;
+    } else 
+        return phi_out;
 }
 
 double newmann_theta_f(const Vector &x){
