@@ -117,10 +117,10 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     theta_rho->SetFromTrueDofs(*Theta);
     for (int ii = 0; ii < theta_rho->Size(); ii++){
         if ((*theta_rho)(ii) > config.T_f)
-            (*theta_rho)(ii) = 0.0144*(*theta_rho)(ii)
-                             - 0.0574;
+	  (*theta_rho)(ii) = 2.3417*pow((*theta_rho)(ii),2)
+	    - 18.679*(*theta_rho)(ii)+0.1;
         else
-            (*theta_rho)(ii) = 0.;
+            (*theta_rho)(ii) = 0.1;
     }
 
     //Define local coefficients
@@ -140,21 +140,21 @@ void Flow_Operator::Update_T(const HypreParVector *Theta){
     ScalarVectorProductCoefficient neg_eta_psi_grad(eta, neg_psi_grad);
   
     //RHS coefficients
-    /*grad.Mult(*theta_aux, *theta_grad_aux);
-    VectorGridFunctionCoefficient grad_theta(theta_grad_aux);
+    //grad.Mult(*theta_aux, *theta_grad_aux);
+    GradientGridFunctionCoefficient grad_theta(theta_aux);
     GridFunctionCoefficient grad_rho(theta_rho);
     InnerProductCoefficient r_hat_grad_theta(r_hat, grad_theta);
     ProductCoefficient grad_rho_theta(grad_rho, r_hat_grad_theta);
-    ProductCoefficient F(344.4, grad_rho_theta);
-    ProductCoefficient rF(r, F);
-    ProductCoefficient neg_rF(neg, rF);*/
-
-    double a = -0.31; //19.77
-    GradientGridFunctionCoefficient grad_theta(theta_aux);
-    InnerProductCoefficient r_hat_grad_theta(r_hat, grad_theta);
-    ProductCoefficient F(-a, r_hat_grad_theta);
+    ProductCoefficient F(-0.016, grad_rho_theta);
     ProductCoefficient rF(r, F);
     ProductCoefficient neg_rF(neg, rF);
+
+      /*double a = 0.031; //19.77
+    GradientGridFunctionCoefficient grad_theta(theta_aux);
+    InnerProductCoefficient r_hat_grad_theta(r_hat, grad_theta);
+    ProductCoefficient F(a, r_hat_grad_theta);
+    ProductCoefficient rF(r, F);
+    ProductCoefficient neg_rF(neg, rF);*/
   
     if(f) delete f;
     f = new ParLinearForm(&fespace);

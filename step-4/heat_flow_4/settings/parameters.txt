@@ -24,8 +24,8 @@ FE parameters
 0.00001    #reltol(SUNDIALS)
 
 Physical parameters
-0       #Fusion_temperature
-9       #n_DeltaT
+-2       #Fusion_temperature
+9      #n_DeltaT
 4.22    #Liquid_volumetric_heat_capacity
 1.88    #Solid_volumetric_heat_capacity
 0.55    #Liquid_thermal_conductivity

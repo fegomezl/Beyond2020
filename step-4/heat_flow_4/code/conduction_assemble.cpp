@@ -67,5 +67,5 @@ double initial_f(const Vector &x){
     if (r_2 < pow(Rad, 2))
       return -1;
     else
-      return 3;
+      return 5;
 }
