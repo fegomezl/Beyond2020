@@ -15,11 +15,11 @@ Simulation parameters
 
 FE parameters
 3          #Refinements
-2          #Order
+1          #Order
 12         #ODE_solver_type
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
-10000        #iter(Conduction)
+100        #iter(Conduction)
 0.000001    #abstol(SUNDIALS)
 0.000001    #reltol(SUNDIALS)
 
