@@ -15,7 +15,7 @@ Simulation parameters
 
 FE parameters
 3          #Refinements
-1          #Order
+2          #Order
 12         #ODE_solver_type
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
