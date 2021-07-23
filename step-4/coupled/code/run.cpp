@@ -9,10 +9,11 @@ Artic_sea::Artic_sea(Config config):
     config(config),
     pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
     block_true_offsets(3),
-    theta(NULL), phi(NULL), Theta(NULL),
+    theta(NULL), phi(NULL), phase(NULL), Theta(NULL),
     oper_T(NULL),
     ode_solver(NULL), cvode(NULL), arkode(NULL),
-    paraview_out(NULL), flow_oper(NULL), x_psi(NULL), X_Psi(NULL)
+    paraview_out(NULL), flow_oper(NULL), x_psi(NULL), x_v(NULL), x_w(NULL),
+    X_Psi(NULL)
 {}
 
 void Artic_sea::run(const char *mesh_file){
@@ -26,28 +27,49 @@ void Artic_sea::run(const char *mesh_file){
 
 Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
-    delete m_theta, m_phi;
-    delete k_theta, k_phi;
-    delete t_theta, t_phi;
+    delete m_theta;
+    delete m_phi;
+    delete k_theta;
+    delete k_phi;
+    delete t_theta;
+    delete t_phi;
 }
 
 Flow_Operator::~Flow_Operator(){
-    delete f, g;
-    delete m, d, c;
-    delete M, D, C;
-    delete psi, w, v;
-    delete psi_aux, w_aux, theta;
-    if(x_T) delete x_T;
+    delete f;
+    delete g;
+    delete m;
+    delete d;
+    delete c;
+    delete M;
+    delete D;
+    delete psi;
+    delete w;
+    delete v;
+    delete psi_aux;
+    delete w_aux;
+    delete theta;
+    delete x_T;
+    delete H;
 }
 
 Artic_sea::~Artic_sea(){
-    delete pmesh, fec, fespace;
-    delete fec_v, fespace_v;
-    delete theta, phi, Theta;
+    delete pmesh;
+    delete fec;
+    delete fespace;
+    delete fec_v;
+    delete fespace_v;
+    delete theta;
+    delete phi;
+    delete phase;
+    delete Theta;
     delete oper_T;
     delete ode_solver;
     delete paraview_out;
     delete flow_oper;
-    delete x_psi, X_Psi;
+    delete x_psi;
+    delete x_v;
+    delete x_w;
+    delete X_Psi;
     if (config.master) cout << "Memory deleted \n";
 }
