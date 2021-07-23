@@ -10,13 +10,13 @@ double height;
 //Size of the BC border
 double epsilon_r;
 
-double vel = 10;
+double vel = 0.1;
 double entrance = 2;
 
 double theta_in = -1.8, theta_out = -20;
 double phi_in = 3.5, phi_out = 22.5;
 double theta_nu = -20, phi_nu = 0.;
-double rad = 2, h = 0.1;
+double rad = 1, h = 0.1;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters

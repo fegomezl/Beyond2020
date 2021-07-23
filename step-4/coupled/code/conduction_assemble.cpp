@@ -55,13 +55,13 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //                  0
 
     Array<int> ess_bdr_theta(attributes); ess_bdr_theta = 0;
-    ess_bdr_theta[0] = 0;     ess_bdr_theta[1] = 0;     ess_bdr_theta[3] = 0;
+    ess_bdr_theta[0] = 1;     ess_bdr_theta[1] = 1;     ess_bdr_theta[3] = 1;
     newmann_bdr_theta[0] = 0; newmann_bdr_theta[1] = 0; newmann_bdr_theta[3] = 0;
     robin_bdr_theta[0] = 0;   robin_bdr_theta[1] = 0;   robin_bdr_theta[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_list_theta);
 
     Array<int> ess_bdr_phi(attributes); ess_bdr_phi = 0;
-    ess_bdr_phi[0] = 0;       ess_bdr_phi[1] = 0;       ess_bdr_phi[3] = 0;
+    ess_bdr_phi[0] = 1;       ess_bdr_phi[1] = 1;       ess_bdr_phi[3] = 1;
     newmann_bdr_phi[0] = 0;   newmann_bdr_phi[1] = 0;   newmann_bdr_phi[3] = 0;
     robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 0;     robin_bdr_phi[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_list_phi);
