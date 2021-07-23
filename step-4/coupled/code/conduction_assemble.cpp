@@ -11,7 +11,7 @@ double robin_h_phi_f(const Vector &x);
 double robin_ref_theta_f(const Vector &x);
 double robin_ref_phi_f(const Vector &x);
 
-Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
+Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
     TimeDependentOperator(2*fespace.GetTrueVSize(), 0.),
     config(config),
     fespace(fespace),
@@ -25,9 +25,9 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
     aux_theta(&fespace), aux_phi(&fespace),
     aux_C(&fespace), aux_K(&fespace), aux_D(&fespace),
-    psi(&fespace),
+    v(&fespace_v),
     coeff_r(r_f), zero(dim, zero_f), rot(dim, rot_f),
-    gradpsi(&psi), coeff_rV(rot, zero), dt_coeff_rV(0., coeff_rV),
+    coeff_rV(&v), dt_coeff_rV(0., coeff_rV),
     coeff_rCL(coeff_r, coeff_r),
     coeff_rK(coeff_r, coeff_r), dt_coeff_rK(0., coeff_rK),
     coeff_rD(coeff_r, coeff_r), dt_coeff_rD(0., coeff_rD),

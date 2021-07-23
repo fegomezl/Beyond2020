@@ -3,45 +3,47 @@
 // unitary r vector
 void r_hat(const Vector &x, Vector &y);
 
-//void r_inv_hat_f(const Vector &x, Vector &f);
-
 double r_inv(const Vector &x);
 
-//Right hand side of the equation
- double f_rhs(const Vector &x);
-
 //Boundary values for w
- double boundary_w(const Vector &x);
+double boundary_w(const Vector &x);
 
- void boundary_gradw(const Vector &x, Vector &f);
+void boundary_gradw(const Vector &x, Vector &f);
 
 //Boundary values for psi
- double boundary_psi(const Vector &x);
+double boundary_psi(const Vector &x);
 
- void boundary_gradpsi(const Vector &x, Vector &f);
+void boundary_gradpsi(const Vector &x, Vector &f);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const HypreParVector *X_T):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes,  const HypreParVector *X_T):
+  config(config),
   fespace(fespace),
+  block_true_offsets(3),
   f(NULL), g(NULL),
   m(NULL), d(NULL), c(NULL),
   M(NULL), D(NULL), C(NULL), hBlocks(2,2), H(NULL),
   psi(NULL), w(NULL), v(NULL),
-  w_aux(NULL), psi_aux(NULL), theta(NULL),
-  bg(1.), r_invCoeff(r_inv), r_hatCoeff(dim, r_hat), r_inv_hat(r_invCoeff, r_hatCoeff),
+  w_aux(NULL), psi_aux(NULL), v_aux(NULL), theta(NULL),
+  r_invCoeff(r_inv), r_hatCoeff(dim, r_hat), r_inv_hat(r_invCoeff, r_hatCoeff),
   neg(-1.), w_coeff(boundary_w), w_grad(dim, boundary_gradw), psi_coeff(boundary_psi),
   psi_grad(dim, boundary_gradpsi), eta_r_inv_hat(neg, r_inv_hat), neg_w(neg, w_coeff),
   r_inv_hat_w_grad(r_inv_hat, w_grad), neg_w_grad(neg, w_grad), r_inv_hat_psi_grad(r_inv_hat, psi_grad),
   eta_r_inv_hat_psi_grad(eta_r_inv_hat, psi_grad), neg_psi_grad(neg, psi_grad),
-  eta_psi_grad(neg, psi_grad), neg_eta_psi_grad(neg, eta_psi_grad), inv_mu(pow(config.viscosity, -1)),
-  x_T(NULL), delta_T(x_T), rcap(dim, r_hat), r_deltaT(rcap, delta_T), bg_deltaT(bg, r_deltaT),
-  r(r_f), rF(bg_deltaT, r), inv_mu_TCoeff(inv_mu, rF),
+  eta_psi_grad(neg, psi_grad), neg_eta_psi_grad(neg, eta_psi_grad),
+  r(r_f), zero(dim, zero_f), grad(&fespace, &fespace_v), rot(dim, rot_f),
+  gradpsi(psi), rot_psi_grad(rot, psi_grad), rV_aux(v_aux), rV(rot, zero),
   ess_bdr_psi(attributes), ess_bdr_w(attributes), superlu(NULL), SLU_A(NULL)
 {
+
+  //Create the block offsets
+  block_true_offsets[0] = 0;
+  block_true_offsets[1] = fespace.TrueVSize();
+  block_true_offsets[2] = fespace.TrueVSize();
+  block_true_offsets.PartialSum();
+
   //Initialize the corresponding vectors
   Y.Update(block_true_offsets);
   B.Update(block_true_offsets);
-
-  x_T = new ParGridFunction(&fespace);
 
   theta = new ParGridFunction(&fespace);
   theta->SetFromTrueDofs(*X_T);
@@ -75,7 +77,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
   fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
-  ess_bdr_psi[0] = 0; ess_bdr_psi[1] = 0;
+  ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
   ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
   fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
 
@@ -89,6 +91,11 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   psi_aux->ProjectCoefficient(psi_coeff);
 
   v = new ParGridFunction(&fespace_v);
+  v_aux = new ParGridFunction(&fespace_v);
+
+  grad.AddDomainIntegrator(new GradientInterpolator);
+  grad.Assemble();
+  grad.Finalize();
 
   g = new ParLinearForm(&fespace);
   g->AddDomainIntegrator(new DomainLFIntegrator(neg_w));
@@ -98,7 +105,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   g->Assemble();
   g->ParallelAssemble(B.GetBlock(0));
 
-  this->Update_T(config, X_T, dim, attributes);
+  this->Update_T(X_T);
 
   //Define bilinear forms of the system
   m = new ParBilinearForm(&fespace);
@@ -118,7 +125,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
 }
 
 
-void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, int attributes){
+void Flow_Operator::Update_T(const HypreParVector *X_T){
   if(theta) delete theta;
   theta = new ParGridFunction(&fespace);
   theta->SetFromTrueDofs(*X_T);
@@ -138,17 +145,9 @@ void Flow_Operator::Update_T(Config config, const HypreParVector *X_T, int dim, 
   eta_psi_grad.SetACoef(eta);
   neg_eta_psi_grad.SetBCoef(eta_psi_grad);
 
-  x_T->SetFromTrueDofs(*X_T);
-  delta_T.SetGridFunction(x_T);
-  r_deltaT.SetBCoef(delta_T);
-  bg_deltaT.SetBCoef(r_deltaT);
-  rF.SetACoef(bg_deltaT);
-  inv_mu_TCoeff.SetBCoef(rF);
-
-
   if(f) delete f;
   f = new ParLinearForm(&fespace);
-  f->AddDomainIntegrator(new DomainLFIntegrator(inv_mu_TCoeff));
+  //f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
   f->AddDomainIntegrator(new DomainLFIntegrator(r_inv_hat_w_grad));
   f->AddDomainIntegrator(new DomainLFIntegrator(eta_r_inv_hat_psi_grad));
   f->AddDomainIntegrator(new DomainLFGradIntegrator(w_grad));
@@ -175,11 +174,6 @@ double r_inv(const Vector &x){
 void r_hat(const Vector &x, Vector &y){
   y(0)=1;
   y(1)=0;
-}
-
-//Right hand side of the equation
-double f_rhs(const Vector &x){
-    return 0.;
 }
 
 //Boundary values for w
