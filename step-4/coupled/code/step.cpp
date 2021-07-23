@@ -13,7 +13,7 @@ void Artic_sea::time_step(){
     theta->Distribute(&(X.GetBlock(0)));
     Theta = theta->GetTrueDofs();
 
-    flow_oper->Solve(Theta);
+    flow_oper->Solve(X);
     (*x_psi) = flow_oper->GetStream();
     (*x_v) = flow_oper->GetVelocity();
     (*x_w) = flow_oper->GetVorticity();

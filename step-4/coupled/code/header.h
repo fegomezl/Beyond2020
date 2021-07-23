@@ -119,9 +119,9 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
   public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T);
-    void Solve(const HypreParVector *X_T);
-    void Update_T(const HypreParVector *X_T);
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const BlockVector X);
+    void Solve(const BlockVector X);
+    void Update_T(const BlockVector X);
     ParGridFunction GetStream(){return *psi;}
     ParGridFunction GetVelocity(){return *v;}
     ParGridFunction GetVorticity(){return *w;}
@@ -164,6 +164,7 @@ class Flow_Operator{
        ParGridFunction *psi_aux;
        ParGridFunction *v_aux;
        ParGridFunction *theta;
+       ParGridFunction *phi;
 
        //Rotational coefficients
        FunctionCoefficient r;
@@ -278,3 +279,7 @@ extern double epsilon_r;
 
 extern double vel;
 extern double entrance;
+
+extern double theta_in, theta_out;
+extern double phi_in, phi_out;
+extern double rad;

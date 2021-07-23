@@ -15,7 +15,7 @@ double boundary_psi(const Vector &x);
 
 void boundary_gradpsi(const Vector &x, Vector &f);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes,  const HypreParVector *X_T):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes,  const BlockVector X):
   config(config),
   fespace(fespace),
   block_true_offsets(3),
@@ -23,7 +23,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   m(NULL), d(NULL), c(NULL),
   M(NULL), D(NULL), C(NULL), hBlocks(2,2), H(NULL),
   psi(NULL), w(NULL), v(NULL),
-  w_aux(NULL), psi_aux(NULL), v_aux(NULL), theta(NULL),
+  w_aux(NULL), psi_aux(NULL), v_aux(NULL), theta(NULL), phi(NULL),
   r_invCoeff(r_inv), r_hatCoeff(dim, r_hat), r_inv_hat(r_invCoeff, r_hatCoeff),
   neg(-1.), w_coeff(boundary_w), w_grad(dim, boundary_gradw), psi_coeff(boundary_psi),
   psi_grad(dim, boundary_gradpsi), eta_r_inv_hat(neg, r_inv_hat), neg_w(neg, w_coeff),
@@ -46,9 +46,13 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   B.Update(block_true_offsets);
 
   theta = new ParGridFunction(&fespace);
-  theta->SetFromTrueDofs(*X_T);
+  theta->SetFromTrueDofs(X.GetBlock(0));
+
+  phi = new ParGridFunction(&fespace);
+  phi->SetFromTrueDofs(X.GetBlock(1));
+
   for (int ii = 0; ii < theta->Size(); ii++){
-      (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
+      (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_fun((*phi)(ii)))));
       (*theta)(ii) = config.epsilon_eta + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.epsilon_eta);
   }
 
@@ -105,7 +109,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   g->Assemble();
   g->ParallelAssemble(B.GetBlock(0));
 
-  this->Update_T(X_T);
+  this->Update_T(X);
 
   //Define bilinear forms of the system
   m = new ParBilinearForm(&fespace);
@@ -125,12 +129,17 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
 }
 
 
-void Flow_Operator::Update_T(const HypreParVector *X_T){
+void Flow_Operator::Update_T(const BlockVector X){
   if(theta) delete theta;
   theta = new ParGridFunction(&fespace);
-  theta->SetFromTrueDofs(*X_T);
+  theta->SetFromTrueDofs(X.GetBlock(0));
+
+  if(phi) delete phi;
+  phi = new ParGridFunction(&fespace);
+  phi->SetFromTrueDofs(X.GetBlock(1));
+
   for (int ii = 0; ii < theta->Size(); ii++){
-    (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
+    (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_fun((*phi)(ii)))));
     (*theta)(ii) = config.epsilon_eta + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.epsilon_eta);
   }
 
@@ -145,7 +154,7 @@ void Flow_Operator::Update_T(const HypreParVector *X_T){
   eta_psi_grad.SetACoef(eta);
   neg_eta_psi_grad.SetBCoef(eta_psi_grad);
 
-  if(f) delete f;
+  if (f) delete f;
   f = new ParLinearForm(&fespace);
   //f->AddDomainIntegrator(new DomainLFIntegrator(neg_rF));
   f->AddDomainIntegrator(new DomainLFIntegrator(r_inv_hat_w_grad));
@@ -157,7 +166,7 @@ void Flow_Operator::Update_T(const HypreParVector *X_T){
   f->Assemble();
   f->ParallelAssemble(B.GetBlock(1));
 
-  if(d) delete d;
+  if (d) delete d;
   d = new ParBilinearForm(&fespace);
   d->AddDomainIntegrator(new DiffusionIntegrator(eta));
   d->AddDomainIntegrator(new ConvectionIntegrator(eta_r_inv_hat));

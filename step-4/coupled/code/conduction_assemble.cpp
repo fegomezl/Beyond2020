@@ -62,8 +62,8 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 
     Array<int> ess_bdr_phi(attributes); ess_bdr_phi = 0;
     ess_bdr_phi[0] = 0;       ess_bdr_phi[1] = 0;       ess_bdr_phi[3] = 1;
-    newmann_bdr_phi[0] = 0;   newmann_bdr_phi[1] = 0;   newmann_bdr_phi[3] = 0;
-    robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 1;     robin_bdr_phi[3] = 0;
+    newmann_bdr_phi[0] = 0;   newmann_bdr_phi[1] = 1;   newmann_bdr_phi[3] = 0;
+    robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 0;     robin_bdr_phi[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_list_phi);
 
     //Check that the internal boundaries is always zero.
@@ -119,10 +119,6 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     SetParameters(X);
 }
 
-double theta_in = -2, theta_out = -20;
-double phi_in = 3.5, phi_out = 22.5;
-double rad = 0.2;
-
 //Initial conditions
 double initial_theta_f(const Vector &x){
     double r_2 = pow(x(0) - (entrance + rad), 2) + pow(x(1) - Zmax, 2);
@@ -145,7 +141,10 @@ double newmann_theta_f(const Vector &x){
 }
 
 double newmann_phi_f(const Vector &x){
-    return 0;
+    if (x(0) < entrance)
+        return vel*phi_out;
+    else
+        return 0;
 }
 
 double robin_h_theta_f(const Vector &x){
