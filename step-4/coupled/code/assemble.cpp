@@ -42,8 +42,8 @@ void Artic_sea::assemble_system(){
     x_v = new ParGridFunction(fespace_v);
     x_w = new ParGridFunction(fespace);
 
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), Theta);
-    flow_oper->Solve(Theta);
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), X);
+    flow_oper->Solve(X);
     (*x_psi) = flow_oper->GetStream();
     (*x_v) = flow_oper->GetVelocity();
     (*x_w) = flow_oper->GetVorticity();

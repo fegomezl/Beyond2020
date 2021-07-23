@@ -15,7 +15,7 @@ double boundary_psi(const Vector &x);
 
 void boundary_gradpsi(const Vector &x, Vector &f);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes,  const HypreParVector *X_T):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes,  const BlockVector X):
   config(config),
   fespace(fespace),
   block_true_offsets(3),
@@ -46,7 +46,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   B.Update(block_true_offsets);
 
   theta = new ParGridFunction(&fespace);
-  theta->SetFromTrueDofs(*X_T);
+  theta->SetFromTrueDofs(X.GetBlock(0));
   for (int ii = 0; ii < theta->Size(); ii++){
       (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
       (*theta)(ii) = config.epsilon_eta + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.epsilon_eta);
@@ -73,12 +73,12 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //            \------------/
     //                  0
 
-  ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
-  ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
+  ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
+  ess_bdr_w[2] = 1; ess_bdr_w[3] = 0;
   fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_list_w);
 
   ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
-  ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
+  ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 0;
   fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_list_psi);
 
   //Define grid functions
@@ -105,7 +105,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   g->Assemble();
   g->ParallelAssemble(B.GetBlock(0));
 
-  this->Update_T(X_T);
+  this->Update_T(X);
 
   //Define bilinear forms of the system
   m = new ParBilinearForm(&fespace);
@@ -125,10 +125,10 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
 }
 
 
-void Flow_Operator::Update_T(const HypreParVector *X_T){
+void Flow_Operator::Update_T(const BlockVector X){
   if(theta) delete theta;
   theta = new ParGridFunction(&fespace);
-  theta->SetFromTrueDofs(*X_T);
+  theta->SetFromTrueDofs(X.GetBlock(0));
   for (int ii = 0; ii < theta->Size(); ii++){
     (*theta)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - config.T_f)));
     (*theta)(ii) = config.epsilon_eta + pow(1-(*theta)(ii), 2)/(pow((*theta)(ii), 3) + config.epsilon_eta);
@@ -172,8 +172,8 @@ double r_inv(const Vector &x){
 }
 
 void r_hat(const Vector &x, Vector &y){
-  y(0)=1;
-  y(1)=0;
+    y(0) = 1;
+    y(1) = 0;
 }
 
 //Boundary values for w
@@ -188,10 +188,18 @@ void boundary_gradw(const Vector &x, Vector &f){
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return 0.5*x(0)*x(0);
+    if (x(0) < entrance)
+        return 0.5*vel*pow(x(0), 2)*x(1)/Zmax;
+    else
+        return 0.5*vel*pow(entrance, 2)*x(1)/Zmax;
 }
 
 void boundary_gradpsi(const Vector &x, Vector &f){
-    f(0) = x(0);
-    f(1) = 0;
+    if (x(0) < entrance){
+        f(0) = 0.5*vel*x(0)*x(1)/Zmax;
+        f(1) = 0.5*vel*pow(x(0), 2)/Zmax;
+    } else {
+        f(0) = 0.;
+        f(1) = 0.5*vel*pow(entrance, 2)/Zmax;
+    }
 }

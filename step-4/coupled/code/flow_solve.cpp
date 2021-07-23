@@ -1,8 +1,8 @@
 #include "header.h"
 
-void Flow_Operator::Solve(const HypreParVector *X_T){
+void Flow_Operator::Solve(const BlockVector X){
 
-    this->Update_T(X_T);
+    this->Update_T(X);
     //Create the complete bilinear operator:
     //
     //   H = [ M    C ]

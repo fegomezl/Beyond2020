@@ -119,9 +119,9 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
   public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T);
-    void Solve(const HypreParVector *X_T);
-    void Update_T(const HypreParVector *X_T);
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const BlockVector X);
+    void Solve(const BlockVector X);
+    void Update_T(const BlockVector X);
     ParGridFunction GetStream(){return *psi;}
     ParGridFunction GetVelocity(){return *v;}
     ParGridFunction GetVorticity(){return *w;}
@@ -276,4 +276,5 @@ extern double delta_c_s_fun(const double &temperature, const double &salinity);
 extern double Rmin, Rmax, Zmin, Zmax, height;
 extern double epsilon_r;
 
-extern double mid;
+extern double vel;
+extern double entrance;
