@@ -96,6 +96,7 @@ void Conduction_Operator::UpdateVelocity(const ParGridFunction *v_flow){
     v = *v_flow;
     rV.SetGridFunction(&v);
     coeff_rCLV.SetBCoef(rV);
+    dt_coeff_rCLV.SetBCoef(coeff_rCLV);
 }
 
 void Flow_Operator::Update_T(const HypreParVector *Theta){

@@ -129,4 +129,5 @@ void Conduction_Operator::UpdateVelocity(const ParGridFunction *v_flow){
     coeff_rV.SetGridFunction(&v);
     dt_coeff_rV.SetBCoef(coeff_rV);
     coeff_rCLV.SetBCoef(coeff_rV);
+    dt_coeff_rCLV.SetBCoef(coeff_rCLV);
 }
