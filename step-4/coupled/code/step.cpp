@@ -10,15 +10,15 @@ void Artic_sea::time_step(){
     ode_solver->Step(X, t, dt);
 
     //Solve the flow problem
-    X_Psi = (flow_oper->GetStream()).GetTrueDofs();
     theta->Distribute(&(X.GetBlock(0)));
     Theta = theta->GetTrueDofs();
 
-    flow_oper->Solve(config, Theta, dim, pmesh->bdr_attributes.Max());
+    flow_oper->Solve(Theta);
     (*x_psi) = flow_oper->GetStream();
+    (*x_v) = flow_oper->GetVelocity();
     (*x_w) = flow_oper->GetVorticity();
 
-    oper_T->UpdateVelocity(*X_Psi, x_v);
+    oper_T->UpdateVelocity(x_v);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
@@ -124,12 +124,9 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     k_phi->Finalize();
 }
 
-void Conduction_Operator::UpdateVelocity(const HypreParVector &Psi, ParGridFunction *v){
-    psi.SetFromTrueDofs(Psi);
-    gradpsi.SetGridFunction(&psi);
-    coeff_rV.SetBCoef(gradpsi);
-    v->Randomize();
-    v->ProjectDiscCoefficient(coeff_rV, GridFunction::ARITHMETIC);
+void Conduction_Operator::UpdateVelocity(const ParGridFunction *v_flow){
+    v = *v_flow;
+    coeff_rV.SetGridFunction(&v);
     dt_coeff_rV.SetBCoef(coeff_rV);
     coeff_rCLV.SetBCoef(coeff_rV);
 }

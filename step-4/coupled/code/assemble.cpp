@@ -24,7 +24,7 @@ void Artic_sea::assemble_system(){
     phi = new ParGridFunction(fespace);
     phase = new ParGridFunction(fespace);
 
-    oper_T = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
+    oper_T = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets,  X);
 
     //Reocver initial conditions
     theta->Distribute(&(X.GetBlock(0)));
@@ -41,14 +41,13 @@ void Artic_sea::assemble_system(){
     x_psi = new ParGridFunction(fespace);
     x_v = new ParGridFunction(fespace_v);
     x_w = new ParGridFunction(fespace);
-    X_Psi = new HypreParVector(fespace);
 
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, Theta);
-    flow_oper->Solve(config, Theta, dim, pmesh->bdr_attributes.Max());
-    X_Psi = (flow_oper->GetStream()).GetTrueDofs();
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), Theta);
+    flow_oper->Solve(Theta);
     (*x_psi) = flow_oper->GetStream();
+    (*x_v) = flow_oper->GetVelocity();
     (*x_w) = flow_oper->GetVorticity();
-    oper_T->UpdateVelocity(*X_Psi, x_v);
+    oper_T->UpdateVelocity(x_v);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -127,8 +126,8 @@ double r_f(const Vector &x){
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.; f(0,1) = -1.;
-    f(1,0) = 1.; f(1,1) = 0.;
+    f(0,0) = 0.; f(0,1) = 1.;
+    f(1,0) = -1.; f(1,1) = 0.;
 }
 
 void zero_f(const Vector &x, Vector &f){

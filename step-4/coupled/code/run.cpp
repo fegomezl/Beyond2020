@@ -12,8 +12,7 @@ Artic_sea::Artic_sea(Config config):
     theta(NULL), phi(NULL), phase(NULL), Theta(NULL),
     oper_T(NULL),
     ode_solver(NULL), cvode(NULL), arkode(NULL),
-    paraview_out(NULL), flow_oper(NULL), x_psi(NULL), x_v(NULL), x_w(NULL),
-    X_Psi(NULL)
+    paraview_out(NULL), flow_oper(NULL), x_psi(NULL), x_v(NULL), x_w(NULL)
 {}
 
 void Artic_sea::run(const char *mesh_file){
@@ -48,9 +47,9 @@ Flow_Operator::~Flow_Operator(){
     delete v;
     delete psi_aux;
     delete w_aux;
+    delete v_aux;
     delete theta;
-    delete x_T;
-    delete H;
+   // delete H;
 }
 
 Artic_sea::~Artic_sea(){
@@ -70,6 +69,5 @@ Artic_sea::~Artic_sea(){
     delete x_psi;
     delete x_v;
     delete x_w;
-    delete X_Psi;
     if (config.master) cout << "Memory deleted \n";
 }

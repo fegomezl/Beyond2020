@@ -79,8 +79,6 @@ int main(int argc, char *argv[]){
                    "Solid diffusion constant.");
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
-    args.AddOption(&config.viscosity, "-v", "--viscosity",
-                   "Kinematic viscosity of the material.");
     args.AddOption(&nEpsilon_eta, "-e_eta", "--epsilon_eta",
                    "Value of constatn epsilon for (1-phi)^2/(phi^3 + epsilon)(10^(-n)).");
     args.AddOption(&nEpsilon_r, "-e_r", "--epsilon_r",

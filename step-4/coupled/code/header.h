@@ -34,16 +34,15 @@ struct Config{
     double k_l, k_s;
     double D_l, D_s;
     double L;
-    double viscosity;
     double epsilon_eta;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
+        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
 
         void SetParameters(const BlockVector &X);
-        void UpdateVelocity(const HypreParVector &psi, ParGridFunction *v);
+        void UpdateVelocity(const ParGridFunction *v_flow);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
@@ -83,15 +82,14 @@ class Conduction_Operator : public TimeDependentOperator{
         ParGridFunction aux_K;
         ParGridFunction aux_D;
 
-        ParGridFunction psi;
+        ParGridFunction v;
 
         //Coefficients
         mutable FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
         MatrixFunctionCoefficient rot;
 
-        GradientGridFunctionCoefficient gradpsi;
-        MatrixVectorProductCoefficient coeff_rV;
+        VectorGridFunctionCoefficient coeff_rV;
         ScalarVectorProductCoefficient dt_coeff_rV;
 
         ProductCoefficient coeff_rCL;
@@ -121,18 +119,22 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
   public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const HypreParVector *X_T);
-    void Solve(Config config, const HypreParVector *X_T, int dim, int attributes);
-    void Update_T(Config config, const HypreParVector *X_T, int dim, int attributes);
+    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *X_T);
+    void Solve(const HypreParVector *X_T);
+    void Update_T(const HypreParVector *X_T);
     ParGridFunction GetStream(){return *psi;}
     ParGridFunction GetVelocity(){return *v;}
     ParGridFunction GetVorticity(){return *w;}
     ~Flow_Operator();
 
   protected:
+        //Global parameters
+        Config config;
 
         //Mesh objects
         ParFiniteElementSpace &fespace;
+
+       Array<int> block_true_offsets;
 
         //System objects
         ParLinearForm *f;
@@ -140,7 +142,6 @@ class Flow_Operator{
         ParBilinearForm *m;
         ParBilinearForm *d;
         ParMixedBilinearForm *c;
-        ParMixedBilinearForm *ct;
         Array<int> ess_bdr_psi;
         Array<int> ess_bdr_w;
         Array<int> ess_tdof_list_w;
@@ -161,13 +162,15 @@ class Flow_Operator{
        //Boundary conditions
        ParGridFunction *w_aux;
        ParGridFunction *psi_aux;
+       ParGridFunction *v_aux;
        ParGridFunction *theta;
 
-       ConstantCoefficient bg;
        //Rotational coefficients
+       FunctionCoefficient r;
        FunctionCoefficient r_invCoeff;
        VectorFunctionCoefficient r_hatCoeff;
        ScalarVectorProductCoefficient r_inv_hat;
+       VectorFunctionCoefficient zero;
        //Properties coefficients
        GridFunctionCoefficient eta;
        ConstantCoefficient neg;
@@ -190,15 +193,12 @@ class Flow_Operator{
        ScalarVectorProductCoefficient eta_psi_grad;
        ScalarVectorProductCoefficient neg_eta_psi_grad;
        //Temperature coefficients
-       ConstantCoefficient inv_mu;
-       ParGridFunction *x_T;
-       GradientGridFunctionCoefficient delta_T;
-       VectorFunctionCoefficient rcap;
-       InnerProductCoefficient r_deltaT;
-       ProductCoefficient bg_deltaT;
-       FunctionCoefficient r;
-       ProductCoefficient rF;
-       ProductCoefficient inv_mu_TCoeff;
+       DiscreteLinearOperator grad;
+       MatrixFunctionCoefficient rot;
+       GradientGridFunctionCoefficient gradpsi;
+       MatrixVectorProductCoefficient rot_psi_grad;
+       VectorGridFunctionCoefficient rV_aux;
+       MatrixVectorProductCoefficient rV;
 
        //Solver objects
        SuperLUSolver *superlu;
@@ -263,7 +263,6 @@ class Artic_sea{
         ParGridFunction *x_psi;
         ParGridFunction *x_v;
         ParGridFunction *x_w;
-        HypreParVector *X_Psi;
 };
 
 extern double r_f(const Vector &x);
