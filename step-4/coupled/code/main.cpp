@@ -10,14 +10,6 @@ double height;
 //Size of the BC border
 double epsilon_r;
 
-double vel = 10;
-double entrance = 1.5;
-
-double theta_in = -2, theta_out = -20;
-double phi_in = 3.5, phi_out = 20;
-double theta_nu = -2.3, phi_nu = 3.5;
-double rad = 1, h = 1;
-
 int main(int argc, char *argv[]){
     //Define MPI parameters
     int nproc = 0, pid = 0;
@@ -79,12 +71,10 @@ int main(int argc, char *argv[]){
                    "Liquid thermal conductivity.");
     args.AddOption(&config.k_s, "-k_s", "--k_s",
                    "Solid thermal conductivity.");
-    args.AddOption(&config.D_l, "-D_l", "--D_l",
-                   "Liquid diffusion constant.");
-    args.AddOption(&config.D_s, "-D_s", "--D_s",
-                   "Solid diffusion constant.");
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
+    args.AddOption(&config.viscosity, "-v", "--viscosity",
+                   "Kinematic viscosity of the material.");
     args.AddOption(&nEpsilon_eta, "-e_eta", "--epsilon_eta",
                    "Value of constatn epsilon for (1-phi)^2/(phi^3 + epsilon)(10^(-n)).");
     args.AddOption(&nEpsilon_r, "-e_r", "--epsilon_r",

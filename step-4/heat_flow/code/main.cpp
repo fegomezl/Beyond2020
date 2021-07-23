@@ -12,7 +12,7 @@ double epsilon_r;
 
 //Velocity
 double Vel = 10;
-double Rad = 2.5;
+double Rad = 1.5;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters

@@ -10,11 +10,11 @@ settings/square.geo #Mesh_script
 
 Simulation parameters
 0.0005   #Dt
-0.1     #Final_time
-10       #Visualization_steps
+1        #Final_time
+20       #Visualization_steps
 
 FE parameters
-2          #Refinements
+3          #Refinements
 1          #Order
 12         #ODE_solver_type
 0          #abstol(Conduction)
