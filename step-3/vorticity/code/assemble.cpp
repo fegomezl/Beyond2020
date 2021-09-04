@@ -100,8 +100,6 @@ void Artic_sea::assemble_system(){
     c.AddDomainIntegrator(new MixedGradGradIntegrator);
     c.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
     c.Assemble();
-
-    //Forma uno
     c.EliminateTrialDofs(ess_bdr_psi, *psi, g);
     c.EliminateTestDofs(ess_bdr_w);
     c.Finalize();

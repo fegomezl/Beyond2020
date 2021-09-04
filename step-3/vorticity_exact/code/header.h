@@ -20,7 +20,7 @@ struct Config{
     double T_f;
     double invDeltaT;
     double viscosity;
-    double cold_porosity;
+    double epsilon_eta;
 };
 
 using namespace std;
@@ -56,25 +56,10 @@ class Artic_sea{
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
 
-        Array<int> ess_bdr_psi;
-
-        Array<int> block_true_offsets;
-
         //System objects
         ParGridFunction *w;
         ParGridFunction *psi;
         ParGridFunction *v;
-
-        ParGridFunction *w_aux;
-        ParGridFunction *psi_aux;
-        ParGridFunction *theta;
-
-        ParLinearForm *g;
-        ParLinearForm *f;
-
-        ParBilinearForm *m;
-        ParBilinearForm *d;
-        ParMixedBilinearForm *c;
 
         //Solver objects
         BlockVector X;
@@ -83,20 +68,18 @@ class Artic_sea{
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
-        
-        //Convergence analysis objects
-        double actual_error_w=0;
-        double actual_error_psi=0;
-};
+        HypreParMatrix *Ct;
 
-void boundary_gradpsi(const Vector &x, Vector &f);
+        //Convergence analysis
+        double error_w;
+        double error_psi;
+};
 
 extern double height;
 extern double int_rad;
 extern double out_rad;
 
-extern double border;
-extern double InvR;
+extern double epsilon_r;
 
 extern double exact_w(const Vector &x);
 extern double exact_psi(const Vector &x);

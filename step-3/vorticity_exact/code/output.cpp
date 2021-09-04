@@ -3,14 +3,32 @@
 void Artic_sea::output_results(){
     if (config.master){
     //Print general information of the program
-        cout << "\nScalar size: " << size << "\n"
+        cout << "\nScalar size: " << 2*size << "\n"
              << "Vectorial size: " << size_v << "\n"
              << "Mesh Size: " << h_min << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
-             << "Total refinements: " << config.refinements << "\n"
-             << "W total mean error: " << actual_error_w/(height*(out_rad-int_rad)) << "\n"
-             << "Psi total mean error: " << actual_error_psi/(height*(out_rad-int_rad)) << "\n";
+             << "Total refinements: " << config.refinements << "\n";
+
+    //Print numerical results of the program
+        ofstream output;
+        output.precision(4);
+        if (config.refinements != 0)
+            output.open("results/convergence.txt", std::ios::app);
+        else {
+            output.open("results/convergence.txt", std::ios::trunc);
+            output << left << setw(16) 
+                   << "DOFs" << setw(16) 
+                   << "h" << setw(16) 
+                   << "w error" << setw(16)
+                   << "psi error" << "\n";
+        }
+        output << left << setw(16) 
+               << size << setw(16) 
+               << h_min << setw(16) 
+               << error_w << setw(16)
+               << error_psi << "\n";
+        output.close();
     }
 
     //Print visual results to Paraview
