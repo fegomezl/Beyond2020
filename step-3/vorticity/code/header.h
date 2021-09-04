@@ -56,26 +56,10 @@ class Artic_sea{
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
 
-        Array<int> ess_bdr_psi;
-
-        Array<int> block_true_offsets;
-
         //System objects
         ParGridFunction *w;
         ParGridFunction *psi;
         ParGridFunction *v;
-
-        ParGridFunction *w_aux;
-        ParGridFunction *psi_aux;
-        ParGridFunction *v_aux;
-        ParGridFunction *theta;
-
-        ParLinearForm *g;
-        ParLinearForm *f;
-
-        ParBilinearForm *m;
-        ParBilinearForm *d;
-        ParMixedBilinearForm *c;
 
         //Solver objects
         BlockVector X;
@@ -84,9 +68,8 @@ class Artic_sea{
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
+        HypreParMatrix *Ct;
 };
-
-void boundary_gradpsi(const Vector &x, Vector &f);
 
 extern double height;
 extern double int_rad;

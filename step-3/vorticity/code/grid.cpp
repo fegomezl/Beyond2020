@@ -40,6 +40,7 @@ void Artic_sea::make_grid(const char *mesh_file){
     size_v = fespace_v->GlobalTrueVSize();
 
     //Create the block offsets
+    Array<int> block_true_offsets(3);
     block_true_offsets[0] = 0;
     block_true_offsets[1] = fespace->TrueVSize();
     block_true_offsets[2] = fespace->TrueVSize();
