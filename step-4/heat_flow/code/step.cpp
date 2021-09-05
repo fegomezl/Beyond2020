@@ -102,6 +102,8 @@ void Flow_Operator::SetParameters(const Vector &Theta){
     //Update temperature coefficients
     theta.SetFromTrueDofs(Theta);
     theta.GetDerivative(1, 0, theta_dr);
+    for (int ii = 0; ii < theta.Size(); ii++)
+        theta(ii) = 3.8*theta(ii) - 16;     // gb/u
 
     theta_eta.SetFromTrueDofs(Theta);
     for (int ii = 0; ii < theta_eta.Size(); ii++){
@@ -111,7 +113,8 @@ void Flow_Operator::SetParameters(const Vector &Theta){
 
     //Properties coefficients
     GridFunctionCoefficient Theta_dr(&theta_dr);
-    ProductCoefficient k_Theta_dr(30., Theta_dr);
+    GridFunctionCoefficient k(&theta);
+    ProductCoefficient k_Theta_dr(k, Theta_dr);
 
     GridFunctionCoefficient eta(&theta_eta);
     ProductCoefficient neg_eta(-1., eta);
