@@ -57,12 +57,14 @@ int main(int argc, char *argv[]){
     if (config.master) args.PrintOptions(cout);
 
     //Run the program for different refinements
-    config.invDeltaT = pow(10, nDeltaT);
-    config.epsilon_eta = pow(10, -nEpsilon_eta);
-    epsilon_r = pow(10, -nEpsilon_r);
-    config.last = true;
-    Artic_sea artic_sea(config);
-    artic_sea.run(mesh_file);
+    {
+        config.invDeltaT = pow(10, nDeltaT);
+        config.epsilon_eta = pow(10, -nEpsilon_eta);
+        epsilon_r = pow(10, -nEpsilon_r);
+        config.last = true;
+        Artic_sea artic_sea(config);
+        artic_sea.run(mesh_file);
+    }
 
     MPI_Finalize();
 

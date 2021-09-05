@@ -1,8 +1,10 @@
 #include "header.h"
 
+//Rotational functions
+void zero_f(const Vector &x, Vector &f);
 double r_f(const Vector &x);
 void rot_f(const Vector &x, DenseMatrix &f);
-void zero_f(const Vector &x, Vector &f);
+void r_inv_hat_f(const Vector &x, Vector &f);
 
 void Artic_sea::assemble_system(){
     //Initialize the system
@@ -12,20 +14,29 @@ void Artic_sea::assemble_system(){
     vis_steps = config.vis_steps_max;
     vis_impressions = 0;
 
-    //Define solution for theta
+    //Define variables
     theta = new ParGridFunction(fespace);
+    w = new ParGridFunction(fespace);
+    psi = new ParGridFunction(fespace);
+    v = new ParGridFunction(fespace_v);
+
     Theta = new HypreParVector(fespace);
-
-    cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), *Theta);
-    theta->SetFromTrueDofs(*Theta);
-
-    //Define solution for psi
+    W = new HypreParVector(fespace);
     Psi = new HypreParVector(fespace);
+    V = new HypreParVector(fespace_v);
 
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), Theta);
-    flow_oper->Solve(Theta);
-    Psi = (flow_oper->psi)->GetTrueDofs();
-    cond_oper->UpdateVelocity(flow_oper->v);
+    //Initialize operators
+    cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), *Theta);
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), *Theta);
+
+    //Solve initial velocity field
+    flow_oper->Solve(*W, *Psi, *V);
+
+    //Read initial global state
+    theta->Distribute(Theta);
+    w->Distribute(W);
+    psi->Distribute(Psi);
+    v->Distribute(V);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -77,9 +88,9 @@ void Artic_sea::assemble_system(){
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", theta);
-    paraview_out->RegisterField("Stream_Function(r)", flow_oper->psi);
-    paraview_out->RegisterField("Velocity(r)", flow_oper->v);
-    paraview_out->RegisterField("Vorticity(r)", flow_oper->w);
+    paraview_out->RegisterField("Vorticity", w);
+    paraview_out->RegisterField("Stream", psi);
+    paraview_out->RegisterField("Velocity", v);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();
@@ -97,16 +108,21 @@ void Artic_sea::assemble_system(){
              << "\n--------------------------------------------------\n";
 }
 
+void zero_f(const Vector &x, Vector &f){
+    f(0) = 0.;
+    f(1) = 0.;
+}
+
 double r_f(const Vector &x){
     return x(0);
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.; f(0,1) = 1.;
-    f(1,0) = -1.; f(1,1) = 0.;
+    f(0,0) = 0.; f(0,1) = -1.;
+    f(1,0) = 1.; f(1,1) = 0.;
 }
 
-void zero_f(const Vector &x, Vector &f){
-    f(0) = 0.;
+void r_inv_hat_f(const Vector &x, Vector &f){
+    f(0) = pow(x(0) + epsilon_r, -1);
     f(1) = 0.;
 }

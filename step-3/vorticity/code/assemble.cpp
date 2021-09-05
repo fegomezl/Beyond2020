@@ -59,11 +59,11 @@ void Artic_sea::assemble_system(){
 
     Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
     ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
-    ess_bdr_w[2] = 1; ess_bdr_w[3] = 0;
+    ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
 
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
-    ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 0;
+    ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
 
     //Define grid functions
     w =  new ParGridFunction(fespace);
@@ -84,7 +84,7 @@ void Artic_sea::assemble_system(){
     ParBilinearForm m(fespace);
     m.AddDomainIntegrator(new MassIntegrator);
     m.Assemble();
-    m.EliminateEssentialBC(ess_bdr_w, *w, g);
+    m.EliminateEssentialBC(ess_bdr_w, *w, g, Operator::DIAG_ONE);
     m.Finalize();
     M = m.ParallelAssemble();
 
@@ -92,7 +92,7 @@ void Artic_sea::assemble_system(){
     d.AddDomainIntegrator(new DiffusionIntegrator(neg_eta));
     d.AddDomainIntegrator(new ConvectionIntegrator(neg_eta_r_inv_hat));
     d.Assemble();
-    d.EliminateEssentialBC(ess_bdr_psi, *psi, f);
+    d.EliminateEssentialBC(ess_bdr_psi, *psi, f, Operator::DIAG_KEEP);
     d.Finalize();
     D = d.ParallelAssemble();
 
@@ -147,10 +147,7 @@ double temperature_f(const Vector &x){
 
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    if (x(0) > 5)
-        return 1;
-    else
-        return 0;
+    return 0;
 }
 
 //Boundary values for w
@@ -160,10 +157,5 @@ double boundary_w(const Vector &x){
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    double a = 1;
-    double v = 10;
-    if (x(0) < a)
-        return -v*0.5*pow(x(0), 2)*x(1)/height;
-    else
-        return -v*0.5*pow(a, 2)*x(1)/height;
+    return -0.5*pow(x(0), 2);
 }
