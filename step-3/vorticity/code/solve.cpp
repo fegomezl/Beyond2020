@@ -8,31 +8,25 @@ void Artic_sea::solve_system(){
     //
     //   H = [ M     C ] 
     //       [ C^t   D ] 
-    Array2D<HypreParMatrix*> hBlocks(2,2);
-    hBlocks = NULL;
-    hBlocks(0, 0) = M;
-    hBlocks(0, 1) = C;
-    hBlocks(1, 0) = Ct;
-    hBlocks(1, 1) = D;
+    Array2D<HypreParMatrix*> HBlocks(2,2);
+    HBlocks = NULL;
+    HBlocks(0, 0) = M;
+    HBlocks(0, 1) = C;
+    HBlocks(1, 0) = Ct;
+    HBlocks(1, 1) = D;
 
-    Array2D<double> blockCoeff(2,2);
-    blockCoeff(0, 0) = 1.;
-    blockCoeff(0, 1) = 1.;
-    blockCoeff(1, 0) = 1.;
-    blockCoeff(1, 1) = 1.;
+    HypreParMatrix *H = HypreParMatrixFromBlocks(HBlocks);
+    SuperLURowLocMatrix A(*H);
 
-    HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
-
-    SuperLUSolver *superlu = new SuperLUSolver(MPI_COMM_WORLD);
-    Operator *SLU_A = new SuperLURowLocMatrix(*H);
-    superlu->SetOperator(*SLU_A);
-    superlu->SetPrintStatistics(true);
-    superlu->SetSymmetricPattern(true);
-    superlu->SetColumnPermutation(superlu::PARMETIS);
-    superlu->SetIterativeRefine(superlu::SLU_DOUBLE);
+    SuperLUSolver superlu(MPI_COMM_WORLD);
+    superlu.SetOperator(A);
+    superlu.SetPrintStatistics(true);
+    superlu.SetSymmetricPattern(true);
+    superlu.SetColumnPermutation(superlu::PARMETIS);
+    superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
 
     //Solve the linear system Ax=B
-    superlu->Mult(B, X);
+    superlu.Mult(B, X);
 
     //Recover the solution on each proccesor
     w->Distribute(&(X.GetBlock(0)));    
@@ -57,8 +51,6 @@ void Artic_sea::solve_system(){
 
     //Delete used memory
     delete H;
-    delete superlu;
-    delete SLU_A;
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){

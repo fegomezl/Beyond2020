@@ -4,8 +4,8 @@ settings/square.geo #Mesh_script
 10      #Rmax
 0       #Zmin
 10      #Zmax
-15      #Rcells
-15      #Zcells
+100     #Rcells
+100     #Zcells
 
 
 Simulation parameters
