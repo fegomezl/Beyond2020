@@ -7,7 +7,6 @@ settings/square.geo #Mesh_script
 100     #Rcells
 100     #Zcells
 
-
 Simulation parameters
 0.0005   #Dt
 0.1     #Final_time
