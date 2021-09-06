@@ -131,13 +131,6 @@ class Flow_Operator{
         HypreParMatrix *C;
         HypreParMatrix *Ct;
 
-        Array2D<HypreParMatrix*> hBlocks;
-        Array2D<double> blockCoeff; 
-        HypreParMatrix *H;
-       
-        SuperLUSolver superlu;
-        SuperLURowLocMatrix *SLU_A;
-
         //Aditional variables
         ParGridFunction theta;
         ParGridFunction theta_eta;

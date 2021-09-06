@@ -42,8 +42,6 @@ Flow_Operator::~Flow_Operator(){
     delete D;
     delete C;
     delete Ct;
-    delete H;
-    delete SLU_A;
 }
 
 Artic_sea::~Artic_sea(){

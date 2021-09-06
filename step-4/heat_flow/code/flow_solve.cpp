@@ -5,17 +5,21 @@ void Flow_Operator::Solve(Vector &W, Vector &Psi, Vector &V){
     //
     //   H = [ M    C ]
     //       [ C^t  D ]
-    hBlocks(0, 0) = M;
-    hBlocks(0, 1) = C;
-    hBlocks(1, 0) = Ct;
-    hBlocks(1, 1) = D;
+    Array2D<HypreParMatrix*> HBlocks(2,2);
+    HBlocks(0, 0) = M;
+    HBlocks(0, 1) = C;
+    HBlocks(1, 0) = Ct;
+    HBlocks(1, 1) = D;
 
-    if (H) delete H;
-    H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
+    HypreParMatrix *H = HypreParMatrixFromBlocks(HBlocks);
+    SuperLURowLocMatrix A(*H);
 
-    if (SLU_A) delete SLU_A;
-    SLU_A = new SuperLURowLocMatrix (*H);
-    superlu.SetOperator(*SLU_A);
+    SuperLUSolver superlu(MPI_COMM_WORLD);
+    superlu.SetOperator(A);
+    superlu.SetPrintStatistics(false);
+    superlu.SetSymmetricPattern(true);
+    superlu.SetColumnPermutation(superlu::PARMETIS);
+    superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
 
     //Solve the linear system Ax=B
     superlu.Mult(B, X);
@@ -35,4 +39,6 @@ void Flow_Operator::Solve(Vector &W, Vector &Psi, Vector &V){
     w.ParallelAverage(W);
     psi.ParallelAverage(Psi);
     v.ParallelAverage(V);
+
+    delete H;
 }

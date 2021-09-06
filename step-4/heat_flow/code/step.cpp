@@ -123,29 +123,13 @@ void Flow_Operator::SetParameters(const Vector &Theta){
     ProductCoefficient k_r_Theta_dr(r, k_Theta_dr);
     ScalarVectorProductCoefficient neg_eta_r_inv_hat(neg_eta, r_inv_hat);
 
-    //Apply boundary conditions
-    w.ProjectCoefficient(w_coeff);
-    psi.ProjectCoefficient(psi_coeff);
-
-    //Define the RHS
-    if (g) delete g;
-    g = new ParLinearForm(&fespace);
-    g->Assemble();
-
+    //Define the non-constant RHS
     if (f) delete f;
     f = new ParLinearForm(&fespace);
     f->AddDomainIntegrator(new DomainLFIntegrator(k_r_Theta_dr));
     f->Assemble();
 
-    //Define bilinear forms of the system
-    if (m) delete m;
-    m = new ParBilinearForm (&fespace);
-    m->AddDomainIntegrator(new MassIntegrator);
-    m->Assemble();
-    m->EliminateEssentialBC(ess_bdr_w, w, *g, Operator::DIAG_ONE);
-    m->Finalize();
-    M = m->ParallelAssemble();
-
+    //Define non-constant bilinear forms of the system
     if (d) delete d;
     d = new ParBilinearForm (&fespace);
     d->AddDomainIntegrator(new DiffusionIntegrator(neg_eta));
@@ -153,17 +137,8 @@ void Flow_Operator::SetParameters(const Vector &Theta){
     d->Assemble();
     d->EliminateEssentialBC(ess_bdr_psi, psi, *f, Operator::DIAG_KEEP);
     d->Finalize();
+    if (D) delete D;
     D = d->ParallelAssemble();
-
-    if (c) delete c;
-    c = new ParMixedBilinearForm (&fespace, &fespace);
-    c->AddDomainIntegrator(new MixedGradGradIntegrator);
-    c->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
-    c->Assemble();
-    c->EliminateTrialDofs(ess_bdr_psi, psi, *g);
-    c->EliminateTestDofs(ess_bdr_w);
-    c->Finalize();
-    C = c->ParallelAssemble();
 
     if (ct) delete ct;
     ct = new ParMixedBilinearForm(&fespace, &fespace);
@@ -173,12 +148,9 @@ void Flow_Operator::SetParameters(const Vector &Theta){
     ct->EliminateTrialDofs(ess_bdr_w, w, *f);
     ct->EliminateTestDofs(ess_bdr_psi);
     ct->Finalize();
+    if (Ct) delete Ct;
     Ct = ct->ParallelAssemble();
 
     //Transfer to TrueDofs
-    w.ParallelAssemble(X.GetBlock(0));
-    psi.ParallelAssemble(X.GetBlock(1));
-
-    g->ParallelAssemble(B.GetBlock(0));
     f->ParallelAssemble(B.GetBlock(1));
 }

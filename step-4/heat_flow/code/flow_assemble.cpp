@@ -12,8 +12,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     f(NULL), g(NULL),
     m(NULL), d(NULL), c(NULL), ct(NULL),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
-    hBlocks(2,2), blockCoeff(2,2), H(NULL),
-    superlu(MPI_COMM_WORLD), SLU_A(NULL),
     psi(&fespace), w(&fespace), v(&fespace_v),
     theta(&fespace), theta_eta(&fespace), 
     psi_grad(&fespace_v), theta_dr(&fespace),
@@ -49,19 +47,40 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
 
+    //Apply boundary conditions
+    w.ProjectCoefficient(w_coeff);
+    psi.ProjectCoefficient(psi_coeff);
+
+    //Define the constant RHS
+    g = new ParLinearForm(&fespace);
+    g->Assemble();
+
+    //Define constant bilinear forms of the system
+    m = new ParBilinearForm (&fespace);
+    m->AddDomainIntegrator(new MassIntegrator);
+    m->Assemble();
+    m->EliminateEssentialBC(ess_bdr_w, w, *g, Operator::DIAG_ONE);
+    m->Finalize();
+    M = m->ParallelAssemble();
+
+    c = new ParMixedBilinearForm (&fespace, &fespace);
+    c->AddDomainIntegrator(new MixedGradGradIntegrator);
+    c->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
+    c->Assemble();
+    c->EliminateTrialDofs(ess_bdr_psi, psi, *g);
+    c->EliminateTestDofs(ess_bdr_w);
+    c->Finalize();
+    C = c->ParallelAssemble();
+
+    //Transfer to TrueDofs
+    w.ParallelAssemble(X.GetBlock(0));
+    psi.ParallelAssemble(X.GetBlock(1));
+    g->ParallelAssemble(B.GetBlock(0));
+
     //Create gradient interpolator
     grad.AddDomainIntegrator(new GradientInterpolator);
     grad.Assemble();
     grad.Finalize();
-
-    //Initialize solver
-    hBlocks = NULL;
-    blockCoeff = 1.;
-
-    superlu.SetPrintStatistics(false);
-    superlu.SetSymmetricPattern(true);
-    superlu.SetColumnPermutation(superlu::PARMETIS);
-    superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
 
     //Set initial system
     SetParameters(Theta);
