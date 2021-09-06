@@ -27,7 +27,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //            \------------/
     //                  0
     Array<int> ess_bdr(attributes);
-    ess_bdr[0] = 1;  ess_bdr[1] = 1;
+    ess_bdr[0] = 0;  ess_bdr[1] = 0;
     ess_bdr[2] = 0;  ess_bdr[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
     FunctionCoefficient initial(initial_f);
@@ -54,17 +54,16 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     T_solver.SetMaxIter(config.iter_conduction);
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
-
-    SetParameters(X);
 }
 
 double initial_f(const Vector &x){
     double mid_x = (Rmax + Rmin)/2;
-    double mid_y = height/2;
+    double mid_y = (Zmax - Zmin)/2;
+    double Rad = (Rmax - Rmin)/5;
 
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     if (r_2 < pow(Rad, 2))
-        return -5;
+        return 10;
     else
-        return 5;
+        return 20;
 }

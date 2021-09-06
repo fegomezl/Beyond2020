@@ -40,8 +40,7 @@ class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Vector &X);
 
-        void SetParameters(const Vector &X);
-        void UpdateVelocity(const ParGridFunction *v_flow);
+        void SetParameters(const Vector &X, const Vector &V);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
@@ -92,27 +91,27 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
     public:
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const HypreParVector *Theta);
-        void Solve(const HypreParVector *Theta);
-        void Update_T(const HypreParVector *Theta);
-        ~Flow_Operator();
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const Vector &Theta);
 
-        ParGridFunction *psi;
-        ParGridFunction *w;
-        ParGridFunction *v;
+        void SetParameters(const Vector &Theta);
+
+        void Solve(Vector &W, Vector &Psi, Vector &V);
+
+        ~Flow_Operator();
     protected:
         //Global parameters
         Config config;
+
+        ParGridFunction psi;
+        ParGridFunction w;
+        ParGridFunction v;
 
         //Mesh objects
         ParFiniteElementSpace &fespace;
 
         Array<int> block_true_offsets;
 
-        Array<int> ess_tdof_list_w;
         Array<int> ess_bdr_w;
-
-        Array<int> ess_tdof_list_psi;
         Array<int> ess_bdr_psi;
 
         //System objects
@@ -124,36 +123,41 @@ class Flow_Operator{
         ParMixedBilinearForm *ct;
 
         //Solver objects
-        BlockVector Y;
+        BlockVector X;
         BlockVector B;
+
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
+        HypreParMatrix *Ct;
 
-        //Boundary conditions
-        ParGridFunction *w_aux;
-        ParGridFunction *psi_aux;
-        ParGridFunction *v_aux;
-        ParGridFunction *theta_eta;
+        Array2D<HypreParMatrix*> hBlocks;
+        Array2D<double> blockCoeff; 
+        HypreParMatrix *H;
+       
+        SuperLUSolver superlu;
+        SuperLURowLocMatrix *SLU_A;
+
+        //Aditional variables
+        ParGridFunction theta;
+        ParGridFunction theta_eta;
+        ParGridFunction psi_grad;
+        ParGridFunction theta_dr;
 
         //Rotational coefficients
         FunctionCoefficient r;
-        FunctionCoefficient r_inv;
-        VectorFunctionCoefficient r_hat;
-        ScalarVectorProductCoefficient r_inv_hat;
-        VectorFunctionCoefficient zero;
+        VectorFunctionCoefficient r_inv_hat;
+        MatrixFunctionCoefficient rot;
 
         //Boundary Coefficients
-        VectorFunctionCoefficient w_grad; 
-        VectorFunctionCoefficient psi_grad; 
+        FunctionCoefficient w_coeff; 
+        FunctionCoefficient psi_coeff; 
 
         //Construction rV
         DiscreteLinearOperator grad;
-        MatrixFunctionCoefficient rot;
-        GradientGridFunctionCoefficient gradpsi;
-        MatrixVectorProductCoefficient rot_psi_grad;
-        VectorGridFunctionCoefficient rV_aux;
-        MatrixVectorProductCoefficient rV;
+
+        VectorGridFunctionCoefficient Psi_grad;
+        MatrixVectorProductCoefficient rot_Psi_grad;
 };
 
 class Artic_sea{
@@ -185,15 +189,23 @@ class Artic_sea{
         HYPRE_Int size_v;
 
         ParMesh *pmesh;
+
         FiniteElementCollection *fec;
         FiniteElementCollection *fec_v;
+
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
 
         //System objects
         ParGridFunction *theta;
+        ParGridFunction *w;
+        ParGridFunction *psi;
+        ParGridFunction *v;
+
         HypreParVector *Theta;
+        HypreParVector *W;
         HypreParVector *Psi;
+        HypreParVector *V;
 
         //Operators
         Conduction_Operator *cond_oper;
@@ -207,12 +219,10 @@ class Artic_sea{
         ParaViewDataCollection *paraview_out;
 };
 
+extern void zero_f(const Vector &x, Vector &f);
 extern double r_f(const Vector &x);
 extern void rot_f(const Vector &x, DenseMatrix &f);
-extern void zero_f(const Vector &x, Vector &f);
+extern void r_inv_hat_f(const Vector &x, Vector &f);
 
-extern double Rmin, Rmax, Zmin, Zmax, height;
+extern double Rmin, Rmax, Zmin, Zmax;
 extern double epsilon_r;
-
-extern double Vel;
-extern double Rad;

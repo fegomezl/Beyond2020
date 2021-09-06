@@ -1,60 +1,38 @@
 #include "header.h"
 
-void Flow_Operator::Solve(const HypreParVector *Theta){
-
-    this->Update_T(Theta);
-
+void Flow_Operator::Solve(Vector &W, Vector &Psi, Vector &V){
     //Create the complete bilinear operator:
     //
     //   H = [ M    C ]
     //       [ C^t  D ]
-    Array2D<HypreParMatrix*> hBlocks(2,2);
-    hBlocks = NULL;
     hBlocks(0, 0) = M;
     hBlocks(0, 1) = C;
-    hBlocks(1, 0) = C->Transpose();
+    hBlocks(1, 0) = Ct;
     hBlocks(1, 1) = D;
 
-    Array2D<double> blockCoeff(2,2);
-    blockCoeff(0, 0) = 1.;
-    blockCoeff(0, 1) = -1.;
-    blockCoeff(1, 0) = -1.;
-    blockCoeff(1, 1) = -1.;
+    if (H) delete H;
+    H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
 
-    HypreParMatrix *H = HypreParMatrixFromBlocks(hBlocks, &blockCoeff);
-
-    SuperLUSolver superlu = SuperLUSolver(MPI_COMM_WORLD);
-    SuperLURowLocMatrix SLU_A(*H);
-    superlu.SetOperator(SLU_A);
-    superlu.SetPrintStatistics(false);
-    superlu.SetSymmetricPattern(true);
-    superlu.SetColumnPermutation(superlu::PARMETIS);
-    superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
+    if (SLU_A) delete SLU_A;
+    SLU_A = new SuperLURowLocMatrix (*H);
+    superlu.SetOperator(*SLU_A);
 
     //Solve the linear system Ax=B
-    Y.Randomize();
-    superlu.Mult(B, Y);
+    superlu.Mult(B, X);
     superlu.DismantleGrid();
 
     //Recover the solution on each proccesor
-    w->Distribute(&(Y.GetBlock(0)));
-    for (int ii = 0; ii < w->Size(); ii++)
-        (*w)(ii) += (*w_aux)(ii);
+    w.Distribute(&(X.GetBlock(0)));
+    psi.Distribute(&(X.GetBlock(1)));
 
-    psi->Distribute(&(Y.GetBlock(1)));
-    for (int ii = 0; ii < psi->Size(); ii++)
-        (*psi)(ii) += (*psi_aux)(ii);
+    //Calculate velocity
+    grad.Mult(psi, psi_grad);
+    Psi_grad.SetGridFunction(&psi_grad);
+    rot_Psi_grad.SetBCoef(Psi_grad);
+    v.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
 
-    //Calculate rV
-    v->Randomize();
-    v_aux->Randomize();
-
-    //gradpsi.SetGridFunction(psi);
-    grad.Mult(*psi, *v_aux);
-    rV_aux.SetGridFunction(v_aux);
-    rV.SetBCoef(rV_aux);
-    v->ProjectDiscCoefficient(rV, GridFunction::ARITHMETIC);
-
-    //Free memory
-    delete H;
+    //Export flow information
+    w.ParallelAverage(W);
+    psi.ParallelAverage(Psi);
+    v.ParallelAverage(V);
 }
