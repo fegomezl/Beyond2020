@@ -84,6 +84,5 @@ double boundary_w(const Vector &x){
 }
 
 double boundary_psi(const Vector &x){
-    double vel = 0.;
-    return -0.5*vel*pow(x(0), 2);
+    return 0.;
 }

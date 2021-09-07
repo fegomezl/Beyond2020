@@ -112,7 +112,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &V){
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCLV));
-    k_theta->AddBoundaryIntegrator(new MassIntegrator(neg_r_robin_h_theta), robin_bdr_theta);
+    k_theta->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_theta), robin_bdr_theta);
     k_theta->Assemble();
     k_theta->Finalize();
 
@@ -120,7 +120,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &V){
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
     k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi->AddBoundaryIntegrator(new MassIntegrator(neg_r_robin_h_phi), robin_bdr_phi);
+    k_phi->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_phi), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
 }
