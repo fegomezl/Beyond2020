@@ -2,7 +2,6 @@
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //Solve M(dX_dt) = -K(X) for dX_dt
-
     HypreParVector Theta(&fespace);
     HypreParVector Phi(&fespace);
     for (int ii = block_true_offsets[0]; ii < block_true_offsets[1]; ii++)

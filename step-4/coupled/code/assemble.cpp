@@ -1,9 +1,10 @@
 #include "header.h"
 
 //Rotational functions
+void zero_f(const Vector &x, Vector &f);
 double r_f(const Vector &x);
 void rot_f(const Vector &x, DenseMatrix &f);
-void zero_f(const Vector &x, Vector &f);
+void r_inv_hat_f(const Vector &x, Vector &f);
 
 //Fusion temperature dependent of salinity
 double T_fun(const double &salinity);
@@ -22,32 +23,32 @@ void Artic_sea::assemble_system(){
     //Define solution x
     theta = new ParGridFunction(fespace);
     phi = new ParGridFunction(fespace);
+    w = new ParGridFunction(fespace);
+    psi = new ParGridFunction(fespace);
+    v = new ParGridFunction(fespace_v);
     phase = new ParGridFunction(fespace);
 
-    oper_T = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets,  X);
+    V = new HypreParVector(fespace_v);
 
-    //Reocver initial conditions
+    //Initialize operators
+    cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
+
+    //Solve initial velocity field
+    flow_oper->Solve(Z, *V);
+
+    //Read initial global state
     theta->Distribute(&(X.GetBlock(0)));
     phi->Distribute(&(X.GetBlock(1)));
-    Theta = theta->GetTrueDofs();
+    w->Distribute(&(Z.GetBlock(0)));
+    psi->Distribute(&(Z.GetBlock(1)));
+    v->Distribute(V);
 
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++){
         double T_f = config.T_f + T_fun((*phi)(ii));
         (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
     }
-
-    //Define solution psi
-    x_psi = new ParGridFunction(fespace);
-    x_v = new ParGridFunction(fespace_v);
-    x_w = new ParGridFunction(fespace);
-
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), X);
-    flow_oper->Solve(X);
-    (*x_psi) = flow_oper->GetStream();
-    (*x_v) = flow_oper->GetVelocity();
-    (*x_w) = flow_oper->GetVorticity();
-    oper_T->UpdateVelocity(x_v);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -76,16 +77,16 @@ void Artic_sea::assemble_system(){
 
     // Initialize ODE solver
     if (config.ode_solver_type < 8)
-        ode_solver->Init(*oper_T);
+        ode_solver->Init(*cond_oper);
     else if (cvode){
-        cvode->Init(*oper_T);
+        cvode->Init(*cond_oper);
         cvode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         cvode->SetMaxStep(dt);
         cvode->SetStepMode(CV_ONE_STEP);
         ode_solver = cvode;
     }
     else if (arkode){
-        arkode->Init(*oper_T);
+        arkode->Init(*cond_oper);
         arkode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         arkode->SetMaxStep(dt);
         arkode->SetStepMode(ARK_ONE_STEP);
@@ -101,9 +102,9 @@ void Artic_sea::assemble_system(){
     paraview_out->RegisterField("Temperature", theta);
     paraview_out->RegisterField("Salinity", phi);
     paraview_out->RegisterField("Phase", phase);
-    paraview_out->RegisterField("Stream_Function(r)", x_psi);
-    paraview_out->RegisterField("Velocity(r)", x_v);
-    paraview_out->RegisterField("Vorticity(r)", x_w);
+    paraview_out->RegisterField("Vorticity", w);
+    paraview_out->RegisterField("Stream", psi);
+    paraview_out->RegisterField("Velocity", v);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();
@@ -135,13 +136,24 @@ void zero_f(const Vector &x, Vector &f){
     f(1) = 0.;
 }
 
+void r_inv_hat_f(const Vector &x, Vector &f){
+    f(0) = pow(x(0) + epsilon_r, -1);
+    f(1) = 0.;
+}
+
 double T_fun(const double &salinity){
-    return -(0.6037*salinity + 0.00058123*pow(salinity, 3));
+    double a = 0.6037;
+    double b = 0.00058123;
+    return -(a*salinity + b*pow(salinity, 3));
 }
 
 double delta_c_s_fun(const double &temperature, const double &salinity){
-    return -0.00313*salinity -
-           0.00704*temperature -
-           0.0000783*salinity*temperature +
-           16.9*salinity*pow(temperature, -2);
+    double a = -0.00313;
+    double b = -0.00704;
+    double c = -0.0000783;
+    double d = 16.9;
+    return a*salinity +
+           b*temperature +
+           c*salinity*temperature +
+           d*salinity*pow(temperature, -2);
 }

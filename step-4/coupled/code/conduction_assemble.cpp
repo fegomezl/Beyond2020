@@ -55,13 +55,13 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //                  0
 
     Array<int> ess_bdr_theta(attributes); ess_bdr_theta = 0;
-    ess_bdr_theta[0] = 1;     ess_bdr_theta[1] = 1;     ess_bdr_theta[3] = 1;
+    ess_bdr_theta[0] = 0;     ess_bdr_theta[1] = 0;     ess_bdr_theta[3] = 0;
     newmann_bdr_theta[0] = 0; newmann_bdr_theta[1] = 0; newmann_bdr_theta[3] = 0;
     robin_bdr_theta[0] = 0;   robin_bdr_theta[1] = 0;   robin_bdr_theta[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_list_theta);
 
     Array<int> ess_bdr_phi(attributes); ess_bdr_phi = 0;
-    ess_bdr_phi[0] = 1;       ess_bdr_phi[1] = 1;       ess_bdr_phi[3] = 1;
+    ess_bdr_phi[0] = 0;       ess_bdr_phi[1] = 0;       ess_bdr_phi[3] = 0;
     newmann_bdr_phi[0] = 0;   newmann_bdr_phi[1] = 0;   newmann_bdr_phi[3] = 0;
     robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 0;     robin_bdr_phi[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_list_phi);
@@ -115,25 +115,23 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     T_phi_solver.SetMaxIter(config.iter_conduction);
     T_phi_solver.SetPrintLevel(0);
     T_phi_solver.SetPreconditioner(T_phi_prec);
-
-    SetParameters(X);
 }
 
 //Initial conditions
 double initial_theta_f(const Vector &x){
     double r_2 = pow(x(0) - Rmax/2, 2) + pow(x(1) - Zmax/2, 2);
-    if (r_2 > pow(rad, 2))
-        return theta_in;
-    else
+    if (r_2 < pow(rad, 2))
         return theta_out;
+    else
+        return theta_in;
 }
 
 double initial_phi_f(const Vector &x){
     double r_2 = pow(x(0) - Rmax/2, 2) + pow(x(1) - Zmax/2, 2);
-    if (r_2 > pow(rad, 2))
-        return phi_in;
-    else
+    if (r_2 < pow(rad, 2))
         return phi_out;
+    else
+        return phi_in;
 }
 
 double newmann_theta_f(const Vector &x){

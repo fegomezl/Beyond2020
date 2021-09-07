@@ -46,4 +46,5 @@ void Artic_sea::make_grid(const char *mesh_file){
     block_true_offsets.PartialSum();
 
     X.Update(block_true_offsets);
+    Z.Update(block_true_offsets);
 }

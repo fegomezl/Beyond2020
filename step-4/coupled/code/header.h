@@ -41,8 +41,7 @@ class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
 
-        void SetParameters(const BlockVector &X);
-        void UpdateVelocity(const ParGridFunction *v_flow);
+        void SetParameters(const BlockVector &X, const Vector &V);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
@@ -118,93 +117,69 @@ class Conduction_Operator : public TimeDependentOperator{
 };
 
 class Flow_Operator{
-  public:
-    Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, const BlockVector X);
-    void Solve(const BlockVector X);
-    void Update_T(const BlockVector X);
-    ParGridFunction GetStream(){return *psi;}
-    ParGridFunction GetVelocity(){return *v;}
-    ParGridFunction GetVorticity(){return *w;}
-    ~Flow_Operator();
+    public:
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const BlockVector &X);
 
-  protected:
+        void SetParameters(const BlockVector &X);
+
+        void Solve(BlockVector &Z, Vector &V);
+
+        ~Flow_Operator();
+    protected:
         //Global parameters
         Config config;
 
         //Mesh objects
         ParFiniteElementSpace &fespace;
 
-       Array<int> block_true_offsets;
+        Array<int> block_true_offsets;
+
+        Array<int> ess_bdr_w;
+        Array<int> ess_bdr_psi;
 
         //System objects
+        ParGridFunction psi;
+        ParGridFunction w;
+        ParGridFunction v;
+
+        BlockVector Y;
+        BlockVector B;
+
         ParLinearForm *f;
         ParLinearForm *g;
         ParBilinearForm *m;
         ParBilinearForm *d;
         ParMixedBilinearForm *c;
-        Array<int> ess_bdr_psi;
-        Array<int> ess_bdr_w;
-        Array<int> ess_tdof_list_w;
-        Array<int> ess_tdof_list_psi;
+        ParMixedBilinearForm *ct;
 
         //Solver objects
-        ParGridFunction *psi;
-        ParGridFunction *w;
-        ParGridFunction *v;
-        BlockVector Y;
-        BlockVector B;
         HypreParMatrix *M;
         HypreParMatrix *D;
         HypreParMatrix *C;
-        Array2D<HypreParMatrix*> hBlocks;
-        HypreParMatrix *H;
+        HypreParMatrix *Ct;
 
-       //Boundary conditions
-       ParGridFunction *w_aux;
-       ParGridFunction *psi_aux;
-       ParGridFunction *v_aux;
-       ParGridFunction *theta;
-       ParGridFunction *phi;
+        //Additional variables
+        ParGridFunction theta;
+        ParGridFunction theta_dr;
+        ParGridFunction phi;
+        ParGridFunction phi_dr;
+        ParGridFunction eta;
+        ParGridFunction psi_grad;
+      
+        //Rotational coefficients
+        FunctionCoefficient r;
+        VectorFunctionCoefficient r_inv_hat;
+        MatrixFunctionCoefficient rot;
 
-       //Rotational coefficients
-       FunctionCoefficient r;
-       FunctionCoefficient r_invCoeff;
-       VectorFunctionCoefficient r_hatCoeff;
-       ScalarVectorProductCoefficient r_inv_hat;
-       VectorFunctionCoefficient zero;
-       //Properties coefficients
-       GridFunctionCoefficient eta;
-       ConstantCoefficient neg;
-       //Dirichlet coefficients
-       FunctionCoefficient w_coeff;
-       VectorFunctionCoefficient w_grad;
+        //Boundary coefficients
+        FunctionCoefficient w_coeff;
+        FunctionCoefficient psi_coeff;
 
-       FunctionCoefficient psi_coeff;
-       VectorFunctionCoefficient psi_grad;
-       //Rotational coupled coefficients
-       ScalarVectorProductCoefficient eta_r_inv_hat;
+        //Construction rV
+        DiscreteLinearOperator grad;
 
-       ProductCoefficient neg_w;
-       InnerProductCoefficient r_inv_hat_w_grad;
-       ScalarVectorProductCoefficient neg_w_grad;
-
-       InnerProductCoefficient r_inv_hat_psi_grad;
-       InnerProductCoefficient eta_r_inv_hat_psi_grad;
-       ScalarVectorProductCoefficient neg_psi_grad;
-       ScalarVectorProductCoefficient eta_psi_grad;
-       ScalarVectorProductCoefficient neg_eta_psi_grad;
-       //Temperature coefficients
-       DiscreteLinearOperator grad;
-       MatrixFunctionCoefficient rot;
-       GradientGridFunctionCoefficient gradpsi;
-       MatrixVectorProductCoefficient rot_psi_grad;
-       VectorGridFunctionCoefficient rV_aux;
-       MatrixVectorProductCoefficient rV;
-
-       //Solver objects
-       SuperLUSolver *superlu;
-       Operator *SLU_A;
-
+        VectorGridFunctionCoefficient Psi_grad;
+        MatrixVectorProductCoefficient rot_Psi_grad;
 };
 
 class Artic_sea{
@@ -236,8 +211,10 @@ class Artic_sea{
         HYPRE_Int size_v;
 
         ParMesh *pmesh;
+
         FiniteElementCollection *fec;
         FiniteElementCollection *fec_v;
+
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
 
@@ -245,12 +222,19 @@ class Artic_sea{
 
         //System objects
         ParGridFunction *theta;
-        HypreParVector *Theta;
         ParGridFunction *phi;
+        ParGridFunction *w;
+        ParGridFunction *psi;
+        ParGridFunction *v;
         ParGridFunction *phase;
 
-        BlockVector X;
-        Conduction_Operator *oper_T;
+        BlockVector X;              //theta and phi
+        BlockVector Z;              //w and psi
+        HypreParVector *V;
+
+        //Operators
+        Conduction_Operator *cond_oper;
+        Flow_Operator *flow_oper;
 
         //Solver objects
         ODESolver *ode_solver;
@@ -258,25 +242,25 @@ class Artic_sea{
         ARKStepSolver *arkode;
 
         ParaViewDataCollection *paraview_out;
-
-        //Flow_Operator objects
-        Flow_Operator *flow_oper;
-        ParGridFunction *x_psi;
-        ParGridFunction *x_v;
-        ParGridFunction *x_w;
 };
 
+//Rotational functions
+extern void zero_f(const Vector &x, Vector &f);
 extern double r_f(const Vector &x);
 extern void rot_f(const Vector &x, DenseMatrix &f);
-extern void zero_f(const Vector &x, Vector &f);
+extern void r_inv_hat_f(const Vector &x, Vector &f);
 
+//Fusion temperature dependent of salinity
 extern double T_fun(const double &salinity);
 
+//Variation on solid heat capacity
 extern double delta_c_s_fun(const double &temperature, const double &salinity);
 
+//Simulation parameters
 extern double Rmin, Rmax, Zmin, Zmax, height;
 extern double epsilon_r;
 
+//Physical parameters
 extern double vel;
 extern double entrance;
 
