@@ -123,6 +123,10 @@ void Flow_Operator::SetParameters(const Vector &Theta){
     ProductCoefficient k_r_Theta_dr(r, k_Theta_dr);
     ScalarVectorProductCoefficient neg_eta_r_inv_hat(neg_eta, r_inv_hat);
 
+    //Apply boundary conditions
+    w.ProjectCoefficient(w_coeff);
+    psi.ProjectCoefficient(psi_coeff);
+
     //Define the non-constant RHS
     if (f) delete f;
     f = new ParLinearForm(&fespace);

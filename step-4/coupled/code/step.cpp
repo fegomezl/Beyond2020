@@ -179,6 +179,10 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     ProductCoefficient k_r_Theta_dr(r, k_Theta_dr);
     ProductCoefficient k_r_Phi_dr(r, k_Phi_dr);
 
+    //Apply boundary conditions
+    w.ProjectCoefficient(w_coeff);
+    psi.ProjectCoefficient(psi_coeff);
+
     //Define the non-constant RHS
     if (f) delete f;
     f = new ParLinearForm(&fespace);
