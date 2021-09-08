@@ -50,6 +50,15 @@ void Artic_sea::assemble_system(){
         (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
     }
 
+    //Normalize stream
+    psi->Neg();
+    double psi_local_max = psi->Max(), psi_max;
+    MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    if (psi_max != 0){
+        for (int ii = 0; ii < psi->Size(); ii++)
+            (*psi)(ii) /= psi_max;
+    }
+
     //Set the ODE solver type
     switch (config.ode_solver_type){
         // MFEM explicit methods
@@ -127,8 +136,8 @@ double r_f(const Vector &x){
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.; f(0,1) = 1.;
-    f(1,0) = -1.; f(1,1) = 0.;
+    f(0,0) = 0.; f(0,1) = -1.;
+    f(1,0) = 1.; f(1,1) = 0.;
 }
 
 void zero_f(const Vector &x, Vector &f){

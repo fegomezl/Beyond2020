@@ -256,3 +256,5 @@ extern double c_l;
 extern double vel, r0;
 extern double theta_in, theta_out;
 extern double phi_in, phi_out;
+extern double n_l, n_h;
+extern double theta_n, phi_n;

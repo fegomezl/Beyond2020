@@ -33,6 +33,15 @@ void Artic_sea::time_step(){
             (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
         }
 
+        //Normalize stream
+        psi->Neg();
+        double psi_local_max = psi->Max(), psi_max;
+        MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        if (psi_max != 0){
+            for (int ii = 0; ii < psi->Size(); ii++)
+                (*psi)(ii) /= psi_max;
+        }
+
         //Graph
         paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);

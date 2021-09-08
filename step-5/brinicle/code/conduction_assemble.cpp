@@ -108,11 +108,17 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 //Initial conditions
 
 double initial_theta_f(const Vector &x){
-    return theta_in;
+    if (x(0) > r0 && (x(0)-r0)/n_l <= 1-(Zmax-x(1))/n_h)
+        return theta_n;
+    else
+        return theta_in;
 }
 
 double initial_phi_f(const Vector &x){
-    return phi_in;
+    if (x(0) > r0 && (x(0)-r0)/n_l <= 1-(Zmax-x(1))/n_h)
+        return phi_n;
+    else
+        return phi_in;
 }
 
 //Robin boundary conditions of the form kdu/dn = h(u-u_ref)

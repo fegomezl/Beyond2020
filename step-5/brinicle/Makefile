@@ -42,6 +42,10 @@ Ti=$(shell sed -n 41p settings/parameters.txt | tr -d -c 0-9.-)
 To=$(shell sed -n 42p settings/parameters.txt | tr -d -c 0-9.-)
 Si=$(shell sed -n 43p settings/parameters.txt | tr -d -c 0-9.)
 So=$(shell sed -n 44p settings/parameters.txt | tr -d -c 0-9.)
+Nl=$(shell sed -n 45p settings/parameters.txt | tr -d -c 0-9.)
+Nh=$(shell sed -n 46p settings/parameters.txt | tr -d -c 0-9.)
+Tn=$(shell sed -n 47p settings/parameters.txt | tr -d -c 0-9.-)
+Sn=$(shell sed -n 48p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
@@ -62,7 +66,8 @@ all: main.x results/mesh.msh
 						-T_f $(T_FU) -DT $(DELTA_T) -c_l $(C_L) -c_s $(C_S) \
 						-k_l $(K_L) -k_s $(K_S) -D_l $(D_L) -D_s $(D_S) -L $(L) \
 						 -e_eta $(EPSILON_ETA) -e_r $(EPSILON_R) \
-						 -v $(V) -r0 $(R0) -Ti $(Ti) -To $(To) -Si $(Si) -So $(So) 
+						 -v $(V) -r0 $(R0) -Ti $(Ti) -To $(To) -Si $(Si) -So $(So) \
+						 -nl $(Nl) -nh $(Nh) -Tn $(Tn) -Sn $(Sn)
 	@echo -e '\nDone!\n'
 
 main: main.x

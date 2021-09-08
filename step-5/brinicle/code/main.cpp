@@ -14,6 +14,8 @@ double c_l;
 double vel, r0;
 double theta_in, theta_out;
 double phi_in, phi_out;
+double n_l, n_h;
+double theta_n, phi_n;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -99,7 +101,14 @@ int main(int argc, char *argv[]){
                    "Initial salinity.");
     args.AddOption(&phi_out, "-So", "--Phi_out",
                    "Inflow salinity.");
-
+    args.AddOption(&n_l, "-nl", "--n_length",
+                   "Nucleation length.");
+    args.AddOption(&n_h, "-nh", "--n_heigth",
+                   "Nucleation height.");
+    args.AddOption(&theta_n, "-Tn", "--Theta_n",
+                   "Nucleation temperature.");
+    args.AddOption(&phi_n, "-Sn", "--Phi_n",
+                   "Nucleation salinity.");
 
     //Check if parameters were read correctly
     args.Parse();
