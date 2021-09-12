@@ -1,16 +1,16 @@
 Mesh Parameters
 settings/square.geo #Mesh_script
 0       #Rmin
-15      #Rmax
+35      #Rmax
 0       #Zmin
-10      #Zmax
-100     #Rcells
-100     #Zcells
+90      #Zmax
+60     #Rcells
+60     #Zcells
 
 Simulation parameters
 0.0001  #Dt
-0.14     #Final_time
-10      #Visualization_steps
+2.0     #Final_time
+100      #Visualization_steps
 
 FE parameters
 2          #Refinements
@@ -19,8 +19,8 @@ FE parameters
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
 100        #iter(Conduction)
-0.00001    #abstol(SUNDIALS)
-0.00001    #reltol(SUNDIALS)
+0.0000001    #abstol(SUNDIALS)
+0.0000001    #reltol(SUNDIALS)
 
 Physical parameters
 0       #Fusion_temperature
@@ -41,8 +41,8 @@ Brinicle conditions
 -1.8    #Initial_temperature
 -20     #Inflow_temperature
 3.5     #Initial_salinity
-22.5    #Inflow_salinity
-1       #Nucleation_length
-1       #Nucleation_height
+20    #Inflow_salinity
+2       #Nucleation_length
+1.5       #Nucleation_height
 -20     #Nucleation_temperature
 3.5     #Nucleation_salinity

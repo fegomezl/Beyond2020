@@ -157,11 +157,13 @@ double T_fun(const double &salinity){
 }
 
 double delta_c_s_fun(const double &temperature, const double &salinity){
+    double a0 = 1.92;
     double a = -0.00313;
     double b = -0.00704;
     double c = -0.0000783;
     double d = 16.9;
-    return a*salinity +
+    return a0+
+           a*salinity +
            b*temperature +
            c*salinity*temperature +
            d*salinity*pow(temperature, -2);
