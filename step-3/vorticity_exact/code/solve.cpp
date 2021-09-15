@@ -53,8 +53,14 @@ void Artic_sea::solve_system(){
     FunctionCoefficient Exact_w(exact_w);
     FunctionCoefficient Exact_psi(exact_psi);
     ConstantCoefficient zero(0.);
-    error_w = w->ComputeL2Error(Exact_w)/w->ComputeL2Error(zero);
-    error_psi = psi->ComputeL2Error(Exact_psi)/psi->ComputeL2Error(zero);
+
+    ParGridFunction exact_w_f(fespace);
+    ParGridFunction exact_psi_f(fespace);
+    exact_w_f.ProjectCoefficient(Exact_w);
+    exact_psi_f.ProjectCoefficient(Exact_psi);
+
+    error_w = w->ComputeL2Error(Exact_w)/exact_w_f.ComputeL2Error(zero);
+    error_psi = psi->ComputeL2Error(Exact_psi)/exact_psi_f.ComputeL2Error(zero);
 
     //Delete used memory
     delete H;
