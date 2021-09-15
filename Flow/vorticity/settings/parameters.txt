@@ -1,0 +1,19 @@
+Mesh Parameters
+settings/square.geo #Mesh_script
+0 #Rmin
+10 #Rmax
+0 #Zmin
+10 #Zmax
+100 #Rcells
+100 #Zcells
+
+FE parameters
+2 #Refinements
+1 #Order
+
+Physical parameters
+0       #Fusion_temperature
+9       #n_DeltaT
+1       #Viscosity
+3       #n_epsilon_eta
+2       #n_epsilon_r
