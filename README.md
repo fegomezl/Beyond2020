@@ -37,4 +37,4 @@ In each of the simulations, the domain is a cylinder, sometimes hollow, with an 
   - diffusion_flow:
     Heat and salinity diffusion problem, where both variables are weakly coplued, including convection effects with a quasi-static flow and a stream function-vorticity approach.
 - Brinicle
-    Simulation from **diffusion_flow** applied to form a brinicle, which is an ice channel formed on the artic sea because of icy brine fluxes that enter the ocean from the top layer of ice.
+  - Simulation from **diffusion_flow** applied to form a brinicle, which is an ice channel formed on the artic sea because of icy brine fluxes that enter the ocean from the top layer of ice.
