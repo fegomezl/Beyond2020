@@ -137,7 +137,6 @@ double temperature_f(const Vector &x){
     double mid_y = height/2;
     double sigma = (out_rad - int_rad)/10;
 
-    //double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     if (r_2 < pow(sigma, 2))
         return -10;
