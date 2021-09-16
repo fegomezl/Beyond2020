@@ -16,4 +16,4 @@ Physical parameters
 9       #n_DeltaT
 1       #Viscosity
 0       #n_epsilon_eta
-5       #n_epsilon_r
+0       #n_epsilon_r

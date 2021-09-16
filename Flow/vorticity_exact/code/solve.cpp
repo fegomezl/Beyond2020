@@ -59,7 +59,7 @@ void Artic_sea::solve_system(){
 
     error_w = 0;
     //error_w = w->ComputeL2Error(Exact_w)/exact_w_f.ComputeL2Error(zero);
-    error_psi = psi->ComputeL2Error(Exact_psi)/ComputeGlobalLpNorm(2, Exact_psi, *pmesh, irs); 
+    error_psi = psi->ComputeL2Error(Exact_psi, irs)/ComputeGlobalLpNorm(2, Exact_psi, *pmesh, irs); 
 
     //Delete used memory
     delete H;

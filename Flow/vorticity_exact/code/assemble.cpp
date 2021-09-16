@@ -131,7 +131,7 @@ double r_f(const Vector &x){
 }
 
 void r_inv_hat_f(const Vector &x, Vector &f){
-    f(0) = pow(x(0) + epsilon_r, -1);
+    f(0) = pow(x(0), -1);
     f(1) = 0.;
 }
 
