@@ -66,7 +66,7 @@ void Artic_sea::assemble_system(){
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
 
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
-    ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
+    ess_bdr_psi[0] = 0; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
 
     //Define grid functions
@@ -144,23 +144,23 @@ double scale = 1e-4;
 
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    return 8*scale*x(0)*x(1);
+    return 0.;
 }
 
 //Boundary values
 double boundary_w(const Vector &x){
-    return exact_w(x);
+    return 0.;
 }
 
 double boundary_psi(const Vector &x){
-    return exact_psi(x);
+    return x(0)*boost::math::cyl_bessel_j(1, boost::math::cyl_bessel_j_zero(1., 1)*x(0)/out_rad);
 }
 
 //Exact solutions
 double exact_w(const Vector &x){
-  return 8*scale*pow(x(0),2)*x(1);
+    return 0.;
 }
 
 double exact_psi(const Vector &x){
-  return scale*x(1)*pow(x(0),4);
+    return x(0)*boost::math::cyl_bessel_j(1, boost::math::cyl_bessel_j_zero(1., 1)*x(0)/out_rad)*cosh(boost::math::cyl_bessel_j_zero(1., 1)*x(1)/out_rad)/cosh(boost::math::cyl_bessel_j_zero(1., 1)*height/out_rad);
 }

@@ -50,17 +50,16 @@ void Artic_sea::solve_system(){
     v->ProjectDiscCoefficient(V, GridFunction::ARITHMETIC);
 
     //Calculate convergence error
-    FunctionCoefficient Exact_w(exact_w);
     FunctionCoefficient Exact_psi(exact_psi);
-    ConstantCoefficient zero(0.);
 
-    ParGridFunction exact_w_f(fespace);
-    ParGridFunction exact_psi_f(fespace);
-    exact_w_f.ProjectCoefficient(Exact_w);
-    exact_psi_f.ProjectCoefficient(Exact_psi);
+    int order_quad = max(2, 2*config.order+1);
+    const IntegrationRule *irs[Geometry::NumGeom];
+    for (int ii=0; ii < Geometry::NumGeom; ++ii)
+        irs[ii] = &(IntRules.Get(ii, order_quad));
 
-    error_w = w->ComputeL2Error(Exact_w)/exact_w_f.ComputeL2Error(zero);
-    error_psi = psi->ComputeL2Error(Exact_psi)/exact_psi_f.ComputeL2Error(zero);
+    error_w = 0;
+    //error_w = w->ComputeL2Error(Exact_w)/exact_w_f.ComputeL2Error(zero);
+    error_psi = psi->ComputeL2Error(Exact_psi)/ComputeGlobalLpNorm(2, Exact_psi, *pmesh, irs); 
 
     //Delete used memory
     delete H;
