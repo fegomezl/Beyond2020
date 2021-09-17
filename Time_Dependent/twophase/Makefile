@@ -63,8 +63,8 @@ ifeq ($(SHARE_DIR), NULL)
 	@echo 'No share directory.'
 else
 	@echo -e 'Moving graphs ... \c'
-	@rm -rf $(SHARE_DIR)/step-2
-	@cp -r results $(SHARE_DIR)/step-2
+	@rm -rf $(SHARE_DIR)/twophase
+	@cp -r results $(SHARE_DIR)/twophase
 	@echo -e 'Done!'
 endif
 
