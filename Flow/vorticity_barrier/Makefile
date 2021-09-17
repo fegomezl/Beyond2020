@@ -7,15 +7,15 @@ OUTER_RADIUS=$(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.)
 HEIGHT=$(shell sed -n 6p settings/parameters.txt | tr -d -c 0-9.)  
 
 #Program parameters
-REF=$(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.) 
-ORDER=$(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.)
+REF=$(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.) 
+ORDER=$(shell sed -n 13p settings/parameters.txt | tr -d -c 0-9.)
 
 #Physical parameters
-T_FU=$(shell sed -n 15p settings/parameters.txt | tr -d -c 0-9.-)
-DELTA_T=$(shell sed -n 16p settings/parameters.txt | tr -d -c 0-9.)
-VISC=$(shell sed -n 17p settings/parameters.txt | tr -d -c 0-9.-)
-EPSILON_ETA=$(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.)
-EPSILON_R=$(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
+T_FU=$(shell sed -n 16p settings/parameters.txt | tr -d -c 0-9.-)
+DELTA_T=$(shell sed -n 17p settings/parameters.txt | tr -d -c 0-9.)
+VISC=$(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.-)
+EPSILON_ETA=$(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
+EPSILON_R=$(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX=mpic++
@@ -43,8 +43,8 @@ ifeq ($(SHARE_DIR), NULL)
 	@echo 'No share directory.'
 else 
 	@echo -e 'Moving graphs ... \c'
-	@rm -rf $(SHARE_DIR)/vorticity
-	@cp -r results/graph $(SHARE_DIR)/vorticity
+	@rm -rf $(SHARE_DIR)/vorticity_barrier
+	@cp -r results/graph $(SHARE_DIR)/vorticity_barrier
 	@echo 'Done!'
 endif
 

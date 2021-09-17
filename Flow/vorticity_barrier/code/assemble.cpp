@@ -15,6 +15,7 @@ double boundary_w(const Vector &x);
 
 //Boundary values for psi
 double boundary_psi(const Vector &x);
+double inflow(double x);
 
 void Artic_sea::assemble_system(){
     //Calculate the porus coefficient
@@ -42,6 +43,8 @@ void Artic_sea::assemble_system(){
     //Dirichlet coefficients
     FunctionCoefficient w_coeff(boundary_w);
     FunctionCoefficient psi_coeff(boundary_psi);
+    ConstantCoefficient psi_aux_1(inflow(int_rad));
+    ConstantCoefficient psi_aux_2(inflow(out_rad));
 
     //Rotational coupled coefficients
     ScalarVectorProductCoefficient neg_eta_r_inv_hat(neg_eta, r_inv_hat);
@@ -49,21 +52,29 @@ void Artic_sea::assemble_system(){
 
     //Define essential boundary conditions
     //   
-    //                  1
-    //            /------------\
-    // (psi,w=0)  |            |
-    //           2|            |3
-    //            |            |
-    //            \------------/
-    //                  0
+    //                   1
+    //             /------------\
+    // (psi,w=0)   |___      ___|
+    //              ___|3  5|___ 
+    //          2  |            | 4
+    //             \------------/
+    //                   0
 
     Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
-    ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
-    ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
+    ess_bdr_w[0] = 0; ess_bdr_w[1] = 0; ess_bdr_w[2] = 1;
+    ess_bdr_w[3] = 0; ess_bdr_w[4] = 1; ess_bdr_w[5] = 0;
 
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
-    ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
-    ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
+    ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1; ess_bdr_psi[2] = 1;
+    ess_bdr_psi[3] = 1; ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 1;
+
+    Array<int> aux_bdr_psi_1(pmesh->bdr_attributes.Max());
+    aux_bdr_psi_1 = 0;
+    aux_bdr_psi_1[3] = 1;
+
+    Array<int> aux_bdr_psi_2(pmesh->bdr_attributes.Max());
+    aux_bdr_psi_2 = 0;
+    aux_bdr_psi_2[5] = 1;
 
     //Define grid functions
     w =  new ParGridFunction(fespace);
@@ -71,6 +82,8 @@ void Artic_sea::assemble_system(){
 
     psi = new ParGridFunction(fespace);
     psi->ProjectCoefficient(psi_coeff);
+    psi->ProjectBdrCoefficient(psi_aux_1, aux_bdr_psi_1);
+    psi->ProjectBdrCoefficient(psi_aux_2, aux_bdr_psi_2);
 
     //Define the RHS
     ParLinearForm g(fespace);
@@ -135,11 +148,11 @@ void r_inv_hat_f(const Vector &x, Vector &f){
 double temperature_f(const Vector &x){
     double mid_x = (out_rad + int_rad)/2;
     double mid_y = height/2;
-    double sigma = 1;
+    double sigma = (out_rad - int_rad)/10;
 
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    if (abs(x(0) - mid_x) > sigma && abs(x(1) - mid_y) < sigma)
-        return -10;
+    if (r_2 < pow(sigma, 2))
+        return 10;
     else
         return 10;
 }
@@ -156,5 +169,9 @@ double boundary_w(const Vector &x){
 
 //Boundary values for psi
 double boundary_psi(const Vector &x){
-    return -0.5*pow(x(0), 2);
+    return inflow(x(0));
+}
+
+double inflow(double x){
+    return -0.5*pow(x, 2);
 }

@@ -44,8 +44,8 @@ ifeq ($(SHARE_DIR), NULL)
 	@echo 'No share directory.'
 else 
 	@echo -e 'Moving graphs ... \c'
-	@rm -rf $(SHARE_DIR)/step-3
-	@cp -r results/graph $(SHARE_DIR)/step-3
+	@rm -rf $(SHARE_DIR)/vorticity_exact
+	@cp -r results/graph $(SHARE_DIR)/vorticity_exact
 	@echo 'Done!'
 endif
 
