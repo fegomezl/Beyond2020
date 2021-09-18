@@ -17,8 +17,10 @@ void Artic_sea::time_step(){
         vis_iteration = 0;
         vis_impressions++;
 
-        //Graph
+        //Update information
         x->SetFromTrueDofs(*X);
+
+        //Graph
         paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);
         paraview_out->Save();

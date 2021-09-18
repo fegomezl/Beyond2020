@@ -51,14 +51,14 @@ void Artic_sea::assemble_system(){
         ode_solver->Init(*oper);
     else if (cvode){
         cvode->Init(*oper);
-        cvode->SetSStolerances(config.reltol, config.abstol);
+        cvode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         cvode->SetMaxStep(dt);
         cvode->SetStepMode(CV_ONE_STEP);
         ode_solver = cvode;
     }
     else if (arkode){
         arkode->Init(*oper);
-        arkode->SetSStolerances(config.reltol, config.abstol);
+        arkode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         arkode->SetMaxStep(dt);
         arkode->SetStepMode(ARK_ONE_STEP);
         if (config.ode_solver_type == 11) arkode->SetERKTableNum(FEHLBERG_13_7_8);
@@ -66,7 +66,7 @@ void Artic_sea::assemble_system(){
     }
 
     //Open the paraview output and print initial state
-    string folder = "results/" + to_string(config.refinements) + "_" + to_string(config.nDeltaT); 
+    string folder = "results/graph"; 
     paraview_out = new ParaViewDataCollection(folder, pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
@@ -95,7 +95,7 @@ double initial(const Vector &x){
     return (b-a)*pow(sin(M_PI*(x(0) - Rmin)/(Rmax-Rmin))*sin(M_PI*(x(1)-Zmin)/(Zmax-Zmin)),2) + a;
 }
 
-double rf(const Vector &x){
+double r_f(const Vector &x){
     return x(0);
 }
 
@@ -109,31 +109,30 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     aux(&fespace),
     aux_C(&fespace),
     aux_K(&fespace),
-    r(rf),
-    coeff_C(&aux_C), coeff_rC(r, coeff_C),
-    coeff_K(&aux_K), coeff_rK(r, coeff_K), dt_coeff_rK(1., coeff_rK),
-    coeff_L(&aux), coeff_rL(r, coeff_L),
+    coeff_r(r_f),
+    coeff_C(&aux_C), coeff_rC(coeff_r, coeff_C),
+    coeff_K(&aux_K), coeff_rK(coeff_r, coeff_K), dt_coeff_rK(1., coeff_rK),
+    coeff_L(&aux), coeff_rL(coeff_r, coeff_L),
     M_solver(fespace.GetComm()),
     T_solver(fespace.GetComm())
 {
-    const double rel_tol = 1e-8;
 
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
     //Configure M solver
     M_solver.iterative_mode = false;
-    M_solver.SetRelTol(rel_tol);
-    M_solver.SetAbsTol(0.);
-    M_solver.SetMaxIter(100);
+    M_solver.SetRelTol(config.reltol_conduction);
+    M_solver.SetAbsTol(config.abstol_conduction);
+    M_solver.SetMaxIter(config.iter_conduction);
     M_solver.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
     M_prec.SetType(HypreSmoother::Jacobi);
 
     //Configure T solver
     T_solver.iterative_mode = false;
-    T_solver.SetRelTol(rel_tol);
-    T_solver.SetAbsTol(0.);
-    T_solver.SetMaxIter(100);
+    T_solver.SetRelTol(config.reltol_conduction);
+    T_solver.SetAbsTol(config.abstol_conduction);
+    T_solver.SetMaxIter(config.iter_conduction);
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 

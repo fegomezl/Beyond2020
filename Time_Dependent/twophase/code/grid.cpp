@@ -26,11 +26,12 @@ void Artic_sea::make_grid(const char *mesh_file){
     for (int ii = 0; ii < config.refinements - serial_refinements; ii++)
         pmesh->UniformRefinement();
 
+    //Calculate minimum size of elements
+    double null;
+    pmesh->GetCharacteristics(h_min, null, null, null);
+
     //Create the FEM space associated with the mesh
-    if (config.order > 0)
-        fec = new H1_FECollection(config.order, dim);
-    else
-        fec = new H1_FECollection(config.order = 1, dim);
+    fec = new H1_FECollection(config.order, dim);
     fespace = new ParFiniteElementSpace(pmesh, fec);
     size = fespace->GlobalTrueVSize();
 }
