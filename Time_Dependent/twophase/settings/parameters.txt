@@ -8,8 +8,8 @@ settings/square.geo #Mesh_script
 30 #Zcells
 
 FE parameters
-3 #Refinements_initial
-3 #Refinements_last
+4 #Refinements_initial
+4 #Refinements_last
 1 #Order
 
 Simulation parameters

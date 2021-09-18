@@ -10,7 +10,7 @@ void Artic_sea::assemble_system(){
 
     //Set boundary conditions
     ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 0;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
+    ess_bdr = 1;  ess_bdr[2] = 0;
 
     //Define solution x and apply initial conditions
     x = new ParGridFunction(fespace);
