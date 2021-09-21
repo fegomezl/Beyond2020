@@ -32,6 +32,10 @@ K_L=$(shell sed -n 31p settings/parameters.txt | tr -d -c 0-9.)
 K_S=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
 L=$(shell sed -n 33p settings/parameters.txt | tr -d -c 0-9.)
 
+#Benchmark parameters
+T_L=$(shell sed -n 36p settings/parameters.txt | tr -d -c 0-9.)
+T_S=$(shell sed -n 37p settings/parameters.txt | tr -d -c 0-9.)
+
 #Compiling parameters
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
@@ -49,7 +53,8 @@ all: main.x results/mesh.msh
 						-abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 						-abstol_s $(ABST_S) -reltol_s $(RELT_S) \
 						-T_f $(T_FU) -DT $(DELTA_T) -ET $(EPSILON_T) -c_l $(C_L) -c_s $(C_S) \
-						-k_l $(K_L) -k_s $(K_S) -L $(L)
+						-k_l $(K_L) -k_s $(K_S) -L $(L) \
+						-T_l $(T_L) -T_s $(T_S)
 	@echo -e '\nDone!\n'
 
 main: main.x
@@ -63,8 +68,8 @@ ifeq ($(SHARE_DIR), NULL)
 	@echo 'No share directory.'
 else
 	@echo -e 'Moving graphs ... \c'
-	@rm -rf $(SHARE_DIR)/twophase
-	@cp -r results $(SHARE_DIR)/twophase
+	@rm -rf $(SHARE_DIR)/twophase_exact
+	@cp -r results $(SHARE_DIR)/twophase_exact
 	@echo -e 'Done!'
 endif
 

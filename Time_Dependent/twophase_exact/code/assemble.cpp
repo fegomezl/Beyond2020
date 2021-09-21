@@ -1,5 +1,12 @@
 #include "header.h"
 
+//Rotational functions
+double r_f(const Vector &x);
+void zero_f(const Vector &x, Vector &f);
+
+//Initial condition
+double initial_f(const Vector &x);
+
 void Artic_sea::assemble_system(){
     //Initialize the system
     t = 0;
@@ -8,23 +15,15 @@ void Artic_sea::assemble_system(){
     vis_steps = config.vis_steps_max;
     vis_impressions = 0;
 
-    //Set boundary conditions
-    ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 0;  ess_bdr[0] = 1;  ess_bdr[1] = 1;
-
-    Array<int> ess_bdr_aux(pmesh->bdr_attributes.Max());
-    ess_bdr_aux = 0; ess_bdr_aux[0] = 1;
-
-    //Define solution x and apply initial conditions
+    //Define solution x
     x = new ParGridFunction(fespace);
-    ConstantCoefficient initial_aux(T_0);
-    x->ProjectCoefficient(initial_f);
-    x->ProjectBdrCoefficient(initial_f, ess_bdr);
-    x->ProjectBdrCoefficient(initial_aux, ess_bdr_aux);
     X = new HypreParVector(fespace);
-    x->GetTrueDofs(*X);
 
-    oper = new Conduction_Operator(config, *fespace, *X, ess_bdr);
+    //Initialize operators
+    oper = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *X);
+
+    //Read initial global state
+    x->Distribute(X);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -56,14 +55,14 @@ void Artic_sea::assemble_system(){
         ode_solver->Init(*oper);
     else if (cvode){
         cvode->Init(*oper);
-        cvode->SetSStolerances(config.reltol, config.abstol);
+        cvode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         cvode->SetMaxStep(dt);
         cvode->SetStepMode(CV_ONE_STEP);
         ode_solver = cvode;
     }
     else if (arkode){
         arkode->Init(*oper);
-        arkode->SetSStolerances(config.reltol, config.abstol);
+        arkode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
         arkode->SetMaxStep(dt);
         arkode->SetStepMode(ARK_ONE_STEP);
         if (config.ode_solver_type == 11) arkode->SetERKTableNum(FEHLBERG_13_7_8);
@@ -71,7 +70,7 @@ void Artic_sea::assemble_system(){
     }
 
     //Open the paraview output and print initial state
-    string folder = "results/" + to_string(config.refinements) + "_" + to_string(config.nDeltaT); 
+    string folder = "results/graph"; 
     paraview_out = new ParaViewDataCollection(folder, pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
@@ -94,51 +93,73 @@ void Artic_sea::assemble_system(){
 
 }
 
-double initial(const Vector &x){
-    return T_i;
-}
-
-double rf(const Vector &x){
-    return x(0);
-}
-
-Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
+Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     config(config),
     fespace(fespace),
-    m(NULL),
-    k(NULL),
-    t(NULL),
-    aux(&fespace),
-    aux_C(&fespace),
-    aux_K(&fespace),
-    r(rf),
-    coeff_C(&aux_C), coeff_rC(r, coeff_C),
-    coeff_K(&aux_K), coeff_rK(r, coeff_K), dt_coeff_rK(1., coeff_rK),
-    coeff_L(&aux), coeff_rL(r, coeff_L),
-    M_solver(fespace.GetComm()),
-    T_solver(fespace.GetComm())
+    m(NULL), k(NULL), t(NULL),
+    aux(&fespace), aux_C(&fespace), aux_K(&fespace), aux_L(&fespace),
+    coeff_r(r_f), zero(dim, zero_f),
+    coeff_rC(coeff_r, coeff_r),
+    coeff_rK(coeff_r, coeff_r), dt_coeff_rK(1., coeff_rK),
+    dHdT(zero, zero), dT_2(zero, zero),
+    M_solver(fespace.GetComm()),T_solver(fespace.GetComm())
 {
-    const double rel_tol = 1e-8;
+    //Set boundary conditions
+    //
+    //                  1
+    //            /------------\
+    //            |            |
+    //    (0)    2|            |3
+    //            |            |
+    //            \------------/
+    //                  0
 
+    Array<int> ess_bdr(attributes);
+    ess_bdr[0] = 1;  ess_bdr[1] = 1;
+    ess_bdr[2] = 0;  ess_bdr[3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+
+    Array<int> ess_bdr_aux(attributes);
+    ess_bdr_aux = 0; ess_bdr_aux[0] = 1;
+
+    //Define initial condition
+    FunctionCoefficient initial(initial_f);    
+    ConstantCoefficient bdr(T_s);
+    aux.ProjectCoefficient(initial);
+    aux.ProjectBdrCoefficient(initial, ess_bdr);
+    aux.ProjectBdrCoefficient(bdr, ess_bdr_aux);
+    aux.GetTrueDofs(X);
 
     //Configure M solver
     M_solver.iterative_mode = false;
-    M_solver.SetRelTol(rel_tol);
-    M_solver.SetAbsTol(0.);
-    M_solver.SetMaxIter(100);
+    M_solver.SetRelTol(config.reltol_conduction);
+    M_solver.SetAbsTol(config.abstol_conduction);
+    M_solver.SetMaxIter(config.iter_conduction);
     M_solver.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
     M_prec.SetType(HypreSmoother::Jacobi);
 
     //Configure T solver
     T_solver.iterative_mode = false;
-    T_solver.SetRelTol(rel_tol);
-    T_solver.SetAbsTol(0.);
-    T_solver.SetMaxIter(100);
+    T_solver.SetRelTol(config.reltol_conduction);
+    T_solver.SetAbsTol(config.abstol_conduction);
+    T_solver.SetMaxIter(config.iter_conduction);
     T_solver.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
     SetParameters(X);
+}
+
+double r_f(const Vector &x){
+    return x(0);
+}
+
+void zero_f(const Vector &x, Vector &f){
+    f(0) = 0.;
+    f(1) = 0.;
+}
+
+double initial_f(const Vector &x){
+    return T_l;
 }

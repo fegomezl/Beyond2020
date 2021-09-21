@@ -17,8 +17,10 @@ void Artic_sea::time_step(){
         vis_iteration = 0;
         vis_impressions++;
 
-        //Graph
+        //Update information
         x->SetFromTrueDofs(*X);
+
+        //Graph
         paraview_out->SetCycle(vis_impressions);
         paraview_out->SetTime(t);
         paraview_out->Save();
@@ -40,13 +42,12 @@ void Artic_sea::time_step(){
 
 void Conduction_Operator::SetParameters(const Vector &X){
     //Create the auxiliar grid functions
-    Vector Aux(X);
-    if (config.T_f != 0)
-        Aux -= config.T_f;
-    aux.SetFromTrueDofs(Aux);
+    aux.SetFromTrueDofs(X);
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux.Size(); ii++){
+        aux(ii) -= config.T_f;
+
         if (aux(ii) > 0){
             aux_C(ii) = config.c_l;
             aux_K(ii) = config.k_l;
@@ -55,23 +56,35 @@ void Conduction_Operator::SetParameters(const Vector &X){
             aux_K(ii) = config.k_s;
         }
 
-        aux(ii) = config.L*config.invDeltaT*exp(-M_PI*pow(config.invDeltaT*aux(ii), 2));
+        aux_L(ii) = 0.5*config.L*(1 + tanh(5*config.invDeltaT*aux(ii)));
     }
 
-    //Set the associated coefficients
-    coeff_C.SetGridFunction(&aux_C);
-    coeff_K.SetGridFunction(&aux_K);
-    coeff_L.SetGridFunction(&aux);
+    //Set the grid coefficients
+    GridFunctionCoefficient coeff_C(&aux_C);
+    GridFunctionCoefficient coeff_K(&aux_K);
 
-    coeff_rC.SetBCoef(coeff_C);
-    coeff_rK.SetBCoef(coeff_K); 
-    coeff_rL.SetBCoef(coeff_L);
+    //Construct latent heat term
+    GradientGridFunctionCoefficient dT(&aux);
+    GradientGridFunctionCoefficient dH(&aux_L);
+    
+    dHdT.SetACoef(dH);  dT_2.SetACoef(dT);
+    dHdT.SetBCoef(dT);  dT_2.SetBCoef(dT);
+
+    SumCoefficient dT_2e(config.EpsilonT, dT_2);
+    
+    PowerCoefficient inv_dT_2(dT_2e, -1.);
+    ProductCoefficient LDeltaT(dHdT, inv_dT_2);
+
+    SumCoefficient coeff_CL(coeff_C, LDeltaT);
+
+    //Construct final coefficients
+    coeff_rC.SetBCoef(coeff_CL);
+    coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK);
 
     //Create corresponding bilinear forms
     delete m;
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    m->AddDomainIntegrator(new MassIntegrator(coeff_rL));
     m->Assemble();
     m->FormSystemMatrix(ess_tdof_list, M);
     M_solver.SetOperator(M);
@@ -104,9 +117,8 @@ void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector
     //Solve M(dX_dt) = -K(X + dt*dX_dt)] for dX_dt
     if (t) delete t;
     t = new ParBilinearForm(&fespace);
-    dt_coeff_rK.SetAConst(dt); dt_coeff_rK.SetBCoef(coeff_rK);
+    dt_coeff_rK.SetAConst(dt);
     t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rL));
     t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
     t->Assemble();
     t->FormSystemMatrix(ess_tdof_list, T);
@@ -131,9 +143,8 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
     //Setup the ODE Jacobian T = M + gamma*K
     if (t) delete t;
     t = new ParBilinearForm(&fespace);
-    dt_coeff_rK.SetAConst(scaled_dt); dt_coeff_rK.SetBCoef(coeff_rK);
+    dt_coeff_rK.SetAConst(scaled_dt); 
     t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rL));
     t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
     t->Assemble();
     t->FormSystemMatrix(ess_tdof_list, T);

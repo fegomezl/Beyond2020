@@ -6,6 +6,9 @@ double Zmin;
 double Rmax;
 double Zmax;
 
+//State of simulation
+double T_l, T_s;
+
 int main(int argc, char *argv[]){
     //Define MPI parameters
     int nproc = 0, pid = 0;
@@ -72,6 +75,11 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
 
+    args.AddOption(&T_l, "-T_l", "--T_liquid",
+                   "Liquid temperature interval.");
+    args.AddOption(&T_s, "-T_s", "--T_solid",
+                   "Solid temperature interval.");
+
     //Check if parameters were read correctly
     args.Parse();
     if (!args.Good()){
@@ -81,9 +89,12 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
+
     //Run the program for different refinements
     {
         config.invDeltaT = pow(10, nDeltaT);
+        T_l = T_l - config.T_f;
+        T_s = config.T_f - T_s;
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
     }

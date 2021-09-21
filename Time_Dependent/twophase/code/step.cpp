@@ -69,8 +69,10 @@ void Conduction_Operator::SetParameters(const Vector &X){
     
     dHdT.SetACoef(dH);  dT_2.SetACoef(dT);
     dHdT.SetBCoef(dT);  dT_2.SetBCoef(dT);
+
+    SumCoefficient dT_2e(config.EpsilonT, dT_2);
     
-    PowerCoefficient inv_dT_2(dT_2, -1.);
+    PowerCoefficient inv_dT_2(dT_2e, -1.);
     ProductCoefficient LDeltaT(dHdT, inv_dT_2);
 
     SumCoefficient coeff_CL(coeff_C, LDeltaT);

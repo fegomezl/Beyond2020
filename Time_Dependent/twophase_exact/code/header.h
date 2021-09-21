@@ -14,31 +14,36 @@ struct Config{
 
     bool master;
     int nproc;
-    int order;
-    int refinements;
+
     double dt_init;
     double t_final;
     int vis_steps_max;
+
+    int refinements;
+    int order;
     int ode_solver_type;
-    double reltol;
-    double abstol;
+    double reltol_conduction;
+    double abstol_conduction;
+    int iter_conduction;
+    double reltol_sundials;
+    double abstol_sundials;
+
     double T_f;
-    double c_s, c_l;
-    double k_s, k_l;
-    double L;
-    int nDeltaT;
     double invDeltaT;
+    double EpsilonT;
+    double c_l, c_s;
+    double k_l, k_s;
+    double L;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr);
+        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual void ImplicitSolve(const double dt,
-                                   const Vector &X, Vector &dX_dt); //Solver for implicit methods
+        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
-	      virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
+	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
         void SetParameters(const Vector &X);
 
@@ -63,22 +68,21 @@ class Conduction_Operator : public TimeDependentOperator{
         CGSolver M_solver;
         CGSolver T_solver;
         HypreSmoother M_prec;
-        HypreSmoother T_prec;
+        HypreSmoother T_prec; 
 
         ParGridFunction aux;
         ParGridFunction aux_C;
         ParGridFunction aux_K;
+        ParGridFunction aux_L;
 
-        FunctionCoefficient r;
+        FunctionCoefficient coeff_r;
+        VectorFunctionCoefficient zero;
 
-        GridFunctionCoefficient coeff_C;
         ProductCoefficient coeff_rC;
-
-        GridFunctionCoefficient coeff_K;
         ProductCoefficient coeff_rK; ProductCoefficient dt_coeff_rK;
 
-        GridFunctionCoefficient coeff_L;
-        ProductCoefficient coeff_rL;
+        InnerProductCoefficient dHdT;
+        InnerProductCoefficient dT_2;
 };
 
 class Artic_sea{
@@ -104,6 +108,7 @@ class Artic_sea{
         int vis_impressions;
 
         int dim;
+        double h_min;
         int serial_refinements;
         HYPRE_Int size;
 
@@ -114,8 +119,6 @@ class Artic_sea{
         //System objects
         ParGridFunction *x;
         HypreParVector *X;
-        Array<int> ess_bdr;
-        FunctionCoefficient initial_f;
         Conduction_Operator *oper;
 
         //Solver objects
@@ -129,4 +132,5 @@ class Artic_sea{
 extern double initial(const Vector &x);
 
 extern double Rmin, Rmax, Zmin, Zmax;
-extern double T_0, T_i;
+
+extern double T_l, T_s;

@@ -30,6 +30,7 @@ struct Config{
 
     double T_f;
     double invDeltaT;
+    double EpsilonT;
     double c_l, c_s;
     double k_l, k_s;
     double L;
