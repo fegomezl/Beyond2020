@@ -1,5 +1,12 @@
 #include "header.h"
 
+//Rotational functions
+double r_f(const Vector &x);
+void zero_f(const Vector &x, Vector &f);
+
+//Initial condition
+double initial_f(const Vector &x);
+
 void Artic_sea::assemble_system(){
     //Initialize the system
     t = 0;
@@ -8,18 +15,15 @@ void Artic_sea::assemble_system(){
     vis_steps = config.vis_steps_max;
     vis_impressions = 0;
 
-    //Set boundary conditions
-    ess_bdr.SetSize(pmesh->bdr_attributes.Max());
-    ess_bdr = 1;  ess_bdr[2] = 0;
-
-    //Define solution x and apply initial conditions
+    //Define solution x
     x = new ParGridFunction(fespace);
-    x->ProjectCoefficient(initial_f);
-    x->ProjectBdrCoefficient(initial_f, ess_bdr);
     X = new HypreParVector(fespace);
-    x->GetTrueDofs(*X);
 
-    oper = new Conduction_Operator(config, *fespace, *X, ess_bdr);
+    //Initialize operators
+    oper = new Conduction_Operator(config, *fespace, dim, pmesh->bdr_attributes.Max(), *X);
+
+    //Read initial global state
+    x->Distribute(X);
 
     //Set the ODE solver type
     switch (config.ode_solver_type){
@@ -89,35 +93,38 @@ void Artic_sea::assemble_system(){
 
 }
 
-double initial(const Vector &x){
-    double a = -10;
-    double b = 10;
-    return (b-a)*pow(sin(M_PI*(x(0) - Rmin)/(Rmax-Rmin))*sin(M_PI*(x(1)-Zmin)/(Zmax-Zmin)),2) + a;
-}
-
-double r_f(const Vector &x){
-    return x(0);
-}
-
-Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr):
+Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X):
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     config(config),
     fespace(fespace),
-    m(NULL),
-    k(NULL),
-    t(NULL),
-    aux(&fespace),
-    aux_C(&fespace),
-    aux_K(&fespace),
-    coeff_r(r_f),
-    coeff_C(&aux_C), coeff_rC(coeff_r, coeff_C),
-    coeff_K(&aux_K), coeff_rK(coeff_r, coeff_K), dt_coeff_rK(1., coeff_rK),
-    coeff_L(&aux), coeff_rL(coeff_r, coeff_L),
-    M_solver(fespace.GetComm()),
-    T_solver(fespace.GetComm())
+    m(NULL), k(NULL), t(NULL),
+    aux(&fespace), aux_C(&fespace), aux_K(&fespace), aux_L(&fespace),
+    coeff_r(r_f), zero(dim, zero_f),
+    coeff_rC(coeff_r, coeff_r),
+    coeff_rK(coeff_r, coeff_r), dt_coeff_rK(1., coeff_rK),
+    dHdT(zero, zero), dT_2(zero, zero),
+    M_solver(fespace.GetComm()),T_solver(fespace.GetComm())
 {
+    //Set boundary conditions
+    //
+    //                  1
+    //            /------------\
+    //            |            |
+    //    (0)    2|            |3
+    //            |            |
+    //            \------------/
+    //                  0
 
+    Array<int> ess_bdr(attributes);
+    ess_bdr[0] = 1;  ess_bdr[1] = 1;
+    ess_bdr[2] = 0;  ess_bdr[3] = 1;
     fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+
+    //Define initial condition
+    FunctionCoefficient initial(initial_f);    
+    aux.ProjectCoefficient(initial);
+    aux.ProjectBdrCoefficient(initial, ess_bdr);
+    aux.GetTrueDofs(X);
 
     //Configure M solver
     M_solver.iterative_mode = false;
@@ -137,4 +144,19 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     T_solver.SetPreconditioner(T_prec);
 
     SetParameters(X);
+}
+
+double r_f(const Vector &x){
+    return x(0);
+}
+
+void zero_f(const Vector &x, Vector &f){
+    f(0) = 0.;
+    f(1) = 0.;
+}
+
+double initial_f(const Vector &x){
+    double a = -10;
+    double b = 10;
+    return (b-a)*pow(sin(M_PI*(x(0) - Rmin)/(Rmax-Rmin))*sin(M_PI*(x(1)-Zmin)/(Zmax-Zmin)),2) + a;
 }

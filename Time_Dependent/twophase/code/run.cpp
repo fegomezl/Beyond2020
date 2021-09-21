@@ -10,7 +10,6 @@ Artic_sea::Artic_sea(Config config):
     pmesh(NULL),
     fec(NULL),
     fespace(NULL),
-    initial_f(initial),
     x(NULL),
     X(NULL),
     oper(NULL),

@@ -37,7 +37,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, const Vector &X, Array<int> ess_bdr);
+        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
         virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
@@ -67,22 +67,21 @@ class Conduction_Operator : public TimeDependentOperator{
         CGSolver M_solver;
         CGSolver T_solver;
         HypreSmoother M_prec;
-        HypreSmoother T_prec;
+        HypreSmoother T_prec; 
 
         ParGridFunction aux;
         ParGridFunction aux_C;
         ParGridFunction aux_K;
+        ParGridFunction aux_L;
 
         FunctionCoefficient coeff_r;
+        VectorFunctionCoefficient zero;
 
-        GridFunctionCoefficient coeff_C;
         ProductCoefficient coeff_rC;
-
-        GridFunctionCoefficient coeff_K;
         ProductCoefficient coeff_rK; ProductCoefficient dt_coeff_rK;
 
-        GridFunctionCoefficient coeff_L;
-        ProductCoefficient coeff_rL;
+        InnerProductCoefficient dHdT;
+        InnerProductCoefficient dT_2;
 };
 
 class Artic_sea{
@@ -119,8 +118,6 @@ class Artic_sea{
         //System objects
         ParGridFunction *x;
         HypreParVector *X;
-        Array<int> ess_bdr;
-        FunctionCoefficient initial_f;
         Conduction_Operator *oper;
 
         //Solver objects

@@ -24,9 +24,9 @@ FE parameters
 
 Physical parameters
 0       #Fusion_temperature
-20       #n_DeltaT
+9       #n_DeltaT
 4.22    #Liquid_volumetric_heat_capacity
 1.88    #Solid_volumetric_heat_capacity
 33.3    #Liquid_thermal_conductivity
 133.2   #Solid_thermal_conductivity
-320     #Volumetric_latent_heat
+320       #Volumetric_latent_heat
