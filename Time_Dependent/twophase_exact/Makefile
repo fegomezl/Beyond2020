@@ -73,6 +73,10 @@ else
 	@echo -e 'Done!'
 endif
 
+plot:
+	@pvpython settings/interfase.py
+	@gnuplot settings/regression.gp
+
 main.x: $(DEPENDENCIES)
 	@echo -e 'Compiling' $@ '... \c'
 	@$(CXX) $(FLAGS) $^ $(MFEM_LIBS) -o $@
