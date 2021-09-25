@@ -9,7 +9,7 @@ settings/square.geo #Mesh_script
 
 Simulation parameters
 0.0001  #Dt
-0.1     #Final_time
+0.02     #Final_time
 10      #Visualization_steps
 
 FE parameters
