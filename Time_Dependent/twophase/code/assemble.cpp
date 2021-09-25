@@ -91,16 +91,15 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     aux.GetTrueDofs(X);
 
     //Configure M solver
-    M_solver.iterative_mode = false;
     M_solver.SetRelTol(config.reltol_conduction);
     M_solver.SetAbsTol(config.abstol_conduction);
     M_solver.SetMaxIter(config.iter_conduction);
     M_solver.SetPrintLevel(0);
-    M_solver.SetPreconditioner(M_prec);
     M_prec.SetType(HypreSmoother::Jacobi);
+    M_prec.SetOperatorSymmetry(true);
+    M_solver.SetPreconditioner(M_prec);
 
     //Configure T solver
-    T_solver.iterative_mode = false;
     T_solver.SetRelTol(config.reltol_conduction);
     T_solver.SetAbsTol(config.abstol_conduction);
     T_solver.SetMaxIter(config.iter_conduction);

@@ -132,8 +132,9 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
 int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double tol){
     //From  M(dX_dt) + K(X) = F
     //Solve M(X_new - X) + dt*K(X_new) = dt*F for X_new
+    X_new = X;
     HypreParVector Z(&fespace);
-    M.Mult(X,Z);
-    T_solver.Mult(Z,X_new);
+    M.Mult(X, Z);
+    T_solver.Mult(Z, X_new);
     return 0;
 }
