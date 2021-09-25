@@ -21,7 +21,6 @@ struct Config{
 
     int refinements;
     int order;
-    int ode_solver_type;
     double reltol_conduction;
     double abstol_conduction;
     int iter_conduction;
@@ -40,12 +39,11 @@ class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
-        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
-	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
+        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Standard solver
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);  //Sundials setup
+	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);   //Sundials solver
 
-        void SetParameters(const Vector &X);
+        void SetParameters(const Vector &X);    //Update parameters from previous step
 
         virtual ~Conduction_Operator();
 
@@ -123,7 +121,6 @@ class Artic_sea{
 
         //Solver objects
         ODESolver *ode_solver;
-        CVODESolver *cvode;
         ARKStepSolver *arkode;
 
         ParaViewDataCollection *paraview_out;

@@ -97,7 +97,8 @@ void Conduction_Operator::SetParameters(const Vector &X){
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
-    //Solve M(dX_dt) = -K(X) for dX_dt
+    //From  M(dX_dt) + K(X) = F
+    //Solve M(dX_dt) + K(X) = F for dX_dt
     ParGridFunction x(&fespace);
     ParLinearForm z(&fespace);
     x.SetFromTrueDofs(X);
@@ -113,34 +114,8 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     M_solver.Mult(Z, dX_dt);
 }
 
-void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt){
-    //Solve M(dX_dt) = -K(X + dt*dX_dt)] for dX_dt
-    if (t) delete t;
-    t = new ParBilinearForm(&fespace);
-    dt_coeff_rK.SetAConst(dt);
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
-    t->Assemble();
-    t->FormSystemMatrix(ess_tdof_list, T);
-    T_solver.SetOperator(T);
-
-    ParGridFunction x(&fespace);
-    ParLinearForm z(&fespace);
-    x.SetFromTrueDofs(X);
-    k->Mult(x, z);
-    z.Neg();
-
-    OperatorHandle A;
-    HypreParVector Z(&fespace);
-    ParGridFunction dx_dt(&fespace);
-    dx_dt = 0.;
-
-    t->FormLinearSystem(ess_tdof_list, dx_dt, z, A, dX_dt, Z);
-    T_solver.Mult(Z, dX_dt);
-}
-
 int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
-    //Setup the ODE Jacobian T = M + gamma*K
+    //Setup the ODE Jacobian T = M + dt*K
     if (t) delete t;
     t = new ParBilinearForm(&fespace);
     dt_coeff_rK.SetAConst(scaled_dt); 
@@ -154,10 +129,11 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
     return 0;
 }
 
-int Conduction_Operator::SUNImplicitSolve(const Vector &B, Vector &X, double tol){
-    //Solve the system Ax = z -> (M - gamma*K)x = Mb
+int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double tol){
+    //From  M(dX_dt) + K(X) = F
+    //Solve M(X_new - X) + dt*K(X_new) = dt*F for X_new
     HypreParVector Z(&fespace);
-    M.Mult(B,Z);
-    T_solver.Mult(Z,X);
+    M.Mult(X,Z);
+    T_solver.Mult(Z,X_new);
     return 0;
 }

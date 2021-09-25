@@ -7,15 +7,10 @@ Config::Config(bool master, int nproc):
 
 Artic_sea::Artic_sea(Config config):
     config(config),
-    pmesh(NULL),
-    fec(NULL),
-    fespace(NULL),
-    x(NULL),
-    X(NULL),
+    pmesh(NULL), fec(NULL), fespace(NULL),
+    x(NULL), X(NULL),
     oper(NULL),
-    ode_solver(NULL),
-    cvode(NULL),
-    arkode(NULL),
+    ode_solver(NULL), arkode(NULL),
     paraview_out(NULL)
 {}
 
