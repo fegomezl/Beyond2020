@@ -67,7 +67,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     coeff_rC(coeff_r, coeff_r),
     coeff_rK(coeff_r, coeff_r), dt_coeff_rK(1., coeff_rK),
     dHdT(zero, zero), dT_2(zero, zero),
-    M_solver(fespace.GetComm()),T_solver(fespace.GetComm())
+    M_solver(fespace.GetComm()), T_solver(fespace.GetComm())
 {
     //Set boundary conditions
     //
@@ -91,19 +91,19 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     aux.GetTrueDofs(X);
 
     //Configure M solver
-    M_solver.SetRelTol(config.reltol_conduction);
+    M_solver.SetTol(config.reltol_conduction);
     M_solver.SetAbsTol(config.abstol_conduction);
     M_solver.SetMaxIter(config.iter_conduction);
     M_solver.SetPrintLevel(0);
-    M_prec.SetType(HypreSmoother::Jacobi);
-    M_prec.SetOperatorSymmetry(true);
+    M_prec.SetPrintLevel(0);
     M_solver.SetPreconditioner(M_prec);
 
     //Configure T solver
-    T_solver.SetRelTol(config.reltol_conduction);
+    T_solver.SetTol(config.reltol_conduction);
     T_solver.SetAbsTol(config.abstol_conduction);
     T_solver.SetMaxIter(config.iter_conduction);
     T_solver.SetPrintLevel(0);
+    T_prec.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
     SetParameters(X);

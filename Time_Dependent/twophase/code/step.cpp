@@ -87,6 +87,7 @@ void Conduction_Operator::SetParameters(const Vector &X){
     m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
     m->Assemble();
     m->FormSystemMatrix(ess_tdof_list, M);
+    M_prec.SetOperator(M);
     M_solver.SetOperator(M);
 
     delete k;
@@ -123,6 +124,7 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
     t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
     t->Assemble();
     t->FormSystemMatrix(ess_tdof_list, T);
+    T_prec.SetOperator(T);
     T_solver.SetOperator(T);
 
     *j_status = 1;

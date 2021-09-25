@@ -63,10 +63,10 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreParMatrix K;
         HypreParMatrix T;   
 
-        CGSolver M_solver;
-        CGSolver T_solver;
-        HypreSmoother M_prec;
-        HypreSmoother T_prec; 
+        HyprePCG M_solver;
+        HyprePCG T_solver;
+        HypreBoomerAMG M_prec;
+        HypreBoomerAMG T_prec; 
 
         ParGridFunction aux;
         ParGridFunction aux_C;
