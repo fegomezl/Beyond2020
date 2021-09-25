@@ -28,6 +28,7 @@ Conduction_Operator::~Conduction_Operator(){
     delete m;
     delete k;
     delete t;
+    delete Me;
 }
 
 Artic_sea::~Artic_sea(){

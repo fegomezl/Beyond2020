@@ -83,10 +83,13 @@ void Conduction_Operator::SetParameters(const Vector &X){
 
     //Create corresponding bilinear forms
     delete m;
+    if (Me) delete Me;
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
     m->Assemble();
-    m->FormSystemMatrix(ess_tdof_list, M);
+    m->Finalize();
+    M = *(m->ParallelAssemble());
+    Me = m->ParallelEliminateTDofs(ess_tdof_list, M);
     M_prec.SetOperator(M);
     M_solver.SetOperator(M);
 
@@ -95,35 +98,27 @@ void Conduction_Operator::SetParameters(const Vector &X){
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k->Assemble();
     k->Finalize();
+    K = *(k->ParallelAssemble());    
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //From  M(dX_dt) + K(X) = F
     //Solve M(dX_dt) + K(X) = F for dX_dt
-    ParGridFunction x(&fespace);
-    ParLinearForm z(&fespace);
-    x.SetFromTrueDofs(X);
-    k->Mult(x, z);
-    z.Neg();
 
-    OperatorHandle A;
+    dX_dt = 0.;
+    
     HypreParVector Z(&fespace);
-    ParGridFunction dx_dt(&fespace);
-    dx_dt = 0.;
+    K.Mult(-1., X, 1., Z);
 
-    m->FormLinearSystem(ess_tdof_list, dx_dt, z, A, dX_dt, Z);
+    EliminateBC(M, *Me, ess_tdof_list, dX_dt, Z);
+
     M_solver.Mult(Z, dX_dt);
 }
 
 int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
     //Setup the ODE Jacobian T = M + dt*K
-    if (t) delete t;
-    t = new ParBilinearForm(&fespace);
-    dt_coeff_rK.SetAConst(scaled_dt); 
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
-    t->Assemble();
-    t->FormSystemMatrix(ess_tdof_list, T);
+    T = *Add(1., M, scaled_dt, K);
+    
     T_prec.SetOperator(T);
     T_solver.SetOperator(T);
 
@@ -137,6 +132,7 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double
     X_new = X;
     HypreParVector Z(&fespace);
     M.Mult(X, Z);
+
     T_solver.Mult(Z, X_new);
     return 0;
 }

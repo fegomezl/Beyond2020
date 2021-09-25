@@ -9,7 +9,7 @@ settings/square.geo #Mesh_script
 
 Simulation parameters
 0.0001  #Dt
-0.02     #Final_time
+0.05     #Final_time
 10      #Visualization_steps
 
 FE parameters
@@ -22,7 +22,7 @@ FE parameters
 0.00001    #reltol(SUNDIALS)
 
 Physical parameters
-0       #Fusion_temperature
+100       #Fusion_temperature
 9       #n_DeltaT
 0       #EpsilonT
 4.22    #Liquid_volumetric_heat_capacity

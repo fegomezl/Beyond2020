@@ -60,6 +60,7 @@ class Conduction_Operator : public TimeDependentOperator{
         ParBilinearForm *t;  //m + dt*k
 
         HypreParMatrix M;
+        HypreParMatrix *Me;
         HypreParMatrix K;
         HypreParMatrix T;   
 
