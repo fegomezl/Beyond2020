@@ -46,8 +46,7 @@ class Conduction_Operator : public TimeDependentOperator{
         void SetParameters(const Vector &X);    //Update parameters from previous step
 
         virtual ~Conduction_Operator();
-
- protected:
+    protected:
         //Global parameters
         Config config;
 
@@ -89,8 +88,8 @@ class Conduction_Operator : public TimeDependentOperator{
 };
 
 class Artic_sea{
-  public:
-   Artic_sea(Config config);
+    public:
+        Artic_sea(Config config);
         void run(const char *mesh_file);
         ~Artic_sea();
     private:
@@ -102,6 +101,7 @@ class Artic_sea{
         //Global parameters
         Config config;
 
+        //Simulation parameters
         int iteration;
         double t;
         double dt;
@@ -110,14 +110,15 @@ class Artic_sea{
         int vis_steps;
         int vis_impressions;
 
+        //Mesh objects
+        ParMesh *pmesh;
+        FiniteElementCollection *fec;
+        ParFiniteElementSpace *fespace;
+
         int dim;
         double h_min;
         int serial_refinements;
         HYPRE_Int size;
-
-        ParMesh *pmesh;
-        FiniteElementCollection *fec;
-        ParFiniteElementSpace *fespace;
 
         //System objects
         ParGridFunction *x;
@@ -128,9 +129,10 @@ class Artic_sea{
         ODESolver *ode_solver;
         ARKStepSolver *arkode;
 
+        //Print objects
         ParaViewDataCollection *paraview_out;
 };
 
-extern double initial(const Vector &x);
-
 extern double Rmin, Rmax, Zmin, Zmax;
+
+extern double initial(const Vector &x);
