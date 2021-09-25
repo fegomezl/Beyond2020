@@ -59,10 +59,14 @@ class Conduction_Operator : public TimeDependentOperator{
         ParBilinearForm *k;  //Difussion operator
         ParBilinearForm *t;  //m + dt*k
 
+        HypreParMatrix M0;
         HypreParMatrix M;
         HypreParMatrix *Me;
+        HypreParMatrix K0;
         HypreParMatrix K;
+        HypreParMatrix *Ke;
         HypreParMatrix T;   
+        HypreParMatrix *Te;   
 
         HyprePCG M_solver;
         HyprePCG T_solver;

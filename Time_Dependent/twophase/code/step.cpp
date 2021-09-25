@@ -89,16 +89,21 @@ void Conduction_Operator::SetParameters(const Vector &X){
     m->Assemble();
     m->Finalize();
     M = *(m->ParallelAssemble());
+    M0 = *(m->ParallelAssemble());
     Me = m->ParallelEliminateTDofs(ess_tdof_list, M);
+
     M_prec.SetOperator(M);
     M_solver.SetOperator(M);
 
     delete k;
+    if (Ke) delete Ke;
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k->Assemble();
     k->Finalize();
     K = *(k->ParallelAssemble());    
+    K0 = *(k->ParallelAssemble());    
+    Ke = k->ParallelEliminateTDofs(ess_tdof_list, K);
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
@@ -108,7 +113,7 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     dX_dt = 0.;
     
     HypreParVector Z(&fespace);
-    K.Mult(-1., X, 1., Z);
+    K0.Mult(-1., X, 1., Z);
 
     EliminateBC(M, *Me, ess_tdof_list, dX_dt, Z);
 
@@ -117,7 +122,9 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
 
 int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
     //Setup the ODE Jacobian T = M + dt*K
-    T = *Add(1., M, scaled_dt, K);
+    if (Te) delete Te;
+    T = *Add(1., M0, scaled_dt, K0);
+    Te = m->ParallelEliminateTDofs(ess_tdof_list, T);
     
     T_prec.SetOperator(T);
     T_solver.SetOperator(T);
@@ -131,7 +138,9 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double
     //Solve M(X_new - X) + dt*K(X_new) = dt*F for X_new
     X_new = X;
     HypreParVector Z(&fespace);
-    M.Mult(X, Z);
+    M0.Mult(X, Z);
+
+    EliminateBC(T, *Te, ess_tdof_list, X_new, Z);
 
     T_solver.Mult(Z, X_new);
     return 0;
