@@ -8,7 +8,8 @@ void Artic_sea::output_results(){
              << "Mesh Size: " << h_min << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
-             << "Total refinements: " << config.refinements << "\n";
+             << "Total refinements: " << config.refinements << "\n"
+             << "Total execution time: " << total_time << " s" << "\n";
     }
 
     //Print visual results to Paraview

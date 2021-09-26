@@ -14,6 +14,4 @@ FE parameters
 Physical parameters
 0       #Fusion_temperature
 9       #n_DeltaT
-1       #Viscosity
-10       #n_epsilon_eta
-0       #n_epsilon_r
+10      #n_epsilon_eta
