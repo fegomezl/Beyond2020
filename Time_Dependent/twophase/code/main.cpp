@@ -78,8 +78,9 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-    //Run the program for different refinements
+    //Run the program
     {
+        tic();
         config.invDeltaT = pow(10, nDeltaT);
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);

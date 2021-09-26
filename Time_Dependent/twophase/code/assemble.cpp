@@ -61,12 +61,15 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     TimeDependentOperator(fespace.GetTrueVSize(), 0.),
     config(config),
     fespace(fespace),
-    m(NULL), k(NULL), t(NULL),
-    Me(NULL), Ke(NULL), Te(NULL),
+    m(NULL), k(NULL), 
+    M(NULL), M_e(NULL), M_0(NULL),
+    K_0(NULL), 
+    T(NULL), T_e(NULL),
+    Z(&fespace),
     aux(&fespace), aux_C(&fespace), aux_K(&fespace), aux_L(&fespace),
     coeff_r(r_f), zero(dim, zero_f),
     coeff_rC(coeff_r, coeff_r),
-    coeff_rK(coeff_r, coeff_r), dt_coeff_rK(1., coeff_rK),
+    coeff_rK(coeff_r, coeff_r), 
     dHdT(zero, zero), dT_2(zero, zero),
     M_solver(fespace.GetComm()), T_solver(fespace.GetComm())
 {

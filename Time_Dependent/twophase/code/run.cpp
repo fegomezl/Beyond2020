@@ -20,6 +20,7 @@ void Artic_sea::run(const char *mesh_file){
     assemble_system();
     for (iteration = 1, vis_iteration = 1; !last; iteration++, vis_iteration++)
         time_step();
+    total_time = toc();
     output_results();
 }
 
@@ -27,10 +28,12 @@ Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete m;
     delete k;
-    delete t;
-    delete Me;
-    delete Ke;
-    delete Te;
+    delete M;
+    delete M_e;
+    delete M_0;
+    delete K_0;
+    delete T;
+    delete T_e;
 }
 
 Artic_sea::~Artic_sea(){

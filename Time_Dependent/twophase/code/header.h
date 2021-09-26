@@ -56,16 +56,11 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
-        ParBilinearForm *t;  //m + dt*k
 
-        HypreParMatrix M0;
-        HypreParMatrix M;
-        HypreParMatrix *Me;
-        HypreParMatrix K0;
-        HypreParMatrix K;
-        HypreParMatrix *Ke;
-        HypreParMatrix T;   
-        HypreParMatrix *Te;   
+        HypreParMatrix *M, *M_e, *M_0;
+        HypreParMatrix *K_0;
+        HypreParMatrix *T, *T_e;
+        mutable HypreParVector Z;   
 
         HyprePCG M_solver;
         HyprePCG T_solver;
@@ -81,7 +76,7 @@ class Conduction_Operator : public TimeDependentOperator{
         VectorFunctionCoefficient zero;
 
         ProductCoefficient coeff_rC;
-        ProductCoefficient coeff_rK; ProductCoefficient dt_coeff_rK;
+        ProductCoefficient coeff_rK;
 
         InnerProductCoefficient dHdT;
         InnerProductCoefficient dT_2;
@@ -109,6 +104,7 @@ class Artic_sea{
         int vis_iteration;
         int vis_steps;
         int vis_impressions;
+        double total_time;
 
         //Mesh objects
         ParMesh *pmesh;

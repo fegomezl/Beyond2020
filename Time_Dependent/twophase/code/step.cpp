@@ -79,55 +79,55 @@ void Conduction_Operator::SetParameters(const Vector &X){
 
     //Construct final coefficients
     coeff_rC.SetBCoef(coeff_CL);
-    coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK);
+    coeff_rK.SetBCoef(coeff_K); 
 
     //Create corresponding bilinear forms
-    delete m;
-    if (Me) delete Me;
+    if (m) delete m;
+    if (M) delete M;
+    if (M_e) delete M_e;
+    if (M_0) delete M_0;
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
     m->Assemble();
     m->Finalize();
-    M = *(m->ParallelAssemble());
-    M0 = *(m->ParallelAssemble());
-    Me = m->ParallelEliminateTDofs(ess_tdof_list, M);
+    M = m->ParallelAssemble();
+    M_e = M->EliminateRowsCols(ess_tdof_list);
+    M_0 = m->ParallelAssemble();
 
-    M_prec.SetOperator(M);
-    M_solver.SetOperator(M);
+    M_prec.SetOperator(*M);
+    M_solver.SetOperator(*M);
 
-    delete k;
-    if (Ke) delete Ke;
+    if (k) delete k;
+    if (K_0) delete K_0;
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k->Assemble();
     k->Finalize();
-    K = *(k->ParallelAssemble());    
-    K0 = *(k->ParallelAssemble());    
-    Ke = k->ParallelEliminateTDofs(ess_tdof_list, K);
+    K_0 = k->ParallelAssemble();    
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //From  M(dX_dt) + K(X) = F
     //Solve M(dX_dt) + K(X) = F for dX_dt
-
+    
+    Z = 0.;
     dX_dt = 0.;
     
-    HypreParVector Z(&fespace);
-    K0.Mult(-1., X, 1., Z);
-
-    EliminateBC(M, *Me, ess_tdof_list, dX_dt, Z);
+    K_0->Mult(-1., X, 1., Z);
+    EliminateBC(*M, *M_e, ess_tdof_list, dX_dt, Z);
 
     M_solver.Mult(Z, dX_dt);
 }
 
 int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
     //Setup the ODE Jacobian T = M + dt*K
-    if (Te) delete Te;
-    T = *Add(1., M0, scaled_dt, K0);
-    Te = m->ParallelEliminateTDofs(ess_tdof_list, T);
-    
-    T_prec.SetOperator(T);
-    T_solver.SetOperator(T);
+
+    if (T) delete T;
+    if (T_e) delete T_e;
+    T = Add(1., *M_0, scaled_dt, *K_0);
+    T_e = T->EliminateRowsCols(ess_tdof_list);
+    T_prec.SetOperator(*T);
+    T_solver.SetOperator(*T);
 
     *j_status = 1;
     return 0;
@@ -136,11 +136,12 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
 int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double tol){
     //From  M(dX_dt) + K(X) = F
     //Solve M(X_new - X) + dt*K(X_new) = dt*F for X_new
-    X_new = X;
-    HypreParVector Z(&fespace);
-    M0.Mult(X, Z);
 
-    EliminateBC(T, *Te, ess_tdof_list, X_new, Z);
+    Z = 0.;
+    X_new = X;
+
+    M_0->Mult(X, Z);
+    EliminateBC(*T, *T_e, ess_tdof_list, X_new, Z);
 
     T_solver.Mult(Z, X_new);
     return 0;
