@@ -11,12 +11,10 @@ Zmin=$(sed -n 5p settings/parameters.txt | tr -d -c 0-9.-)
 sed -i "/Zmin =/c Zmin = $Zmin;" $Mesh_script
 Zmax=$(sed -n 6p settings/parameters.txt | tr -d -c 0-9.-)
 sed -i "/Zmax =/c Zmax = $Zmax;" $Mesh_script
-Hside=$(sed -n 7p settings/parameters.txt | tr -d -c 0-9.-)
-sed -i "/Hside =/c Hside = $Hside;" $Mesh_script
 
-NR=$(sed -n 8p settings/parameters.txt | tr -d -c 0-9.)
+NR=$(sed -n 7p settings/parameters.txt | tr -d -c 0-9.)
 sed -i "/NR =/c NR = $NR;" $Mesh_script
-NZ=$(sed -n 9p settings/parameters.txt | tr -d -c 0-9.)
+NZ=$(sed -n 8p settings/parameters.txt | tr -d -c 0-9.)
 sed -i "/NZ =/c NZ = $NZ;" $Mesh_script
 
 echo -e 'Done! \n'

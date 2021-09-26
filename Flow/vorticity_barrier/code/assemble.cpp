@@ -32,23 +32,21 @@ void Artic_sea::assemble_system(){
     VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
 
     //Properties coefficients
-    ConstantCoefficient inv_mu(pow(config.viscosity, -1));
     GridFunctionCoefficient eta(&theta);
     ProductCoefficient neg_eta(-1., eta);
 
     //RHS coefficients
     FunctionCoefficient f_coeff(f_rhs);
-    ProductCoefficient inv_mu_f(inv_mu, f_coeff);
 
     //Dirichlet coefficients
     FunctionCoefficient w_coeff(boundary_w);
     FunctionCoefficient psi_coeff(boundary_psi);
-    ConstantCoefficient psi_aux_1(inflow(int_rad));
-    ConstantCoefficient psi_aux_2(inflow(out_rad));
+    ConstantCoefficient psi_aux_1(inflow(Rmin));
+    ConstantCoefficient psi_aux_2(inflow(Rmax));
 
     //Rotational coupled coefficients
     ScalarVectorProductCoefficient neg_eta_r_inv_hat(neg_eta, r_inv_hat);
-    ProductCoefficient inv_mu_rf(r, inv_mu_f);
+    ProductCoefficient r_f(r, f_coeff);
 
     //Define essential boundary conditions
     //   
@@ -90,7 +88,7 @@ void Artic_sea::assemble_system(){
     g.Assemble();
 
     ParLinearForm f(fespace);
-    f.AddDomainIntegrator(new DomainLFIntegrator(inv_mu_rf));
+    f.AddDomainIntegrator(new DomainLFIntegrator(r_f));
     f.Assemble();
 
     //Define bilinear forms of the system
@@ -146,15 +144,7 @@ void r_inv_hat_f(const Vector &x, Vector &f){
 
 //Temperature field
 double temperature_f(const Vector &x){
-    double mid_x = (out_rad + int_rad)/2;
-    double mid_y = height/2;
-    double sigma = (out_rad - int_rad)/10;
-
-    double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
-    if (r_2 < pow(sigma, 2))
-        return 10;
-    else
-        return 10;
+    return 10;
 }
 
 //Right hand side of the equation

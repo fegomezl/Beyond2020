@@ -4,17 +4,14 @@ settings/H.geo #Mesh_script
 10 #Rmax
 0 #Zmin
 10 #Zmax
-2  #Hside
 100 #Rcells
 100 #Zcells
 
 FE parameters
-5 #Refinements
-1 #Order
+4 #Refinements
+2 #Order
 
 Physical parameters
 0       #Fusion_temperature
 9       #n_DeltaT
-1       #Viscosity
-1       #n_epsilon_eta
-0       #n_epsilon_r
+10      #n_epsilon_eta

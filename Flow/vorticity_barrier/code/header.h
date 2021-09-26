@@ -19,7 +19,6 @@ struct Config{
 
     double T_f;
     double invDeltaT;
-    double viscosity;
     double epsilon_eta;
 };
 
@@ -40,12 +39,8 @@ class Artic_sea{
         //Global parameters
         Config config;
 
-        //Output parameters
-        int dim;
-        int serial_refinements;
-        HYPRE_BigInt size;
-        HYPRE_BigInt size_v;
-        double h_min;
+        //Simulation parameters
+        double total_time;
 
         //Mesh objects
         ParMesh *pmesh;
@@ -55,6 +50,12 @@ class Artic_sea{
 
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
+
+        int dim;
+        int serial_refinements;
+        HYPRE_BigInt size;
+        HYPRE_BigInt size_v;
+        double h_min;
 
         //System objects
         ParGridFunction *w;
@@ -71,8 +72,4 @@ class Artic_sea{
         HypreParMatrix *Ct;
 };
 
-extern double height;
-extern double int_rad;
-extern double out_rad;
-
-extern double epsilon_r;
+extern double Rmin, Rmax, Zmin, Zmax;

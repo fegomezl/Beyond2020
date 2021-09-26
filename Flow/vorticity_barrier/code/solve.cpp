@@ -2,6 +2,8 @@
 
 void rot_f(const Vector &x, DenseMatrix &f);
 
+double inv_r(const Vector &x);
+
 void Artic_sea::solve_system(){
 
     //Create the complete bilinear operator:
@@ -34,19 +36,20 @@ void Artic_sea::solve_system(){
 
     //Calculate velocity
     v = new ParGridFunction(fespace_v);
-
     ParGridFunction psi_grad(fespace_v);
 
     DiscreteLinearOperator grad(fespace, fespace_v);
     grad.AddDomainIntegrator(new GradientInterpolator);
     grad.Assemble();
     grad.Finalize();
-
     grad.Mult(*psi, psi_grad);
 
-    VectorGridFunctionCoefficient Psi_grad(&psi_grad);
     MatrixFunctionCoefficient rot(dim, rot_f);
-    MatrixVectorProductCoefficient V(rot, Psi_grad);
+    FunctionCoefficient Inv_r(inv_r);
+
+    VectorGridFunctionCoefficient Psi_grad(&psi_grad);
+    MatrixVectorProductCoefficient rV(rot, Psi_grad);
+    ScalarVectorProductCoefficient V(Inv_r, rV);
     v->ProjectDiscCoefficient(V, GridFunction::ARITHMETIC);
 
     //Delete used memory
@@ -56,4 +59,8 @@ void Artic_sea::solve_system(){
 void rot_f(const Vector &x, DenseMatrix &f){
     f(0,0) = 0.;  f(0,1) = -1.;
     f(1,0) = 1.;  f(1,1) = 0.;
+}
+
+double inv_r(const Vector &x){
+    return pow(x(0), -1);
 }
