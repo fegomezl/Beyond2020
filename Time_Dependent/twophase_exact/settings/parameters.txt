@@ -13,8 +13,8 @@ Simulation parameters
 10      #Visualization_steps
 
 FE parameters
-1          #Refinements
-2          #Order
+3          #Refinements
+1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
 100        #iter(Conduction)
@@ -23,8 +23,8 @@ FE parameters
 
 Physical parameters
 0       #Fusion_temperature
-4       #n_DeltaT
-0       #EpsilonT
+9       #n_DeltaT
+0.001       #EpsilonT
 4.22    #Liquid_volumetric_heat_capacity
 1.88    #Solid_volumetric_heat_capacity
 33.3    #Liquid_thermal_conductivity
