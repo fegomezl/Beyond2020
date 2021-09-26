@@ -70,94 +70,79 @@ void Conduction_Operator::SetParameters(const Vector &X){
     dHdT.SetACoef(dH);  dT_2.SetACoef(dT);
     dHdT.SetBCoef(dT);  dT_2.SetBCoef(dT);
 
-    SumCoefficient dT_2e(config.EpsilonT, dT_2);
+    //SumCoefficient dT_2e(config.EpsilonT, dT_2);
     
-    PowerCoefficient inv_dT_2(dT_2e, -1.);
+    PowerCoefficient inv_dT_2(dT_2, -1.);
     ProductCoefficient LDeltaT(dHdT, inv_dT_2);
 
     SumCoefficient coeff_CL(coeff_C, LDeltaT);
 
     //Construct final coefficients
     coeff_rC.SetBCoef(coeff_CL);
-    coeff_rK.SetBCoef(coeff_K); dt_coeff_rK.SetBCoef(coeff_rK);
+    coeff_rK.SetBCoef(coeff_K); 
 
     //Create corresponding bilinear forms
-    delete m;
+    if (m) delete m;
+    if (M) delete M;
+    if (M_e) delete M_e;
+    if (M_0) delete M_0;
     m = new ParBilinearForm(&fespace);
     m->AddDomainIntegrator(new MassIntegrator(coeff_rC));
     m->Assemble();
-    m->FormSystemMatrix(ess_tdof_list, M);
-    M_solver.SetOperator(M);
+    m->Finalize();
+    M = m->ParallelAssemble();
+    M_e = M->EliminateRowsCols(ess_tdof_list);
+    M_0 = m->ParallelAssemble();
 
-    delete k;
+    M_prec.SetOperator(*M);
+    M_solver.SetOperator(*M);
+
+    if (k) delete k;
+    if (K_0) delete K_0;
     k = new ParBilinearForm(&fespace);
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k->Assemble();
     k->Finalize();
+    K_0 = k->ParallelAssemble();    
 }
 
 void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
-    //Solve M(dX_dt) = -K(X) for dX_dt
-    ParGridFunction x(&fespace);
-    ParLinearForm z(&fespace);
-    x.SetFromTrueDofs(X);
-    k->Mult(x, z);
-    z.Neg();
+    //From  M(dX_dt) + K(X) = F
+    //Solve M(dX_dt) + K(X) = F for dX_dt
+    
+    Z = 0.;
+    dX_dt = 0.;
+    
+    K_0->Mult(-1., X, 1., Z);
+    EliminateBC(*M, *M_e, ess_tdof_list, dX_dt, Z);
 
-    OperatorHandle A;
-    HypreParVector Z(&fespace);
-    ParGridFunction dx_dt(&fespace);
-    dx_dt = 0.;
-
-    m->FormLinearSystem(ess_tdof_list, dx_dt, z, A, dX_dt, Z);
     M_solver.Mult(Z, dX_dt);
 }
 
-void Conduction_Operator::ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt){
-    //Solve M(dX_dt) = -K(X + dt*dX_dt)] for dX_dt
-    if (t) delete t;
-    t = new ParBilinearForm(&fespace);
-    dt_coeff_rK.SetAConst(dt);
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
-    t->Assemble();
-    t->FormSystemMatrix(ess_tdof_list, T);
-    T_solver.SetOperator(T);
-
-    ParGridFunction x(&fespace);
-    ParLinearForm z(&fespace);
-    x.SetFromTrueDofs(X);
-    k->Mult(x, z);
-    z.Neg();
-
-    OperatorHandle A;
-    HypreParVector Z(&fespace);
-    ParGridFunction dx_dt(&fespace);
-    dx_dt = 0.;
-
-    t->FormLinearSystem(ess_tdof_list, dx_dt, z, A, dX_dt, Z);
-    T_solver.Mult(Z, dX_dt);
-}
-
 int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
-    //Setup the ODE Jacobian T = M + gamma*K
-    if (t) delete t;
-    t = new ParBilinearForm(&fespace);
-    dt_coeff_rK.SetAConst(scaled_dt); 
-    t->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    t->AddDomainIntegrator(new DiffusionIntegrator(dt_coeff_rK));
-    t->Assemble();
-    t->FormSystemMatrix(ess_tdof_list, T);
-    T_solver.SetOperator(T);
+    //Setup the ODE Jacobian T = M + dt*K
+
+    if (T) delete T;
+    if (T_e) delete T_e;
+    T = Add(1., *M_0, scaled_dt, *K_0);
+    T_e = T->EliminateRowsCols(ess_tdof_list);
+    T_prec.SetOperator(*T);
+    T_solver.SetOperator(*T);
 
     *j_status = 1;
     return 0;
 }
 
-int Conduction_Operator::SUNImplicitSolve(const Vector &B, Vector &X, double tol){
-    //Solve the system Ax = z -> (M - gamma*K)x = Mb
-    HypreParVector Z(&fespace);
-    M.Mult(B,Z);
-    T_solver.Mult(Z,X);
+int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double tol){
+    //From  M(dX_dt) + K(X) = F
+    //Solve M(X_new - X) + dt*K(X_new) = dt*F for X_new
+
+    Z = 0.;
+    X_new = X;
+
+    M_0->Mult(X, Z);
+    EliminateBC(*T, *T_e, ess_tdof_list, X_new, Z);
+
+    T_solver.Mult(Z, X_new);
     return 0;
 }

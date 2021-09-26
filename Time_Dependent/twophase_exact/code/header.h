@@ -21,7 +21,6 @@ struct Config{
 
     int refinements;
     int order;
-    int ode_solver_type;
     double reltol_conduction;
     double abstol_conduction;
     int iter_conduction;
@@ -40,16 +39,14 @@ class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
-        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
-	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
+        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Standard solver
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);  //Sundials setup
+	    virtual int SUNImplicitSolve(const Vector &X, Vector &X_new, double tol);   //Sundials solver
 
-        void SetParameters(const Vector &X);
+        void SetParameters(const Vector &X);    //Update parameters from previous step
 
         virtual ~Conduction_Operator();
-
- protected:
+    protected:
         //Global parameters
         Config config;
 
@@ -59,16 +56,16 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
-        ParBilinearForm *t;  //m + dt*k
 
-        HypreParMatrix M;
-        HypreParMatrix K;
-        HypreParMatrix T;   
+        HypreParMatrix *M, *M_e, *M_0;
+        HypreParMatrix *K_0;
+        HypreParMatrix *T, *T_e;
+        mutable HypreParVector Z;   
 
-        CGSolver M_solver;
-        CGSolver T_solver;
-        HypreSmoother M_prec;
-        HypreSmoother T_prec; 
+        HyprePCG M_solver;
+        HyprePCG T_solver;
+        HypreBoomerAMG M_prec;
+        HypreBoomerAMG T_prec; 
 
         ParGridFunction aux;
         ParGridFunction aux_C;
@@ -79,15 +76,15 @@ class Conduction_Operator : public TimeDependentOperator{
         VectorFunctionCoefficient zero;
 
         ProductCoefficient coeff_rC;
-        ProductCoefficient coeff_rK; ProductCoefficient dt_coeff_rK;
+        ProductCoefficient coeff_rK;
 
         InnerProductCoefficient dHdT;
         InnerProductCoefficient dT_2;
 };
 
 class Artic_sea{
-  public:
-   Artic_sea(Config config);
+    public:
+        Artic_sea(Config config);
         void run(const char *mesh_file);
         ~Artic_sea();
     private:
@@ -99,6 +96,7 @@ class Artic_sea{
         //Global parameters
         Config config;
 
+        //Simulation parameters
         int iteration;
         double t;
         double dt;
@@ -106,15 +104,17 @@ class Artic_sea{
         int vis_iteration;
         int vis_steps;
         int vis_impressions;
+        double total_time;
+
+        //Mesh objects
+        ParMesh *pmesh;
+        FiniteElementCollection *fec;
+        ParFiniteElementSpace *fespace;
 
         int dim;
         double h_min;
         int serial_refinements;
         HYPRE_Int size;
-
-        ParMesh *pmesh;
-        FiniteElementCollection *fec;
-        ParFiniteElementSpace *fespace;
 
         //System objects
         ParGridFunction *x;
@@ -123,13 +123,11 @@ class Artic_sea{
 
         //Solver objects
         ODESolver *ode_solver;
-        CVODESolver *cvode;
         ARKStepSolver *arkode;
 
+        //Print objects
         ParaViewDataCollection *paraview_out;
 };
-
-extern double initial(const Vector &x);
 
 extern double Rmin, Rmax, Zmin, Zmax;
 

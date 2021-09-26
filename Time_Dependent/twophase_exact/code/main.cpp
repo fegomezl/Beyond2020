@@ -44,9 +44,6 @@ int main(int argc, char *argv[]){
                    "Number of total uniform refinements.");
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
-    args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
-                   "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
-                   "            11 - Forward Euler, 12 - RK2, 13 - RK3 SSP, 14 - RK4.");
     args.AddOption(&config.abstol_conduction, "-abstol_c", "--tolabsoluteConduction",
                    "Absolute tolerance of Conduction.");
     args.AddOption(&config.reltol_conduction, "-reltol_c", "--tolrelativeConduction",
@@ -89,9 +86,9 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-
-    //Run the program for different refinements
+    //Run the program
     {
+        tic();
         config.invDeltaT = pow(10, nDeltaT);
         T_l = T_l - config.T_f;
         T_s = config.T_f - T_s;
