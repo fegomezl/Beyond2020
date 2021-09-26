@@ -16,50 +16,54 @@ struct Config{
 
     bool master;
     int nproc;
-    int order;
-    int refinements;
+
     double dt_init;
     double t_final;
     int vis_steps_max;
+
+    int refinements;
+    int order;
     int ode_solver_type;
-    double reltol;
-    double abstol;
+    double reltol_conduction;
+    double abstol_conduction;
+    int iter_conduction;
+    double reltol_sundials;
+    double abstol_sundials;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(ParFiniteElementSpace &fespace, Array<int> ess_bdr);
+        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, Array<int> ess_bdr);
 
-        //Solver for explicit methods
-        virtual void Mult(const Vector &X, Vector &dX_dt) const;           
-
-        //Solver for implicit methods
-        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); 
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
-   	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
+        virtual void Mult(const Vector &X, Vector &dX_dt) const;                                                        //Standard explicit solver
+        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt);                                    //Standar implicit solver 
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);  //Sundials setup
+	    virtual int SUNImplicitSolve(const Vector &X, Vector &X_new, double tol);                                       //Sundials solver
 
         virtual ~Conduction_Operator();
     protected:
+        //Global parameters
+        Config config;
+
         ParFiniteElementSpace &fespace;
         Array<int> ess_tdof_list;
 
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
-        ParBilinearForm *t;  //m + dt*k
 
-        HypreParMatrix M;
-        HypreParMatrix T;
+        HypreParMatrix *M, *M_e, *M_0;
+        HypreParMatrix *K_0;
+        HypreParMatrix *T, *T_e;
+        mutable HypreParVector Z;
 
-        //Solver objects
-        CGSolver M_solver;
-        CGSolver T_solver;
-        HypreSmoother M_prec;
-        HypreSmoother T_prec;
+        HyprePCG M_solver;
+        HyprePCG T_solver;
+        HypreBoomerAMG M_prec;
+        HypreBoomerAMG T_prec; 
 
-        FunctionCoefficient r;
+        FunctionCoefficient coeff_r;
         ProductCoefficient r_alpha;
-        ProductCoefficient dt_r_alpha;
 };
 
 class Artic_sea{
@@ -84,24 +88,21 @@ class Artic_sea{
         int vis_iteration;
         int vis_steps;
         int vis_impressions;
-        double actual_error;
-  	    double total_error;
         double total_time;
-
-        int dim;
-        int serial_refinements;
-        HYPRE_Int size;
 
         //Mesh objects
         ParMesh *pmesh;
         FiniteElementCollection *fec;
         ParFiniteElementSpace *fespace;
 
+        int dim;
+        double h_min;
+        int serial_refinements;
+        HYPRE_Int size;
+
         //System objects
         ParGridFunction *x;
         HypreParVector *X;
-        Array<int> ess_bdr;
-        FunctionCoefficient initial_f;
         Conduction_Operator *oper;
 
         //Solver objects
@@ -109,20 +110,21 @@ class Artic_sea{
         CVODESolver *cvode;
         ARKStepSolver *arkode;
 
+        //Convergence objects
+        double actual_error;
+        double total_error;
+        FunctionCoefficient exact;
+        const IntegrationRule *irs[Geometry::NumGeom];
+
+        //Print objects
         ParaViewDataCollection *paraview_out;
 };
 
 extern double Rmin, Rmax, Zmin, Zmax;
+
+extern double alpha;
 extern int Mterms, Nterms;
 extern std::vector<double> Coeficients;
 
-extern double alpha;
-
 extern void Calc_Coe(double a, double b, std::vector<double> & Coeficients);
 extern double initial(const Vector &x, double t);
-extern double initial_condition(double r, double z, int m, int n, double a, double b);
-extern double integrand(double r,double z,int m,int n, double a, double b);
-extern double integrate(int m, int n,double a,double b);
-extern double Aux( double r, double z, double t);
-extern void print_exact();
-extern void print_initial();

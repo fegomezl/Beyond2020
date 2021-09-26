@@ -7,32 +7,47 @@ RMAX=$(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.-)
 ZMIN=$(shell sed -n 5p settings/parameters.txt | tr -d -c 0-9.-)
 ZMAX=$(shell sed -n 6p settings/parameters.txt | tr -d -c 0-9.-)
 
-#Program parameters
-REF = $(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.)
-ORDER = $(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.)
-ALPHA = $(shell sed -n 15p settings/parameters.txt | tr -d -c 0-9.)
-DT = $(shell sed -n 16p settings/parameters.txt | tr -d -c 0-9.)
-T_FI = $(shell sed -n 17p settings/parameters.txt | tr -d -c 0-9.)
-VIS = $(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.)
-ODE = $(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
-RELT = $(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
-ABST = $(shell sed -n 21p settings/parameters.txt | tr -d -c 0-9.)
+#Simulation parameters
+DT=$(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.)
+T_FI=$(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.)
+VIS=$(shell sed -n 13p settings/parameters.txt | tr -d -c 0-9.)
+
+#FE parameters
+REF=$(shell sed -n 16p settings/parameters.txt | tr -d -c 0-9.)
+ORDER=$(shell sed -n 17p settings/parameters.txt | tr -d -c 0-9.)
+ODE=$(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.)
+ABST_C=$(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
+RELT_C=$(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
+ITER_C=$(shell sed -n 21p settings/parameters.txt | tr -d -c 0-9.)
+ABST_S=$(shell sed -n 22p settings/parameters.txt | tr -d -c 0-9.)
+RELT_S=$(shell sed -n 23p settings/parameters.txt | tr -d -c 0-9.)
+
+#Physical parameters
+ALPHA=$(shell sed -n 26p settings/parameters.txt | tr -d -c 0-9.)
+MT=$(shell sed -n 27p settings/parameters.txt | tr -d -c 0-9.)
+NT=$(shell sed -n 28p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
-FLAGS = $(MFEM_FLAGS)
+FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
 RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
-.PHONY: all mesh graph clean oclean
+.PHONY: all main mesh graph clean oclean
 
 all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
-	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN)  -Zmax $(ZMAX) \
-						-o $(ORDER) -r $(REF) -a $(ALPHA) \
-						-dt $(DT) -t_f $(T_FI) -v_s $(VIS) -ode $(ODE) -reltol $(RELT) -abstol $(ABST)
+	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
+						-dt $(DT) -t_f $(T_FI) -v_s $(VIS) \
+						-r $(REF) -o $(ORDER) -ode $(ODE)\
+						-abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
+						-abstol_s $(ABST_S) -reltol_s $(RELT_S) \
+						-a $(ALPHA) -mt $(MT) -nt $(NT)
 	@echo -e '\nDone!\n'
+
+main: main.x
+	@echo 'Program Compiled.'
 
 mesh: results/mesh.msh
 	@echo 'Mesh created.'
@@ -42,8 +57,8 @@ ifeq ($(SHARE_DIR), NULL)
 	@echo 'No share directory.'
 else
 	@echo -e 'Moving graphs ... \c'
-	@rm -rf $(SHARE_DIR)/onephase
-	@cp -r results/graph $(SHARE_DIR)/onephase
+	@rm -rf $(SHARE_DIR)/twophase
+	@cp -r results $(SHARE_DIR)/twophase
 	@echo -e 'Done!'
 endif
 
@@ -64,9 +79,8 @@ results/mesh.msh: settings/parameters.txt
 	@gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
-
 clean:
-	@rm -rf *.x results/graph/* results/*.txt
+	@rm -rf *.x results/*
 
 oclean:
 	@rm -rf .objects/*.o

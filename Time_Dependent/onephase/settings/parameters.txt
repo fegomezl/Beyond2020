@@ -1,21 +1,28 @@
 Mesh Parameters
-settings/structured_square.geo #Mesh_script
-0 #Rmin
+settings/square.geo #Mesh_script
+0  #Rmin
 10 #Rmax
-0 #Zmin
+0  #Zmin
 10 #Zmax
-15 #Rcells
-15 #Zcells
-
-FE parameters
-1 #Refinements
-2 #Order
+30 #Rcells
+30 #Zcells
 
 Simulation parameters
-70.8 #Thermal_diffusion_constant
-0.001 #Dt
-2 #Final_time
-10 #Visualization_steps
-12 #ODE_solver_type
-0.00001 #reltol (tolerancia relativa de SUNDIALS solvers)
-0.00001 #abstol (tolerancia absoluta de SUNDIALS solvers)
+0.0001  #Dt
+0.05     #Final_time
+10      #Visualization_steps
+
+FE parameters
+1          #Refinements
+2          #Order
+12         #ODE_solver
+0          #abstol(Conduction)
+0.00000001 #reltol(Conduction)
+100        #iter(Conduction)
+0.00001    #abstol(SUNDIALS)
+0.00001    #reltol(SUNDIALS)
+
+Physical parameters
+70.8       #Diffusion_constant
+6          #Vertical_terms
+6          #Radial_terms
