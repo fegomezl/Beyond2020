@@ -8,7 +8,8 @@ void Artic_sea::output_results(){
              << "Mesh Size: " << h_min << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
-             << "Total refinements: " << config.refinements << "\n";
+             << "Total refinements: " << config.refinements << "\n"
+             << "Total execution time: " << total_time << " s" << "\n";
 
     //Print numerical results of the program
         ofstream output;
@@ -20,13 +21,11 @@ void Artic_sea::output_results(){
             output << left << setw(16) 
                    << "DOFs" << setw(16) 
                    << "h" << setw(16) 
-                   << "w error" << setw(16)
                    << "psi error" << "\n";
         }
         output << left << setw(16) 
                << size << setw(16) 
                << h_min << setw(16) 
-               << error_w << setw(16)
                << error_psi << "\n";
         output.close();
     }

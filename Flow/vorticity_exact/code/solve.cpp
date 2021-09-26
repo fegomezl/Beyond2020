@@ -2,6 +2,8 @@
 
 void rot_f(const Vector &x, DenseMatrix &f);
 
+double inv_r(const Vector &x);
+
 void Artic_sea::solve_system(){
 
     //Create the complete bilinear operator:
@@ -34,19 +36,20 @@ void Artic_sea::solve_system(){
 
     //Calculate velocity
     v = new ParGridFunction(fespace_v);
-
     ParGridFunction psi_grad(fespace_v);
 
     DiscreteLinearOperator grad(fespace, fespace_v);
     grad.AddDomainIntegrator(new GradientInterpolator);
     grad.Assemble();
     grad.Finalize();
-
     grad.Mult(*psi, psi_grad);
 
-    VectorGridFunctionCoefficient Psi_grad(&psi_grad);
     MatrixFunctionCoefficient rot(dim, rot_f);
-    MatrixVectorProductCoefficient V(rot, Psi_grad);
+    FunctionCoefficient Inv_r(inv_r);
+
+    VectorGridFunctionCoefficient Psi_grad(&psi_grad);
+    MatrixVectorProductCoefficient rV(rot, Psi_grad);
+    ScalarVectorProductCoefficient V(Inv_r, rV);
     v->ProjectDiscCoefficient(V, GridFunction::ARITHMETIC);
 
     //Calculate convergence error
@@ -57,8 +60,6 @@ void Artic_sea::solve_system(){
     for (int ii=0; ii < Geometry::NumGeom; ++ii)
         irs[ii] = &(IntRules.Get(ii, order_quad));
 
-    error_w = 0;
-    //error_w = w->ComputeL2Error(Exact_w)/exact_w_f.ComputeL2Error(zero);
     error_psi = psi->ComputeL2Error(Exact_psi, irs)/ComputeGlobalLpNorm(2, Exact_psi, *pmesh, irs); 
 
     //Delete used memory
@@ -68,4 +69,8 @@ void Artic_sea::solve_system(){
 void rot_f(const Vector &x, DenseMatrix &f){
     f(0,0) = 0.;  f(0,1) = -1.;
     f(1,0) = 1.;  f(1,1) = 0.;
+}
+
+double inv_r(const Vector &x){
+    return pow(x(0), -1);
 }

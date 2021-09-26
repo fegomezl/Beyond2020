@@ -10,14 +10,13 @@ double temperature_f(const Vector &x);
 //Right hand side of the equation
 double f_rhs(const Vector &x);
 
-//Boundary values
+//Boundary values for w
 double boundary_w(const Vector &x);
 
+//Boundary values for psi
 double boundary_psi(const Vector &x);
 
 //Exact solutions
-double exact_w(const Vector &x);
-
 double exact_psi(const Vector &x);
 
 void Artic_sea::assemble_system(){
@@ -35,13 +34,11 @@ void Artic_sea::assemble_system(){
     VectorFunctionCoefficient r_inv_hat(dim, r_inv_hat_f);
 
     //Properties coefficients
-    ConstantCoefficient inv_mu(pow(config.viscosity, -1));
     GridFunctionCoefficient eta(&theta);
     ProductCoefficient neg_eta(-1., eta);
 
     //RHS coefficients
     FunctionCoefficient f_coeff(f_rhs);
-    ProductCoefficient inv_mu_f(inv_mu, f_coeff);
 
     //Dirichlet coefficients
     FunctionCoefficient w_coeff(boundary_w);
@@ -49,7 +46,7 @@ void Artic_sea::assemble_system(){
 
     //Rotational coupled coefficients
     ScalarVectorProductCoefficient neg_eta_r_inv_hat(neg_eta, r_inv_hat);
-    ProductCoefficient inv_mu_rf(r, inv_mu_f);
+    ProductCoefficient r_f(r, f_coeff);
 
     //Define essential boundary conditions
     //   
@@ -62,7 +59,7 @@ void Artic_sea::assemble_system(){
     //                  0
 
     Array<int> ess_bdr_w(pmesh->bdr_attributes.Max());
-    ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
+    ess_bdr_w[0] = 0; ess_bdr_w[1] = 1;
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 1;
 
     Array<int> ess_bdr_psi(pmesh->bdr_attributes.Max());
@@ -81,7 +78,7 @@ void Artic_sea::assemble_system(){
     g.Assemble();
 
     ParLinearForm f(fespace);
-    f.AddDomainIntegrator(new DomainLFIntegrator(inv_mu_rf));
+    f.AddDomainIntegrator(new DomainLFIntegrator(r_f));
     f.Assemble();
 
     //Define bilinear forms of the system
@@ -119,8 +116,8 @@ void Artic_sea::assemble_system(){
     Ct = ct.ParallelAssemble();
 
     //Transfer to TrueDofs
-    w->ParallelAssemble(X.GetBlock(0));
-    psi->ParallelAssemble(X.GetBlock(1));
+    w->ParallelAverage(X.GetBlock(0));
+    psi->ParallelAverage(X.GetBlock(1));
 
     g.ParallelAssemble(B.GetBlock(0));
     f.ParallelAssemble(B.GetBlock(1));
@@ -140,27 +137,21 @@ double temperature_f(const Vector &x){
     return 10;
 }
 
-double scale = 1e-4;
-
 //Right hand side of the equation
 double f_rhs(const Vector &x){                 
-    return 0.;
+    return 0;
 }
 
-//Boundary values
+//Boundary values for w
 double boundary_w(const Vector &x){
     return 0.;
 }
 
+//Boundary values for psi
 double boundary_psi(const Vector &x){
-    return x(0)*boost::math::cyl_bessel_j(1, boost::math::cyl_bessel_j_zero(1., 1)*x(0)/out_rad);
-}
-
-//Exact solutions
-double exact_w(const Vector &x){
-    return 0.;
+    return x(0)*boost::math::cyl_bessel_j(1, boost::math::cyl_bessel_j_zero(1., 1)*x(0)/Rmax);
 }
 
 double exact_psi(const Vector &x){
-    return x(0)*boost::math::cyl_bessel_j(1, boost::math::cyl_bessel_j_zero(1., 1)*x(0)/out_rad)*cosh(boost::math::cyl_bessel_j_zero(1., 1)*x(1)/out_rad)/cosh(boost::math::cyl_bessel_j_zero(1., 1)*height/out_rad);
+    return x(0)*boost::math::cyl_bessel_j(1, boost::math::cyl_bessel_j_zero(1., 1)*x(0)/Rmax)*cosh(boost::math::cyl_bessel_j_zero(1., 1)*x(1)/Rmax)/cosh(boost::math::cyl_bessel_j_zero(1., 1)*Zmax/Rmax);
 }

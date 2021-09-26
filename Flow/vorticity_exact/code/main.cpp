@@ -1,12 +1,10 @@
 #include "header.h"
 
 //Dimensions of the mesh
-double height;
-double out_rad;
-double int_rad;
-
-//Size of the BC border
-double epsilon_r;
+double Rmin;
+double Zmin;
+double Rmax;
+double Zmax;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -24,12 +22,14 @@ int main(int argc, char *argv[]){
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
                    "Mesh file to use.");
-    args.AddOption(&height, "-he", "--height",
-                   "Height of the container.");
-    args.AddOption(&out_rad, "-o-r", "--outer-radius",
-                   "Outer radius of the container.");
-    args.AddOption(&int_rad, "-i-r", "--internal-radius",
-                   "Internal radius of the container.");
+    args.AddOption(&Rmin, "-Rmin", "--Rmin",
+                   "Minimum R border.");
+    args.AddOption(&Rmax, "-Rmax", "--Rmax",
+                   "Maximum R border.");
+    args.AddOption(&Zmin, "-Zmin", "--Zmin",
+                   "Minimum Z border.");
+    args.AddOption(&Zmax, "-Zmax", "--Zmax",
+                   "Maximum Z border.");
 
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree).");
@@ -40,12 +40,8 @@ int main(int argc, char *argv[]){
                    "Fusion temperature of the material.");
     args.AddOption(&nDeltaT, "-DT", "--DeltaT",
                    "Temperature interface interval (10^(-n)).");
-    args.AddOption(&config.viscosity, "-v", "--viscosity",
-                   "Kinematic viscosity of the material.");
     args.AddOption(&nEpsilon_eta, "-e_eta", "--epsilon_eta",
                    "Value of constatn epsilon for (1-phi)^2/(phi^3 + epsilon)(10^(-n)).");
-    args.AddOption(&nEpsilon_r, "-e_r", "--epsilon_r",
-                   "Value of constant epsilon for 1/(r + epsilon) (10^(-n)).");
 
     //Check if parameters were read correctly
     args.Parse();
@@ -59,9 +55,9 @@ int main(int argc, char *argv[]){
     //Run the program for different refinements
     int total_refinements = config.refinements;
     for (int ii = 0; ii <= total_refinements; ii++){
+        tic();
         config.invDeltaT = pow(10, nDeltaT);
         config.epsilon_eta = pow(10, -nEpsilon_eta);
-        epsilon_r = pow(10, -nEpsilon_r);
         config.last = ((config.refinements = ii) == total_refinements);
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);

@@ -19,6 +19,7 @@ void Artic_sea::run(const char *mesh_file){
     make_grid(mesh_file);
     assemble_system();
     solve_system();
+    total_time = toc();
     output_results();
 }
 
