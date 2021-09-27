@@ -6,7 +6,7 @@ Zmin = 0;
 Zmax = 20;
 
 NR = 10;
-NZ = 200;
+NZ = 10;
 
 Point(1) = {Rmin, Zmin, 0, 1.0};
 //+

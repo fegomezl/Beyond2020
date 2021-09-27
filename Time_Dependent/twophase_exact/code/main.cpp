@@ -19,7 +19,8 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-    int nDeltaT;
+    int nDeltaT = 0;
+    int nEpsilonT = 0;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -59,8 +60,8 @@ int main(int argc, char *argv[]){
                    "Fusion temperature of the material.");
     args.AddOption(&nDeltaT, "-DT", "--DeltaT",
                    "Temperature interface interval (10^(-n)).");
-    args.AddOption(&config.EpsilonT, "-ET", "--EpsilonT",
-                   "Epsilon constant for temperature (1/(x+e)).");
+    args.AddOption(&nEpsilonT, "-ET", "--EpsilonT",
+                   "Epsilon constant for temperature (1/(x+e)) (10^(-n)).");
     args.AddOption(&config.c_l, "-c_l", "--c_l",
                    "Liquid volumetric heat capacity.");
     args.AddOption(&config.c_s, "-c_s", "--c_s",
@@ -90,6 +91,7 @@ int main(int argc, char *argv[]){
     {
         tic();
         config.invDeltaT = pow(10, nDeltaT);
+        config.EpsilonT = pow(10, -nEpsilonT);
         T_l = T_l - config.T_f;
         T_s = config.T_f - T_s;
         Artic_sea artic_sea(config);
