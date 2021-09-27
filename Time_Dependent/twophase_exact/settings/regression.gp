@@ -10,6 +10,7 @@ file = 'results/data.txt'
 
 set datafile separator ","
 set key autotitle columnhead
+set key r b
 set term pdf
 set o 'results/regression.pdf'
 set fit quiet
@@ -26,4 +27,4 @@ set obj 2 rect from graph 0, 1 to graph 0.50, 0.77 fc rgb "white"
 set lab 2 Fit at graph 0, 0.97
 
 
-plot file u 1:2:3 w yerrorbars ls 1 t 'data', f(x) w l t 'regression' ls 2
+plot file u 1:2:3 w yerrorbars ls 1 t 'Interface', f(x) w l t 'Fit' ls 2
