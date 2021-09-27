@@ -6,8 +6,6 @@ double Zmin;
 double Rmax;
 double Zmax;
 
-double mid;
-
 int main(int argc, char *argv[]){
     //Define MPI parameters
     int nproc = 0, pid = 0;
@@ -19,6 +17,7 @@ int main(int argc, char *argv[]){
     const char *mesh_file;
     Config config((pid == 0), nproc);
     int nDeltaT = 0;
+    int nEpsilonT = 0;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -43,9 +42,6 @@ int main(int argc, char *argv[]){
                    "Number of total uniform refinements.");
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
-    args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
-                   "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
-                   "            11 - Forward Euler, 12 - RK2, 13 - RK3 SSP, 14 - RK4.");
     args.AddOption(&config.abstol_conduction, "-abstol_c", "--tolabsoluteConduction",
                    "Absolute tolerance of Conduction.");
     args.AddOption(&config.reltol_conduction, "-reltol_c", "--tolrelativeConduction",
@@ -61,6 +57,8 @@ int main(int argc, char *argv[]){
                    "Fusion temperature of the material.");
     args.AddOption(&nDeltaT, "-DT", "--DeltaT",
                    "Temperature interface interval (10^(-n)).");
+    args.AddOption(&nEpsilonT, "-ET", "--EpsilonT",
+                   "Epsilon constant for temperature (1/(x+e)) (10^(-n)).");
     args.AddOption(&config.c_l, "-c_l", "--c_l",
                    "Liquid volumetric heat capacity.");
     args.AddOption(&config.c_s, "-c_s", "--c_s",
@@ -85,12 +83,14 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-    //Run the program for different refinements
-    mid = Zmax*config.k_s/(config.k_s + config.k_l);
-    
-    config.invDeltaT = pow(10, nDeltaT);
-    Artic_sea artic_sea(config);
-    artic_sea.run(mesh_file); 
+    //Run the program
+    {
+        tic();
+        config.invDeltaT = pow(10, nDeltaT);
+        config.EpsilonT = pow(10, -nEpsilonT);
+        Artic_sea artic_sea(config);
+        artic_sea.run(mesh_file); 
+    }
 
     MPI_Finalize();
 

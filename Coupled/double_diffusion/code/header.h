@@ -21,7 +21,6 @@ struct Config{
 
     int refinements;
     int order;
-    int ode_solver_type;
     double reltol_conduction;
     double abstol_conduction;
     int iter_conduction;
@@ -30,6 +29,7 @@ struct Config{
 
     double T_f;
     double invDeltaT;
+    double EpsilonT;
     double c_l, c_s;
     double k_l, k_s;
     double D_l, D_s;
@@ -40,12 +40,11 @@ class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
 
-        void SetParameters(const BlockVector &X);
-        void UpdateVelocity(const Vector &psi);
+        void SetParameters(const BlockVector &X);       //Update parameters from previous step
 
-        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
-	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
+        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Standard solver
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);  //Sundials setup
+	    virtual int SUNImplicitSolve(const Vector &X, Vector &X_new, double tol);
 
         virtual ~Conduction_Operator();
     protected:
@@ -55,66 +54,48 @@ class Conduction_Operator : public TimeDependentOperator{
         //Mesh objects
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
+        Array<int> ess_tdof_theta, ess_tdof_phi;
 
-        mutable Array<int> newmann_bdr_theta, newmann_bdr_phi;
-        mutable Array<int> robin_bdr_theta, robin_bdr_phi;
-
-        Array<int> ess_tdof_list_theta, ess_tdof_list_phi;
+        Array<int> robin_bdr_theta, robin_bdr_phi;
 
         //System objects
         ParBilinearForm *m_theta, *m_phi;        //Mass operators
         ParBilinearForm *k_theta, *k_phi;        //Difussion operators
-        ParBilinearForm *t_theta, *t_phi;        //m + dt*k
 
-        HypreParMatrix M_theta, M_phi;
-        HypreParMatrix T_theta, T_phi;   
+        HypreParMatrix *M_theta, *M_e_theta, *M_0_theta,    *M_phi, *M_e_phi, *M_0_phi;
+        HypreParMatrix *K_0_theta,                          *K_0_phi;
+        HypreParMatrix *T_theta, *T_e_theta,                *T_phi, *T_e_phi;
+
+        HypreParVector F_theta, F_phi;
+        HypreParVector dt_F_theta, dt_F_phi;
+        mutable HypreParVector Z_theta, Z_phi;
 
         //Solver objects
-        CGSolver M_theta_solver, M_phi_solver;
-        CGSolver T_theta_solver, T_phi_solver;
-        HypreSmoother M_theta_prec, M_phi_prec;
-        HypreSmoother T_theta_prec, T_phi_prec;
+        HyprePCG M_theta_solver, M_phi_solver;
+        HyprePCG T_theta_solver, T_phi_solver;
+        HypreBoomerAMG M_theta_prec, M_phi_prec;
+        HypreBoomerAMG T_theta_prec, T_phi_prec;
 
         //Auxiliar grid functions
         ParGridFunction aux_phi, aux_theta;
         ParGridFunction aux_C;
         ParGridFunction aux_K;
         ParGridFunction aux_D;
-
-        ParGridFunction psi;
+        ParGridFunction aux_L;
 
         //Coefficients
-        mutable FunctionCoefficient coeff_r;
+        FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
-        MatrixFunctionCoefficient rot;
 
-        GradientGridFunctionCoefficient gradpsi;
-        MatrixVectorProductCoefficient coeff_rV;
-        ScalarVectorProductCoefficient dt_coeff_rV;
-
-        ProductCoefficient coeff_rCL;
-
+        ProductCoefficient coeff_rC;
         ProductCoefficient coeff_rK; 
-        ProductCoefficient dt_coeff_rK;
-
         ProductCoefficient coeff_rD; 
-        ProductCoefficient dt_coeff_rD;
+        
+        InnerProductCoefficient dHdT;
+        InnerProductCoefficient dT_2;
 
-        ScalarVectorProductCoefficient coeff_rCLV;
-        ScalarVectorProductCoefficient dt_coeff_rCLV;
-
-        mutable FunctionCoefficient newmann_theta, newmann_phi;
-        mutable ProductCoefficient r_newmann_theta, r_newmann_phi;
-        mutable ProductCoefficient dt_r_newmann_theta, dt_r_newmann_phi;
-
-        mutable FunctionCoefficient robin_h_theta, robin_h_phi;
-        mutable FunctionCoefficient robin_ref_theta, robin_ref_phi;
-        mutable ProductCoefficient neg_robin_h_theta, neg_robin_h_phi;
-        mutable ProductCoefficient neg_robin_h_ref_theta, neg_robin_h_ref_phi;
-        mutable ProductCoefficient neg_r_robin_h_theta, neg_r_robin_h_phi;
-        mutable ProductCoefficient neg_r_robin_h_ref_theta, neg_r_robin_h_ref_phi;
-        mutable ProductCoefficient neg_dt_r_robin_h_theta, neg_dt_r_robin_h_phi;
-        mutable ProductCoefficient neg_dt_r_robin_h_ref_theta, neg_dt_r_robin_h_ref_phi;
+        FunctionCoefficient robin_h_theta, robin_h_phi;
+        ProductCoefficient r_robin_h_theta, r_robin_h_phi;
 };
 
 class Artic_sea{
@@ -131,6 +112,7 @@ class Artic_sea{
         //Global parameters
         Config config;
 
+        //Simulation parameters
         int iteration;
         double t;
         double dt;
@@ -138,16 +120,18 @@ class Artic_sea{
         int vis_iteration;
         int vis_steps;
         int vis_impressions;
+        double total_time;
 
-        int dim;
-        int serial_refinements;
-        HYPRE_Int size;
-
+        //Mesh objects
         ParMesh *pmesh;
         FiniteElementCollection *fec;
         ParFiniteElementSpace *fespace;
-
         Array<int> block_true_offsets;
+
+        int dim;
+        double h_min;
+        int serial_refinements;
+        HYPRE_Int size;
 
         //System objects
         ParGridFunction *theta;
@@ -155,18 +139,17 @@ class Artic_sea{
         ParGridFunction *phase;
 
         BlockVector X;
-        Conduction_Operator *oper_T;
+        Conduction_Operator *cond_oper;
 
         //Solver objects
         ODESolver *ode_solver;
-        CVODESolver *cvode;
         ARKStepSolver *arkode;
 
+        //Print objects
         ParaViewDataCollection *paraview_out;
 };
 
 extern double r_f(const Vector &x);
-extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void zero_f(const Vector &x, Vector &f);
 
 extern double T_fun(const double &salinity);
@@ -174,5 +157,3 @@ extern double T_fun(const double &salinity);
 extern double delta_c_s_fun(const double &temperature, const double &salinity);
 
 extern double Rmin, Rmax, Zmin, Zmax;
-
-extern double mid;

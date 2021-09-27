@@ -39,11 +39,11 @@ class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, int dim, int attributes, Vector &X);
 
+        void SetParameters(const Vector &X);    //Update parameters from previous step
+
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Standard solver
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);  //Sundials setup
 	    virtual int SUNImplicitSolve(const Vector &X, Vector &X_new, double tol);   //Sundials solver
-
-        void SetParameters(const Vector &X);    //Update parameters from previous step
 
         virtual ~Conduction_Operator();
     protected:
