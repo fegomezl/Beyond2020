@@ -6,7 +6,7 @@ set ylabel 'Interface (mm)'
 set ls 1 lc rgb "black" pt 7 ps 0.2
 set ls 2 lc rgb "red" lt 1 lw 1
 
-file = 'results/graph/data.txt'
+file = 'results/data.txt'
 
 set datafile separator ","
 set key autotitle columnhead
@@ -14,7 +14,7 @@ set term pdf
 set o 'results/regression.pdf'
 set fit quiet
 
-f(x) = A*x**B
+f(x) = 2*A*x**B
 A=1
 B=0.5
 

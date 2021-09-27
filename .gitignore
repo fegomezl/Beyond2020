@@ -3,3 +3,4 @@
 *~
 local_config.mk
 .nfs*
+*.log

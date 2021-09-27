@@ -42,7 +42,7 @@ RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
-.PHONY: all main mesh graph clean oclean
+.PHONY: all main mesh graph plot figure clean oclean
 
 all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
@@ -74,7 +74,10 @@ endif
 
 plot:
 	@pvpython settings/interfase.py
+
+figure:
 	@gnuplot settings/regression.gp
+	@xpdf results/regression.pdf
 
 main.x: $(DEPENDENCIES)
 	@echo -e 'Compiling' $@ '... \c'
