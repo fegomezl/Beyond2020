@@ -4,3 +4,5 @@
 local_config.mk
 .nfs*
 *.log
+*.vtu
+*.pvtu

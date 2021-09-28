@@ -73,7 +73,7 @@ else
 endif
 
 plot:
-	@pvpython settings/interfase.py
+	@/home/wind/Documents/paraview/ParaView-5.10.0-RC1-MPI-Linux-Python3.9-x86_64/bin/pvpython settings/interfase.py
 
 figure:
 	@gnuplot settings/regression.gp
