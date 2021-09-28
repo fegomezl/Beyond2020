@@ -16,7 +16,6 @@ do
         make
         make plot
         cp results/data.txt Data/d_${ii}e_${jj}.txt
+        make clean
     done
 done
-
-make clean
