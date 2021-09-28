@@ -8,9 +8,9 @@ settings/square.geo #Mesh_script
 100     #Zcells
 
 Simulation parameters
-0.0005   #Dt
-0.5     #Final_time
-10       #Visualization_steps
+0.0001   #Dt
+1     #Final_time
+100       #Visualization_steps
 
 FE parameters
 3          #Refinements

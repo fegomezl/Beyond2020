@@ -62,7 +62,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 double initial_f(const Vector &x){
     double mid_x = (Rmax + Rmin)/2;
     double mid_y = (Zmax + Zmin)/2;
-    double Rad = (Rmax - Rmin)/5;
+    double Rad = (Rmax - Rmin)/10;
 
     double r_2 = pow(x(0) - mid_x, 2) + pow(x(1) - mid_y, 2);
     if (r_2 < pow(Rad, 2))
