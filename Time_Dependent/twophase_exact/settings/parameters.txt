@@ -9,7 +9,7 @@ settings/square.geo #Mesh_script
 
 Simulation parameters
 0.00001  #Dt
-0.2       #Final_time
+0.5       #Final_time
 10      #Visualization_steps
 
 FE parameters
@@ -23,8 +23,8 @@ FE parameters
 
 Physical parameters
 0          #Fusion_temperature
-9          #nDeltaT
-9          #nEpsilonT
+1          #nDeltaT
+1          #nEpsilonT
 4.22       #Liquid_volumetric_heat_capacity
 1.88       #Solid_volumetric_heat_capacity
 33.3       #Liquid_thermal_conductivity
