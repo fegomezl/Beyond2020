@@ -13,31 +13,40 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     f(NULL), g(NULL),
     m(NULL), d(NULL), c(NULL), ct(NULL),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
-    psi(&fespace), w(&fespace), v(&fespace_v),
+    psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
     theta(&fespace), theta_dr(&fespace), 
     phi(&fespace), phi_dr(&fespace), 
     eta(&fespace), psi_grad(&fespace_v), 
-    r(r_f), r_inv_hat(dim, r_inv_hat_f),
+    coeff_r(r_f), inv_R(inv_r), r_inv_hat(dim, r_inv_hat_f),
     w_coeff(boundary_w), psi_coeff(boundary_psi), 
     grad(&fespace, &fespace_v),
     rot(dim, rot_f), Psi_grad(&psi_grad),
     rot_Psi_grad(rot, Psi_grad)
 { 
     //Define essential boundary conditions
+    //   
+    //              4               1
+    //            /---|---------------------------\
+    //            |                               |
+    //            |                               |
+    //            |                               | 3
+    //            |                               |
+    //          2 |                               |
+    //            |                               -
+    //            |                               |
+    //            |                               | 5
+    //            |                               |
+    //            \-------------------------------/
+    //                            0
     //
-    //                  1
-    //            /------------\
-    // (w,psi=0)  |            |
-    //           2|            |3
-    //            |            |
-    //            \------------/
-    //                  0
-    //
-    ess_bdr_w[0] = 1; ess_bdr_w[1] = 1;
+
+    ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 0;
+    ess_bdr_w[4] = 0; ess_bdr_w[5] = 0;
   
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
-    ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 0;
+    ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
+    ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 1;
 
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
@@ -84,8 +93,12 @@ double boundary_w(const Vector &x){
 }
 
 double boundary_psi(const Vector &x){
-    if (x(0) < r0)
-        return -vel*0.5*pow(x(0), 2)*x(1)/Zmax;
-    else
-        return -vel*0.5*pow(r0, 2)*x(1)/Zmax;
+    if (x(0) < L_in)
+        return -(Q/(2*M_PI))*pow(x(0)/L_in, 2)*(2-pow(x(0)/L_in, 2))*x(1)/Zmax;
+    else {
+        if (x(1) < L_out)
+            return -(Q/(2*M_PI))*pow(x(1)/L_out, 2)*(3-2*(x(1)/L_out));
+        else
+            return -Q/(2*M_PI);
+    }
 }
