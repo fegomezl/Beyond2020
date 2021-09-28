@@ -16,10 +16,10 @@ set o 'results/regression.pdf'
 set fit quiet
 
 f(x) = 2*A*x**B
-A=1
+A=1.2775
 B=0.5
 
-fit f(x) file u 1:2:3 yerrors via A,B
+fit[0:] f(x) file u 1:2:3 yerrors via A,B
 
 Fit = sprintf(" {/:Bold Parameters} \n y = ax^b \n a = %g +/- %g \n b = %g +/- %g", A, A_err, B, B_err)
 
