@@ -46,7 +46,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
   
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
-    ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 1;
+    ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 0;
 
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
@@ -93,12 +93,14 @@ double boundary_w(const Vector &x){
 }
 
 double boundary_psi(const Vector &x){
+    double in, out = 0;
     if (x(0) < L_in)
-        return -(Q/(2*M_PI))*pow(x(0)/L_in, 2)*(2-pow(x(0)/L_in, 2))*x(1)/Zmax;
-    else {
-        if (x(1) < L_out)
-            return -(Q/(2*M_PI))*pow(x(1)/L_out, 2)*(3-2*(x(1)/L_out));
-        else
-            return -Q/(2*M_PI);
-    }
+        in = pow(x(0)/L_in, 2);
+    else
+        in = 1.;
+    if (x(1) < L_out)
+        out = x(1)/L_out;
+    else
+        out = 1.;
+    return -in*out*Q/(2*M_PI);
 }

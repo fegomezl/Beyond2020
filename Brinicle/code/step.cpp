@@ -26,6 +26,7 @@ void Artic_sea::time_step(){
         w->Distribute(&(Z.GetBlock(0)));
         psi->Distribute(&(Z.GetBlock(1)));
         v->Distribute(V);
+        rv->Distribute(rV);
         
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++){

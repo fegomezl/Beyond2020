@@ -140,14 +140,16 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 //Initial conditions
 
 double initial_theta_f(const Vector &x){
-    if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
+    //if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
+    if (x(0) > L_in && Zmax - x(1) <= n_h)
         return theta_n;
     else
         return theta_in;
 }
 
 double initial_phi_f(const Vector &x){
-    if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
+    //if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
+    if (x(0) > L_in && Zmax - x(1) <= n_h)
         return phi_n;
     else
         return phi_in;
@@ -156,11 +158,11 @@ double initial_phi_f(const Vector &x){
 //Robin boundary conditions of the form kdu/dn = h(u-u_ref)
 
 double robin_h_theta_f(const Vector &x){
-    return c_l*(2/M_PI)*Q*pow(L_in, -2)*(1-pow(x(0)/L_out,2));
+    return c_l*Q*pow(L_in, -2)*M_1_PI;
 }
 
 double robin_h_phi_f(const Vector &x){
-    return (2/M_PI)*Q*pow(L_in, -2)*(1-pow(x(0)/L_out,2));
+    return Q*pow(L_in, -2)*M_1_PI;
 }
 
 double robin_ref_theta_f(const Vector &x){

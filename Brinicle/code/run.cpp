@@ -9,7 +9,7 @@ Artic_sea::Artic_sea(Config config):
     config(config),
     pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
     block_true_offsets(3),
-    theta(NULL), phi(NULL), w(NULL), psi(NULL), v(NULL), phase(NULL), 
+    theta(NULL), phi(NULL), w(NULL), psi(NULL), v(NULL), rv(NULL), phase(NULL), 
     rV(NULL), V(NULL),
     cond_oper(NULL), flow_oper(NULL),
     ode_solver(NULL), arkode(NULL),
@@ -70,6 +70,7 @@ Artic_sea::~Artic_sea(){
     delete w;
     delete psi;
     delete v;
+    delete rv;
     delete phase;
     delete rV;
     delete V;

@@ -27,6 +27,7 @@ void Artic_sea::assemble_system(){
     w = new ParGridFunction(fespace);
     psi = new ParGridFunction(fespace);
     v = new ParGridFunction(fespace_v);
+    rv = new ParGridFunction(fespace_v);
     phase = new ParGridFunction(fespace);
 
     rV = new HypreParVector(fespace_v);
@@ -45,6 +46,7 @@ void Artic_sea::assemble_system(){
     w->Distribute(&(Z.GetBlock(0)));
     psi->Distribute(&(Z.GetBlock(1)));
     v->Distribute(V);
+    rv->Distribute(rV);
 
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++){
@@ -79,6 +81,7 @@ void Artic_sea::assemble_system(){
     paraview_out->RegisterField("Vorticity", w);
     paraview_out->RegisterField("Stream", psi);
     paraview_out->RegisterField("Velocity", v);
+    paraview_out->RegisterField("rVelocity", rv);
     paraview_out->SetCycle(vis_impressions);
     paraview_out->SetTime(t);
     paraview_out->Save();

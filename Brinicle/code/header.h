@@ -214,6 +214,7 @@ class Artic_sea{
         ParGridFunction *w;
         ParGridFunction *psi;
         ParGridFunction *v;
+        ParGridFunction *rv;
         ParGridFunction *phase;
 
         BlockVector X;              //theta and phi
