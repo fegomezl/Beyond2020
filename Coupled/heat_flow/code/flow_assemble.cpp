@@ -12,10 +12,10 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     f(NULL), g(NULL),
     m(NULL), d(NULL), c(NULL), ct(NULL),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
-    psi(&fespace), w(&fespace), v(&fespace_v),
+    psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
     theta(&fespace), theta_eta(&fespace), 
     psi_grad(&fespace_v), theta_dr(&fespace),
-    r(r_f), r_inv_hat(dim, r_inv_hat_f),
+    coeff_r(r_f), inv_R(inv_r), r_inv_hat(dim, r_inv_hat_f),
     w_coeff(boundary_w), psi_coeff(boundary_psi), 
     grad(&fespace, &fespace_v),
     rot(dim, rot_f), Psi_grad(&psi_grad),
@@ -92,6 +92,5 @@ double boundary_w(const Vector &x){
 }
 
 double boundary_psi(const Vector &x){
-    double vel = 0.;
-    return -0.5*vel*pow(x(0), 2);
+    return 0.;
 }

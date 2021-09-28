@@ -6,9 +6,6 @@ double Zmin;
 double Rmax;
 double Zmax;
 
-//Size of the BC border
-double epsilon_r;
-
 int main(int argc, char *argv[]){
     //Define MPI parameters
     int nproc = 0, pid = 0;
@@ -19,7 +16,9 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-    int nDeltaT, nEpsilon_eta, nEpsilon_r;
+    int nDeltaT = 0;
+    int nEpsilonT = 0;
+    int nEpsilonEta = 0;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -44,9 +43,6 @@ int main(int argc, char *argv[]){
                    "Number of total uniform refinements.");
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
-    args.AddOption(&config.ode_solver_type, "-ode", "--ode_solver",
-                   "ODE solver: 1 - Backward Euler, 2 - SDIRK2, 3 - SDIRK3, \n"
-                   "            11 - Forward Euler, 12 - RK2, 13 - RK3 SSP, 14 - RK4.");
     args.AddOption(&config.abstol_conduction, "-abstol_c", "--tolabsoluteConduction",
                    "Absolute tolerance of Conduction.");
     args.AddOption(&config.reltol_conduction, "-reltol_c", "--tolrelativeConduction",
@@ -62,6 +58,10 @@ int main(int argc, char *argv[]){
                    "Fusion temperature of the material.");
     args.AddOption(&nDeltaT, "-DT", "--DeltaT",
                    "Temperature interface interval (10^(-n)).");
+    args.AddOption(&nEpsilonT, "-ET", "--EpsilonT",
+                   "Epsilon constant for temperature (1/(x+e)) (10^(-n)).");
+    args.AddOption(&nEpsilonEta, "-EEta", "--EpsilonEta",
+                   "Epsilon constant for eta (1-phi)^2/(phi^3 + e) (10^(-n)).");
     args.AddOption(&config.c_l, "-c_l", "--c_l",
                    "Liquid volumetric heat capacity.");
     args.AddOption(&config.c_s, "-c_s", "--c_s",
@@ -72,11 +72,6 @@ int main(int argc, char *argv[]){
                    "Solid thermal conductivity.");
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
-    args.AddOption(&nEpsilon_eta, "-e_eta", "--epsilon_eta",
-                   "Value of constatn epsilon for (1-phi)^2/(phi^3 + epsilon)(10^(-n)).");
-    args.AddOption(&nEpsilon_r, "-e_r", "--epsilon_r",
-                   "Value of constant epsilon for 1/(r + epsilon) (10^(-n)).");
-
 
     //Check if parameters were read correctly
     args.Parse();
@@ -88,9 +83,10 @@ int main(int argc, char *argv[]){
     if (config.master) args.PrintOptions(cout);
 
     {
+        tic();
         config.invDeltaT = pow(10, nDeltaT);
-        config.epsilon_eta = pow(10, -nEpsilon_eta);
-        epsilon_r = pow(10, -nEpsilon_r);
+        config.EpsilonT = pow(10, -nEpsilonT);
+        config.EpsilonEta = pow(10, -nEpsilonEta);
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
     }

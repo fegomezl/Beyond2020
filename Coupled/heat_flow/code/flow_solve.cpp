@@ -1,6 +1,6 @@
 #include "header.h"
 
-void Flow_Operator::Solve(Vector &W, Vector &Psi, Vector &V){
+void Flow_Operator::Solve(Vector &W, Vector &Psi, Vector &V, Vector &rV){
     //Create the complete bilinear operator:
     //
     //   H = [ M    C ]
@@ -33,12 +33,16 @@ void Flow_Operator::Solve(Vector &W, Vector &Psi, Vector &V){
     grad.Mult(psi, psi_grad);
     Psi_grad.SetGridFunction(&psi_grad);
     rot_Psi_grad.SetBCoef(Psi_grad);
-    v.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
+    FunctionCoefficient inv_R(inv_r);
+    ScalarVectorProductCoefficient coeff_V(inv_R, rot_Psi_grad);
+    v.ProjectDiscCoefficient(coeff_V, GridFunction::ARITHMETIC);
+    rv.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
 
     //Export flow information
     w.ParallelAverage(W);
     psi.ParallelAverage(Psi);
     v.ParallelAverage(V);
+    rv.ParallelAverage(rV);
 
     delete H;
 }

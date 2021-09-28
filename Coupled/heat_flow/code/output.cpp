@@ -10,5 +10,6 @@ void Artic_sea::output_results(){
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
              << "Total refinements: " << config.refinements << "\n"
              << "Total iterations: " << iteration << "\n"
-             << "Total printing: " << vis_impressions << "\n";
+             << "Total printing: " << vis_impressions << "\n"
+             << "Total execution time: " << total_time << " s" << "\n";
 }

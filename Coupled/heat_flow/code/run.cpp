@@ -9,9 +9,9 @@ Artic_sea::Artic_sea(Config config):
     config(config),
     pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
     theta(NULL), w(NULL), psi(NULL), v(NULL),
-    Theta(NULL), W(NULL), Psi(NULL), V(NULL),
+    Theta(NULL), W(NULL), Psi(NULL), rV(NULL),
     cond_oper(NULL), flow_oper(NULL),
-    ode_solver(NULL), cvode(NULL), arkode(NULL),
+    ode_solver(NULL), arkode(NULL),
     paraview_out(NULL)
 {}
 
@@ -21,6 +21,7 @@ void Artic_sea::run(const char *mesh_file){
     assemble_system();
     for (iteration = 1, vis_iteration = 1; !last; iteration++, vis_iteration++)
         time_step();
+    total_time = toc();
     output_results();
 }
 
@@ -28,7 +29,12 @@ Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete m;
     delete k;
-    delete t;
+    delete M;
+    delete M_e;
+    delete M_0;
+    delete K_0;
+    delete T;
+    delete T_e;
 }
 
 Flow_Operator::~Flow_Operator(){
@@ -57,6 +63,7 @@ Artic_sea::~Artic_sea(){
     delete Theta;
     delete W;
     delete Psi;
+    delete rV;
     delete V;
     delete cond_oper;
     delete flow_oper;

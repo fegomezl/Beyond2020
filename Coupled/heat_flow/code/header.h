@@ -21,7 +21,6 @@ struct Config{
 
     int refinements;
     int order;
-    int ode_solver_type;
     double reltol_conduction;
     double abstol_conduction;
     int iter_conduction;
@@ -30,63 +29,66 @@ struct Config{
 
     double T_f;
     double invDeltaT;
+    double EpsilonT;
+    double EpsilonEta;
     double c_l, c_s;
     double k_l, k_s;
     double L;
-    double epsilon_eta;
 };
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
         Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Vector &X);
 
-        void SetParameters(const Vector &X, const Vector &V);
+        void SetParameters(const Vector &X, const Vector &rV);   //Update parameters from previous step
 
-        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual void ImplicitSolve(const double dt, const Vector &X, Vector &dX_dt); //Solver for implicit methods
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
-	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
+        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Standard solver
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);  //Sundials setup
+	    virtual int SUNImplicitSolve(const Vector &X, Vector &X_new, double tol);   //Sundials solver
 
         virtual ~Conduction_Operator();
     protected:
         //Global parameters
         Config config;
 
+        //Mesh objects
         ParFiniteElementSpace &fespace;
         Array<int> ess_tdof_list;
 
         //System objects
         ParBilinearForm *m;  //Mass operator
         ParBilinearForm *k;  //Difussion operator
-        ParBilinearForm *t;  //m + dt*k
 
-        HypreParMatrix M;
-        HypreParMatrix T;   
+        HypreParMatrix *M, *M_e, *M_0;
+        HypreParMatrix *K_0;
+        HypreParMatrix *T, *T_e;
+        mutable HypreParVector Z;   
 
-        CGSolver M_solver;
-        CGSolver T_solver;
-        HypreSmoother M_prec;
-        HypreSmoother T_prec;
+        //Solver objects
+        HyprePCG M_solver;
+        HyprePCG T_solver;
+        HypreBoomerAMG M_prec;
+        HypreBoomerAMG T_prec; 
 
+        //Auxiliar grid functions
         ParGridFunction aux;
         ParGridFunction aux_C;
         ParGridFunction aux_K;
+        ParGridFunction aux_L;
+        ParGridFunction rv;
 
-        ParGridFunction psi;
-        ParGridFunction v;
-
-        FunctionCoefficient r;
+        //Coefficients
+        FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
 
-        ProductCoefficient coeff_rCL;
+        ProductCoefficient coeff_rC;
+        ProductCoefficient coeff_rK;
 
-        ProductCoefficient coeff_rK; 
-        ProductCoefficient dt_coeff_rK;
+        VectorGridFunctionCoefficient coeff_rV;
+        ScalarVectorProductCoefficient coeff_rCV;
 
-        //GradientGridFunctionCoefficient rV;
-        VectorGridFunctionCoefficient rV;
-        ScalarVectorProductCoefficient coeff_rCLV;
-        ScalarVectorProductCoefficient dt_coeff_rCLV;
+        InnerProductCoefficient dHdT;
+        InnerProductCoefficient dT_2;
 };
 
 class Flow_Operator{
@@ -95,26 +97,24 @@ class Flow_Operator{
 
         void SetParameters(const Vector &Theta);
 
-        void Solve(Vector &W, Vector &Psi, Vector &V);
+        void Solve(Vector &W, Vector &Psi, Vector &V, Vector &rV);
 
         ~Flow_Operator();
     protected:
         //Global parameters
         Config config;
 
+        //Mesh objects
+        ParFiniteElementSpace &fespace;
+        Array<int> block_true_offsets;
+        Array<int> ess_bdr_w, ess_bdr_psi;
+
+        //System objects
         ParGridFunction psi;
         ParGridFunction w;
         ParGridFunction v;
+        ParGridFunction rv;
 
-        //Mesh objects
-        ParFiniteElementSpace &fespace;
-
-        Array<int> block_true_offsets;
-
-        Array<int> ess_bdr_w;
-        Array<int> ess_bdr_psi;
-
-        //System objects
         ParLinearForm *f;
         ParLinearForm *g;
         ParBilinearForm *m;
@@ -138,7 +138,8 @@ class Flow_Operator{
         ParGridFunction theta_dr;
 
         //Rotational coefficients
-        FunctionCoefficient r;
+        FunctionCoefficient coeff_r;
+        FunctionCoefficient inv_R;
         VectorFunctionCoefficient r_inv_hat;
         MatrixFunctionCoefficient rot;
 
@@ -167,6 +168,7 @@ class Artic_sea{
         //Global parameters
         Config config;
 
+        //Simulation parameters
         int iteration;
         double t;
         double dt;
@@ -174,13 +176,9 @@ class Artic_sea{
         int vis_iteration;
         int vis_steps;
         int vis_impressions;
+        double total_time;
 
-        int dim;
-        double h_min;
-        int serial_refinements;
-        HYPRE_Int size;
-        HYPRE_Int size_v;
-
+        //Mesh objects
         ParMesh *pmesh;
 
         FiniteElementCollection *fec;
@@ -188,6 +186,12 @@ class Artic_sea{
 
         ParFiniteElementSpace *fespace;
         ParFiniteElementSpace *fespace_v;
+
+        int dim;
+        double h_min;
+        int serial_refinements;
+        HYPRE_Int size;
+        HYPRE_Int size_v;
 
         //System objects
         ParGridFunction *theta;
@@ -198,6 +202,7 @@ class Artic_sea{
         HypreParVector *Theta;
         HypreParVector *W;
         HypreParVector *Psi;
+        HypreParVector *rV;
         HypreParVector *V;
 
         //Operators
@@ -206,16 +211,16 @@ class Artic_sea{
 
         //Solver objects
         ODESolver *ode_solver;
-        CVODESolver *cvode;
         ARKStepSolver *arkode;
 
+        //Print objects
         ParaViewDataCollection *paraview_out;
 };
 
-extern void zero_f(const Vector &x, Vector &f);
+extern double Rmin, Rmax, Zmin, Zmax;
+
 extern double r_f(const Vector &x);
+extern double inv_r(const Vector &x);
+extern void zero_f(const Vector &x, Vector &f);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void r_inv_hat_f(const Vector &x, Vector &f);
-
-extern double Rmin, Rmax, Zmin, Zmax;
-extern double epsilon_r;
