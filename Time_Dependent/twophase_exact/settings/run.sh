@@ -18,3 +18,5 @@ do
         cp results/data.txt Data/d_${ii}e_${jj}.txt
     done
 done
+
+make clean
