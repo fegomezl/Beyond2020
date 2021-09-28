@@ -6,3 +6,4 @@ local_config.mk
 *.log
 *.vtu
 *.pvtu
+*.pvd
