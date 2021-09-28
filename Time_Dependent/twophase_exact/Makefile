@@ -44,7 +44,7 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all main mesh graph plot figure clean oclean
 
-all: main.x results/mesh.msh
+all: main.x #results/mesh.msh
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
 						-dt $(DT) -t_f $(T_FI) -v_s $(VIS) \
@@ -73,7 +73,7 @@ else
 endif
 
 plot:
-	@/home/wind/Documents/paraview/ParaView-5.10.0-RC1-MPI-Linux-Python3.9-x86_64/bin/pvpython settings/interfase.py
+	@$(PARAVIEW_PATH)/pvpython settings/interfase.py
 
 figure:
 	@gnuplot settings/regression.gp
