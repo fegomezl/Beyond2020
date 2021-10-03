@@ -11,8 +11,8 @@ double robin_ref_theta_f(const Vector &x);
 double robin_ref_phi_f(const Vector &x);
 
 Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
-    TimeDependentOperator(2*fespace.GetTrueVSize(), 0.),
     config(config),
+    TimeDependentOperator(2*fespace.GetTrueVSize(), config.t_init),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
     robin_bdr_theta(attributes), robin_bdr_phi(attributes),
@@ -72,17 +72,19 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     robin_bdr_theta[2] = 0;   robin_bdr_phi[2] = 0;
 
     //Apply initial conditions
-    ParGridFunction theta(&fespace);
-    FunctionCoefficient initial_theta(initial_theta_f);
-    theta.ProjectCoefficient(initial_theta);
-    theta.ProjectBdrCoefficient(initial_theta, ess_bdr_theta);
-    theta.GetTrueDofs(X.GetBlock(0));
-
-    ParGridFunction phi(&fespace);
-    FunctionCoefficient initial_phi(initial_phi_f);
-    phi.ProjectCoefficient(initial_phi);
-    phi.ProjectBdrCoefficient(initial_phi, ess_bdr_phi);
-    phi.GetTrueDofs(X.GetBlock(1));
+    if (!config.restart){
+        ParGridFunction theta(&fespace);
+        FunctionCoefficient initial_theta(initial_theta_f);
+        theta.ProjectCoefficient(initial_theta);
+        theta.ProjectBdrCoefficient(initial_theta, ess_bdr_theta);
+        theta.GetTrueDofs(X.GetBlock(0));
+        
+        ParGridFunction phi(&fespace);
+        FunctionCoefficient initial_phi(initial_phi_f);
+        phi.ProjectCoefficient(initial_phi);
+        phi.ProjectBdrCoefficient(initial_phi, ess_bdr_phi);
+        phi.GetTrueDofs(X.GetBlock(1));
+    }
 
     //Set robin coefficients
     FunctionCoefficient robin_ref_theta(robin_ref_theta_f);

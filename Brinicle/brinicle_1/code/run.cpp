@@ -1,7 +1,8 @@
 #include "header.h"
 
-Config::Config(bool master, int nproc):
-    master(master),
+Config::Config(int pid, int nproc):
+    pid(pid),
+    master(pid == 0),
     nproc(nproc)
 {}
 

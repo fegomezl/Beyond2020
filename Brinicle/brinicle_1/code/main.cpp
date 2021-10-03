@@ -25,10 +25,11 @@ int main(int argc, char *argv[]){
 
     //Define program paramenters
     const char *mesh_file;
-    Config config((pid == 0), nproc);
+    Config config(pid, nproc);
     int nDeltaT = 0;
     int nEpsilonT = 0;
     int nEpsilonEta = 0;
+    int restart = 0;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.vis_steps_max, "-v_s", "--visualization_steps",
                    "Visualize every n-th timestep.");
 
-    args.AddOption(&config.refinements, "-r", "--refinements",
+    args.AddOption(&config.refinements, "-ref", "--refinements",
                    "Number of total uniform refinements.");
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
@@ -110,6 +111,11 @@ int main(int argc, char *argv[]){
     args.AddOption(&phi_n, "-Sn", "--Phi_n",
                    "Nucleation salinity.");
 
+    args.AddOption(&restart, "-r", "--restart",
+                   "If the simulation restarts (1) or not (0).");
+    args.AddOption(&config.t_init, "-t_i", "--t_init",
+                   "Start time of restart.");
+
     //Check if parameters were read correctly
     args.Parse();
     if (!args.Good()){
@@ -121,10 +127,15 @@ int main(int argc, char *argv[]){
 
     {
         tic();
+        config.pid = pid;
         c_l = config.c_l;
         config.invDeltaT = pow(10, nDeltaT);
         config.EpsilonT = pow(10, -nEpsilonT);
         config.EpsilonEta = pow(10, -nEpsilonEta);
+        config.restart = (restart == 1);
+        config.t_init = config.restart ? config.t_init : 0.;
+        config.t_final += config.t_init;
+
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
     }
