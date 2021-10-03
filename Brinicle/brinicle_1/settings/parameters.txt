@@ -11,7 +11,7 @@ settings/square_6.geo #Mesh_script
 
 Simulation parameters
 0.0001  #Dt
-0.01     #Final_time
+0.02     #Final_time
 10      #Visualization_steps
 
 FE parameters
@@ -49,4 +49,4 @@ Brinicle conditions
 
 Restart conditions
 0          #Restart?
-0.01       #Initial time
+0       #Initial time

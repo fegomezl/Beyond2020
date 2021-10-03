@@ -23,7 +23,7 @@ void Artic_sea::output_results(){
 
     if (config.master){
         out.open("settings/parameters.txt", std::ios::app);
-        out << config.t_final << "       #Initial time\n";
+        out << t << "       #Initial time\n";
         out.close();
     }
 
