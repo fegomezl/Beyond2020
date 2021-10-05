@@ -115,6 +115,8 @@ clean:
 
 rclean:
 	@rm -rf *.x results/restart/*.msh results/restart/*.gf
+	@echo '0          #Initial_time' >> settings/parameters.txt
+	@sed -i 52d settings/parameters.txt
 
 oclean:
 	@rm -rf .objects/*.o
