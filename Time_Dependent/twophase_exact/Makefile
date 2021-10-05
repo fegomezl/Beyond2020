@@ -38,13 +38,13 @@ T_S=$(shell sed -n 36p settings/parameters.txt | tr -d -c 0-9.)
 #Compiling parameters
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
-RUN = mpirun -np $(PROCCESORS) ./
+RUN = mpirun --use-hwthread-cpus -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all main mesh graph plot figure clean oclean
 
-all: main.x results/mesh.msh
+all: main.x #results/mesh.msh
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
 						-dt $(DT) -t_f $(T_FI) -v_s $(VIS) \
@@ -73,7 +73,7 @@ else
 endif
 
 plot:
-	@pvpython settings/interfase.py
+	@$(PARAVIEW_PATH)/pvpython settings/interfase.py
 
 figure:
 	@gnuplot settings/regression.gp

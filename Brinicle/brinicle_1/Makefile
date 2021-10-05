@@ -1,4 +1,4 @@
-include ../local_config.mk
+include ../../local_config.mk
 
 #Mesh parmeters
 SCRIPT=$(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
@@ -47,6 +47,10 @@ Nh=$(shell sed -n 46p settings/parameters.txt | tr -d -c 0-9.)
 Tn=$(shell sed -n 47p settings/parameters.txt | tr -d -c 0-9.-)
 Sn=$(shell sed -n 48p settings/parameters.txt | tr -d -c 0-9.)
 
+#Restart conditions
+R=$(shell sed -n 51p settings/parameters.txt | tr -d -c 0-9.)
+T_IN=$(shell sed -n 52p settings/parameters.txt | tr -d -c 0-9.)
+
 #Compiling parameters
 CXX = mpic++
 FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
@@ -61,14 +65,16 @@ all: main.x results/mesh.msh
 	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
 						-Li $(LI) -Lo $(LO) \
 						-dt $(DT) -t_f $(T_FI) -v_s $(VIS) \
-						-r $(REF) -o $(ORDER) \
+						-ref $(REF) -o $(ORDER) \
 						-abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 						-abstol_s $(ABST_S) -reltol_s $(RELT_S) \
 						-T_f $(T_FU) -DT $(DELTA_T) -ET $(EPSILON_T) -EEta $(EPSILON_ETA) \
 						-c_l $(C_L) -c_s $(C_S) \
 						-k_l $(K_L) -k_s $(K_S) -D_l $(D_L) -D_s $(D_S) -L $(L) \
 						-q $(Q) -Ti $(Ti) -To $(To) -Si $(Si) -So $(So) \
-						-nl $(Nl) -nh $(Nh) -Tn $(Tn) -Sn $(Sn)
+						-nl $(Nl) -nh $(Nh) -Tn $(Tn) -Sn $(Sn) \
+						-r $(R) -t_i $(T_IN)
+	@sed -i 52d settings/parameters.txt
 	@echo -e '\nDone!\n'
 
 main: main.x
@@ -83,7 +89,7 @@ ifeq ($(SHARE_DIR), NULL)
 else
 	@echo -e 'Moving graphs ... \c'
 	@rm -rf $(SHARE_DIR)/brinicle
-	@cp -r results $(SHARE_DIR)/brinicle
+	@cp -r results/graph $(SHARE_DIR)/brinicle
 	@echo -e 'Done!'
 endif
 
@@ -106,6 +112,11 @@ results/mesh.msh: settings/parameters.txt
 
 clean:
 	@rm -rf *.x results/graph/*
+
+rclean:
+	@rm -rf *.x results/restart/*.msh results/restart/*.gf
+	@echo '0          #Initial_time' >> settings/parameters.txt
+	@sed -i 52d settings/parameters.txt
 
 oclean:
 	@rm -rf .objects/*.o

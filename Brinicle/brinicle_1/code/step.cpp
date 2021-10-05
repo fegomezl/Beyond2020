@@ -49,7 +49,7 @@ void Artic_sea::time_step(){
     }
 
     //Print the system state
-    double percentage = 100*t/config.t_final;
+    double percentage = 100*(t-config.t_init)/(config.t_final-config.t_init);
     string progress = to_string((int)percentage)+"%";
     if (config.master){
         cout.precision(4);

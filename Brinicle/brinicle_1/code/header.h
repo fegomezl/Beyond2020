@@ -10,10 +10,11 @@ using namespace std;
 using namespace mfem;
 
 struct Config{
-    Config(bool master, int nproc);
+    Config(int pid, int nproc);
 
     bool master;
     int nproc;
+    int pid;
 
     double dt_init;
     double t_final;
@@ -35,6 +36,9 @@ struct Config{
     double k_l, k_s;
     double D_l, D_s;
     double L;
+
+    bool restart;
+    double t_init;
 };
 
 class Conduction_Operator : public TimeDependentOperator{

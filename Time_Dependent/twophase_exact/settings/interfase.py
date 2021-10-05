@@ -2,7 +2,7 @@
 from paraview.simple import *
 
 Source = 'results/graph/graph.pvd'
-End = 'results/graph/data.txt'
+End = 'results/data.txt'
 
 # create a new 'PVD Reader'
 Data = PVDReader(registrationName='Field', FileName=Source)

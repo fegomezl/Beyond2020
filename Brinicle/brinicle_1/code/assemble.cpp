@@ -15,15 +15,34 @@ double delta_c_s_fun(const double &temperature, const double &salinity);
 
 void Artic_sea::assemble_system(){
     //Initialize the system
-    t = 0;
+    t = config.t_init;
     dt = config.dt_init;
     last = false;
     vis_steps = config.vis_steps_max;
     vis_impressions = 0;
 
     //Define solution x
-    theta = new ParGridFunction(fespace);
-    phi = new ParGridFunction(fespace);
+    if (!config.restart){
+        theta = new ParGridFunction(fespace);
+        phi = new ParGridFunction(fespace);
+    } else {
+        std::ifstream in;
+        std::ostringstream oss;
+        oss << std::setw(10) << std::setfill('0') << config.pid;
+        std::string n_theta = "results/restart/theta_"+oss.str()+".gf";
+        std::string n_phi = "results/restart/phi_"+oss.str()+".gf";
+
+        in.open(n_theta.c_str(),std::ios::in);
+        theta = new ParGridFunction(pmesh, in);
+        in.close();
+        theta->GetTrueDofs(X.GetBlock(0));
+
+        in.open(n_phi.c_str(),std::ios::in);
+        phi = new ParGridFunction(pmesh, in);
+        in.close();
+        phi->GetTrueDofs(X.GetBlock(1));
+    }
+
     w = new ParGridFunction(fespace);
     psi = new ParGridFunction(fespace);
     v = new ParGridFunction(fespace_v);
