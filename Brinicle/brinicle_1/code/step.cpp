@@ -13,7 +13,9 @@ void Artic_sea::time_step(){
     flow_oper->Solve(Z, *V, *rV);
 
     //Update visualization steps
-    vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
+    vis_steps = (dt < config.dt_init) ? (config.dt_init/dt)*config.vis_steps_max : config.vis_steps_max;
+    if (config.master)
+        cout << vis_steps << "\n";
 
     if (last || vis_steps <= vis_iteration){
         //Update parameters
@@ -57,8 +59,8 @@ void Artic_sea::time_step(){
              << iteration << setw(12)
              << dt << setw(12)
              << t  << setw(12)
-             << progress << "\r";
-        cout.flush();
+             << progress << "\n";
+        //cout.flush();
     }
 }
 

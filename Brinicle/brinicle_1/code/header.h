@@ -191,7 +191,7 @@ class Artic_sea{
         double dt;
         bool last;
         int vis_iteration;
-        int vis_steps;
+        double vis_steps;
         int vis_impressions;
         double total_time;
 
