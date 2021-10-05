@@ -4,14 +4,14 @@ settings/square_6.geo #Mesh_script
 100      #Rmax
 0        #Zmin
 200      #Zmax
-10       #Inflow_window_size
+1       #Inflow_window_size
 40       #Outflow_window_size
 100     #Rcells
 200     #Zcells
 
 Simulation parameters
 0.0001  #Dt
-0.02     #Final_time
+0.03     #Final_time
 10      #Visualization_steps
 
 FE parameters
