@@ -77,7 +77,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
             aux_K(ii) = config.k_l;
             aux_D(ii) = config.D_l;
         } else {
-            aux_C(ii) = config.c_s; //+ delta_c_s_fun(aux_theta(ii), aux_phi(ii));
+            aux_C(ii) = config.c_s; + delta_c_s_fun(aux_theta(ii), aux_phi(ii));
             aux_K(ii) = config.k_s;
             aux_D(ii) = config.D_s;
         }
@@ -183,23 +183,10 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         eta(ii) = 0.5*(1 + tanh(5*config.invDeltaT*(T - T_f)));
         eta(ii) = config.EpsilonEta + pow(1-eta(ii), 2)/(pow(eta(ii), 3) + config.EpsilonEta);
 
-        /*double a00 = 10.27542, a01 = -0.83195,
-               a10 = -0.38667, a11 = 0.02801,
-               a20 = 0.00624,  
-               a30 = -0.00006;
-
-        theta(ii) = (a00 + a10*T + a20*pow(T, 2) + a30*pow(T, 3))*S +               // k_t = g*b_t/mu
-                    (a01 + a11*T)*pow(abs(S), 1.5);                                  
-
-        double b00 = -2061.94264, b01 = 68.54083, b02 = -24.43573,
-               b10 = 10.27542,    b11 = -1.24793,
-               b20 = -0.19333,    b21 = 0.02101,
-               b30 = 0.00208,
-               b40 = -0.00001;
-
-        phi(ii) = (b00 + b10*T + b20*pow(T, 2) + b30*pow(T, 3) + b40*pow(T, 4)) +   // k_s = g*b_s/mu
-                  (b01 + b11*T + b21*pow(T, 2))*pow(abs(S), 0.5) +
-                  (b02)*S;                                                         */
+        double a = -8.8827379,
+               b = -9.438982566,
+               c = 6.417890826;
+        theta(ii) = a + b*T + c*S;               // k_t = g*b_t/mu
     }
 
     //Properties coefficients
@@ -207,12 +194,10 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     ProductCoefficient neg_Eta(-1., Eta);
 
     GridFunctionCoefficient Theta_dr(&theta_dr);
-    //GridFunctionCoefficient k_t(&theta);
-    ConstantCoefficient k_t(-8.8827379);
+    GridFunctionCoefficient k_t(&theta);
     ProductCoefficient k_Theta_dr(k_t, Theta_dr);
 
     GridFunctionCoefficient Phi_dr(&phi_dr);
-    //GridFunctionCoefficient k_p(&phi);
     ConstantCoefficient k_p(-2061.94264);
     ProductCoefficient k_Phi_dr(k_p, Phi_dr);
 
