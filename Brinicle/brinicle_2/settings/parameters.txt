@@ -15,7 +15,7 @@ Simulation parameters
 10      #Visualization_steps
 
 FE parameters
-2          #Refinements
+3          #Refinements
 1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
