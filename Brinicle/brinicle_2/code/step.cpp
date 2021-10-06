@@ -158,7 +158,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     if(K_0_phi) delete K_0_phi;
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV)); //
     k_phi->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_phi), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
@@ -183,10 +183,15 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         eta(ii) = 0.5*(1 + tanh(5*config.invDeltaT*(T - T_f)));
         eta(ii) = config.EpsilonEta + pow(1-eta(ii), 2)/(pow(eta(ii), 3) + config.EpsilonEta);
 
-        double a = -8.8827379,
-               b = -9.438982566,
-               c = 6.417890826;
-        theta(ii) = a + b*T + c*S;               // k_t = g*b_t/mu
+        double a1 = -8.882737925,
+               a2 = -9.438982566,
+               a3 = 6.417890826;
+        theta(ii) = a1 + a2*T + a3*S;               // k_t = g*b_t/mu
+
+        double b1 = -2020.142411,
+               b2 = -15.03106602,
+               b3 = 12.85101458;
+        phi(ii) = b1 + b2*T + b3*S;               // k_s = g*b_s/mu
     }
 
     //Properties coefficients
@@ -198,7 +203,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     ProductCoefficient k_Theta_dr(k_t, Theta_dr);
 
     GridFunctionCoefficient Phi_dr(&phi_dr);
-    ConstantCoefficient k_p(-2061.94264);
+    GridFunctionCoefficient k_p(&phi);
     ProductCoefficient k_Phi_dr(k_p, Phi_dr);
 
     //Rotational coupled coefficients
