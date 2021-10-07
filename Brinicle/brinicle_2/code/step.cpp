@@ -188,9 +188,9 @@ void Flow_Operator::SetParameters(const BlockVector &X){
                a3 = 6.417890826;
         theta(ii) = a1 + a2*T + a3*S;               // k_t = g*b_t/mu
 
-        double b1 = -2020.142411,
-               b2 = -15.03106602,
-               b3 = 12.85101458;
+        double b1 = -1975.119148,
+               b2 = 7.468676765,
+               b3 = -13.5844212;
         phi(ii) = b1 + b2*T + b3*S;               // k_s = g*b_s/mu
     }
 
