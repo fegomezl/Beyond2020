@@ -5,8 +5,6 @@
 #include <string>
 #include <cmath>
 #include "mfem.hpp"
-#include <boost/math/special_functions/bessel.hpp>
-#include <boost/math/quadrature/trapezoidal.hpp>
 
 using namespace std;
 using namespace mfem;

@@ -78,10 +78,6 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-    //Calculate coeficients of the exact solution
-    Coeficients.resize(Mterms*Nterms, 0.0);
-    Calc_Coe(Zmax, Rmax, Coeficients);
-
     //Run the program
     {
         tic();
