@@ -1,0 +1,28 @@
+Mesh Parameters
+settings/square.geo #Mesh_script
+0  #Rmin
+25 #Rmax
+0  #Zmin
+25 #Zmax
+30 #Rcells
+30 #Zcells
+
+Simulation parameters
+0.0001  #Dt
+0.05     #Final_time
+10      #Visualization_steps
+
+FE parameters
+5          #Refinements
+1          #Order
+12         #ODE_solver
+0          #abstol(Conduction)
+0.00000001 #reltol(Conduction)
+100        #iter(Conduction)
+0.00001    #abstol(SUNDIALS)
+0.00001    #reltol(SUNDIALS)
+
+Physical parameters
+70.8       #Diffusion_constant
+6          #Vertical_terms
+6          #Radial_terms
