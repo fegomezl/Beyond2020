@@ -33,6 +33,8 @@ Conduction_Operator::~Conduction_Operator(){
     delete m_phi;
     delete k_theta;
     delete k_phi;
+    delete f_theta;
+    delete f_phi;
     delete M_theta; 
     delete M_e_theta; 
     delete M_0_theta; 

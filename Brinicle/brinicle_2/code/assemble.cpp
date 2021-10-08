@@ -6,6 +6,7 @@ double inv_r(const Vector &x);
 void zero_f(const Vector &x, Vector &f);
 void rot_f(const Vector &x, DenseMatrix &f);
 void r_inv_hat_f(const Vector &x, Vector &f);
+void z_hat_f(const Vector &x, Vector &f);
 
 //Fusion temperature dependent of salinity
 double T_fun(const double &salinity);
@@ -139,6 +140,11 @@ void zero_f(const Vector &x, Vector &f){
 void r_inv_hat_f(const Vector &x, Vector &f){
     f(0) = pow(x(0), -1);
     f(1) = 0.;
+}
+
+void z_hat_f(const Vector &x, Vector &f){
+    f(0) = 0.;
+    f(1) = -1.;
 }
 
 double T_fun(const double &salinity){

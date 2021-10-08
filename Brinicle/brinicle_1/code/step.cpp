@@ -13,9 +13,7 @@ void Artic_sea::time_step(){
     flow_oper->Solve(Z, *V, *rV);
 
     //Update visualization steps
-    vis_steps = (dt < config.dt_init) ? (config.dt_init/dt)*config.vis_steps_max : config.vis_steps_max;
-    if (config.master)
-        cout << vis_steps << "\n";
+    vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
 
     if (last || vis_steps <= vis_iteration){
         //Update parameters
@@ -59,8 +57,8 @@ void Artic_sea::time_step(){
              << iteration << setw(12)
              << dt << setw(12)
              << t  << setw(12)
-             << progress << "\n";
-        //cout.flush();
+             << progress << "\r";
+        cout.flush();
     }
 }
 
@@ -116,6 +114,12 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     coeff_rCV.SetACoef(coeff_CL);
     coeff_rCV.SetBCoef(coeff_rV);
 
+    InnerProductCoefficient coeff_rVn(coeff_rV, z_hat);
+    ProductCoefficient coeff_rVCn(coeff_C, coeff_rVn);
+
+    ProductCoefficient coeff_rVCn_T(theta_out, coeff_rVCn);
+    ProductCoefficient coeff_rVn_S(phi_out, coeff_rVn);
+
     //Create corresponding bilinear forms
     if (m_theta) delete m_theta;
     if (M_theta) delete M_theta;
@@ -152,7 +156,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
-    k_theta->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_theta), robin_bdr_theta);
+    k_theta->AddBoundaryIntegrator(new MassIntegrator(coeff_rVCn), robin_bdr_theta);
     k_theta->Assemble();
     k_theta->Finalize();
     K_0_theta = k_theta->ParallelAssemble();
@@ -161,11 +165,22 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     if(K_0_phi) delete K_0_phi;
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_phi), robin_bdr_phi);
+    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV)); //
+    k_phi->AddBoundaryIntegrator(new MassIntegrator(coeff_rVn), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
     K_0_phi = k_phi->ParallelAssemble();
+
+    //Set RHS
+    f_theta = new ParLinearForm(&fespace);
+    f_theta->AddBoundaryIntegrator(new BoundaryLFIntegrator(coeff_rVCn_T), robin_bdr_theta);
+    f_theta->Assemble();
+    f_theta->ParallelAssemble(F_theta);
+
+    f_phi = new ParLinearForm(&fespace);
+    f_phi->AddBoundaryIntegrator(new BoundaryLFIntegrator(coeff_rVn_S), robin_bdr_phi);
+    f_phi->Assemble();
+    f_phi->ParallelAssemble(F_phi);
 }
 
 void Flow_Operator::SetParameters(const BlockVector &X){

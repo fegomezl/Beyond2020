@@ -65,6 +65,7 @@ class Conduction_Operator : public TimeDependentOperator{
         //System objects
         ParBilinearForm *m_theta, *m_phi;        //Mass operators
         ParBilinearForm *k_theta, *k_phi;        //Difussion operators
+        ParLinearForm *f_theta, *f_phi;
 
         HypreParMatrix *M_theta, *M_e_theta, *M_0_theta,    *M_phi, *M_e_phi, *M_0_phi;
         HypreParMatrix *K_0_theta,                          *K_0_phi;
@@ -91,6 +92,7 @@ class Conduction_Operator : public TimeDependentOperator{
         //Coefficients
         FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
+        VectorFunctionCoefficient z_hat;
 
         ProductCoefficient coeff_rC;
         ProductCoefficient coeff_rK; 
@@ -101,9 +103,6 @@ class Conduction_Operator : public TimeDependentOperator{
 
         InnerProductCoefficient dHdT;
         InnerProductCoefficient dT_2;
-
-        FunctionCoefficient robin_h_theta, robin_h_phi;
-        ProductCoefficient r_robin_h_theta, r_robin_h_phi;
 };
 
 class Flow_Operator{
@@ -248,6 +247,7 @@ extern double inv_r(const Vector &x);
 extern void zero_f(const Vector &x, Vector &f);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void r_inv_hat_f(const Vector &x, Vector &f);
+extern void z_hat_f(const Vector &x, Vector &f);
 
 //Fusion temperature dependent of salinity
 extern double T_fun(const double &salinity);
@@ -261,4 +261,3 @@ extern double theta_in, theta_out;
 extern double phi_in, phi_out;
 extern double n_l, n_h;
 extern double theta_n, phi_n;
-extern double c_l;
