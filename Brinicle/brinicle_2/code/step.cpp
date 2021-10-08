@@ -183,14 +183,14 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         eta(ii) = 0.5*(1 + tanh(5*config.invDeltaT*(T - T_f)));
         eta(ii) = config.EpsilonEta + pow(1-eta(ii), 2)/(pow(eta(ii), 3) + config.EpsilonEta);
 
-        double a1 = -8.882737925,
-               a2 = -9.438982566,
-               a3 = 6.417890826;
+        double a1 = -25.6446,
+               a2 = -10.894,
+               a3 = 6.6907;
         theta(ii) = a1 + a2*T + a3*S;               // k_t = g*b_t/mu
 
-        double b1 = -1975.119148,
-               b2 = 7.468676765,
-               b3 = -13.5844212;
+        double b1 = -1944.52,
+               b2 = 7.3226,
+               b3 = -14.3925;
         phi(ii) = b1 + b2*T + b3*S;               // k_s = g*b_s/mu
     }
 
