@@ -1,21 +1,21 @@
 Mesh Parameters
 settings/square_6.geo #Mesh_script
 0       #Rmin
-10      #Rmax
+30      #Rmax
 0       #Zmin
-20      #Zmax
-1.5     #Inflow_window_size
-5       #Outflow_window_size
+65      #Zmax
+2     #Inflow_window_size
+7       #Outflow_window_size
 100     #Rcells
 200     #Zcells
 
 Simulation parameters
-0.0001  #Dt
-0.05     #Final_time
-10      #Visualization_steps
+0.01  #Dt
+6.0     #Final_time
+20      #Visualization_steps
 
 FE parameters
-2          #Refinements
+3          #Refinements
 1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
@@ -37,15 +37,15 @@ Physical parameters
 316.7   #Volumetric_latent_heat
 
 Brinicle conditions
-100     #Volumetric_inflow
+1000     #Volumetric_inflow
 -2      #Initial_temperature
--20     #Inflow_temperature
+-20.     #Inflow_temperature
 3.5     #Initial_salinity
 22.5    #Inflow_salinity
-5       #Nucleation_length
-1       #Nucleation_height
+10       #Nucleation_length
+2       #Nucleation_height
 -20.    #Nucleation_temperature
-3       #Nucleation_salinity
+0       #Nucleation_salinity
 
 Restart conditions
 0          #Restart?
