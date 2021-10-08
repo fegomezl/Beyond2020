@@ -11,11 +11,11 @@ settings/square_6.geo #Mesh_script
 
 Simulation parameters
 0.0001  #Dt
-0.03     #Final_time
+0.05     #Final_time
 10      #Visualization_steps
 
 FE parameters
-3          #Refinements
+2          #Refinements
 1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
@@ -45,7 +45,7 @@ Brinicle conditions
 5       #Nucleation_length
 1       #Nucleation_height
 -20.    #Nucleation_temperature
-0       #Nucleation_salinity
+3       #Nucleation_salinity
 
 Restart conditions
 0          #Restart?

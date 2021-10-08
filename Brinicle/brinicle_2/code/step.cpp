@@ -70,9 +70,9 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux_theta.Size(); ii++){
-        aux_theta(ii) -= config.T_f + T_fun(aux_phi(ii));
+        double T = aux_theta(ii) - (config.T_f + T_fun(aux_phi(ii)));
 
-        if (aux_theta(ii) > 0){
+        if (T > 0){
             aux_C(ii) = config.c_l;
             aux_K(ii) = config.k_l;
             aux_D(ii) = config.D_l;
@@ -82,7 +82,8 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
             aux_D(ii) = config.D_s;
         }
 
-        aux_L(ii) = 0.5*config.L*(1 + tanh(5*config.invDeltaT*aux_theta(ii)));
+        aux_L(ii) = 0.5*config.L*(1 + tanh(5*config.invDeltaT*T));
+        aux_theta(ii) = T;
     }
 
     //Set the associated coefficients
