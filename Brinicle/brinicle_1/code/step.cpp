@@ -59,6 +59,11 @@ void Artic_sea::time_step(){
              << t  << setw(12)
              << progress << "\r";
         cout.flush();
+
+        std::ofstream out;
+        out.open("results/progress.txt");
+        out << iteration << "\t" << dt << "\t" << t << "\t" << progress << endl;
+        out.close();
     }
 }
 
@@ -70,7 +75,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < aux_theta.Size(); ii++){
-        double T = aux_theta(ii) - (config.T_f + T_fun(aux_phi(ii)));
+        double T = aux_theta(ii) - config.T_f - T_fun(aux_phi(ii));
 
         if (T > 0){
             aux_C(ii) = config.c_l;
