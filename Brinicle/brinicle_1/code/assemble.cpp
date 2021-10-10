@@ -6,7 +6,6 @@ double inv_r(const Vector &x);
 void zero_f(const Vector &x, Vector &f);
 void rot_f(const Vector &x, DenseMatrix &f);
 void r_inv_hat_f(const Vector &x, Vector &f);
-void z_hat_f(const Vector &x, Vector &f);
 
 //Fusion temperature dependent of salinity
 double T_fun(const double &salinity);
@@ -107,7 +106,7 @@ void Artic_sea::assemble_system(){
     paraview_out->Save();
 
     //Start program check
-    if (config.master)
+    if (config.master){
         cout << left << setw(12)
              << "--------------------------------------------------\n"
              << left << setw(12)
@@ -117,6 +116,15 @@ void Artic_sea::assemble_system(){
              << "Progress"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
+
+        ofstream out;
+        out.open("results/progress.txt", std::ios::trunc);
+        out << left << setw(12) 
+            << "Step" << setw(12)
+            << "Dt" << setw(12)
+            << "Time" << setw(12)
+            << "Progress" << "\n";
+    }
 }
 
 double r_f(const Vector &x){
@@ -142,11 +150,6 @@ void r_inv_hat_f(const Vector &x, Vector &f){
     f(1) = 0.;
 }
 
-void z_hat_f(const Vector &x, Vector &f){
-    f(0) = 0.;
-    f(1) = -1.;
-}
-
 double T_fun(const double &salinity){
     double a = 0.6037;
     double b = 0.00058123;
@@ -154,10 +157,10 @@ double T_fun(const double &salinity){
 }
 
 double delta_c_s_fun(const double &temperature, const double &salinity){
-    double a = -0.00313;
-    double b = -0.00704;
-    double c = -0.0000783;
-    double d = 16.9;
+    double a = -0.00307;
+    double b = 0.00692;
+    double c = 0.0000768;
+    double d = 16.6;
     return a*salinity +
            b*temperature +
            c*salinity*temperature +

@@ -14,6 +14,7 @@ double theta_in, theta_out;
 double phi_in, phi_out;
 double n_l, n_h;
 double theta_n, phi_n;
+double c_l;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -127,6 +128,7 @@ int main(int argc, char *argv[]){
     {
         tic();
         config.pid = pid;
+        c_l = config.c_l;
         config.invDeltaT = pow(10, nDeltaT);
         config.EpsilonT = pow(10, -nEpsilonT);
         config.EpsilonEta = pow(10, -nEpsilonEta);

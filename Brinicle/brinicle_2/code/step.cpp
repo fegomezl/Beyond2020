@@ -61,8 +61,12 @@ void Artic_sea::time_step(){
         cout.flush();
 
         std::ofstream out;
-        out.open("results/progress.txt");
-        out << iteration << "\t" << dt << "\t" << t << "\t" << progress << endl;
+        out.open("results/progress.txt", std::ios::app);
+        out << left << setw(12)
+            << iteration << setw(12)
+            << dt << setw(12)
+            << t  << setw(12)
+            << progress << "\n";
         out.close();
     }
 }
@@ -119,12 +123,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     coeff_rCV.SetACoef(coeff_CL);
     coeff_rCV.SetBCoef(coeff_rV);
 
-    InnerProductCoefficient coeff_rVn(coeff_rV, z_hat);
-    ProductCoefficient coeff_rVCn(coeff_C, coeff_rVn);
-
-    ProductCoefficient coeff_rVCn_T(theta_out, coeff_rVCn);
-    ProductCoefficient coeff_rVn_S(phi_out, coeff_rVn);
-
     //Create corresponding bilinear forms
     if (m_theta) delete m_theta;
     if (M_theta) delete M_theta;
@@ -161,7 +159,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
-    k_theta->AddBoundaryIntegrator(new MassIntegrator(coeff_rVCn), robin_bdr_theta);
+    k_theta->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_theta), robin_bdr_theta);
     k_theta->Assemble();
     k_theta->Finalize();
     K_0_theta = k_theta->ParallelAssemble();
@@ -170,22 +168,11 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     if(K_0_phi) delete K_0_phi;
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV)); //
-    k_phi->AddBoundaryIntegrator(new MassIntegrator(coeff_rVn), robin_bdr_phi);
+    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k_phi->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_phi), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
     K_0_phi = k_phi->ParallelAssemble();
-
-    //Set RHS
-    f_theta = new ParLinearForm(&fespace);
-    f_theta->AddBoundaryIntegrator(new BoundaryLFIntegrator(coeff_rVCn_T), robin_bdr_theta);
-    f_theta->Assemble();
-    f_theta->ParallelAssemble(F_theta);
-
-    f_phi = new ParLinearForm(&fespace);
-    f_phi->AddBoundaryIntegrator(new BoundaryLFIntegrator(coeff_rVn_S), robin_bdr_phi);
-    f_phi->Assemble();
-    f_phi->ParallelAssemble(F_phi);
 }
 
 void Flow_Operator::SetParameters(const BlockVector &X){
@@ -206,15 +193,23 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         eta(ii) = 0.5*(1 + tanh(5*config.invDeltaT*(T - T_f)));
         eta(ii) = config.EpsilonEta + pow(1-eta(ii), 2)/(pow(eta(ii), 3) + config.EpsilonEta);
 
-        double a1 = -25.6446,
-               a2 = -10.894,
-               a3 = 6.6907;
-        theta(ii) = a1 + a2*T + a3*S;               // k_t = g*b_t/mu
+        double a00 = 10.27542, a01 = -0.83195,
+               a10 = -0.38667, a11 = 0.02801,
+               a20 = 0.00624,  
+               a30 = -0.00006;
 
-        double b1 = -1944.52,
-               b2 = 7.3226,
-               b3 = -14.3925;
-        phi(ii) = b1 + b2*T + b3*S;               // k_s = g*b_s/mu
+        theta(ii) = (a00 + a10*T + a20*pow(T, 2) + a30*pow(T, 3))*S +               // k_t = g*b_t/mu
+                    (a01 + a11*T)*pow(abs(S), 1.5);                                  
+
+        double b00 = -2061.94264, b01 = 68.54083, b02 = -24.43573,
+               b10 = 10.27542,    b11 = -1.24793,
+               b20 = -0.19333,    b21 = 0.02101,
+               b30 = 0.00208,
+               b40 = -0.00001;
+
+        phi(ii) = (b00 + b10*T + b20*pow(T, 2) + b30*pow(T, 3) + b40*pow(T, 4)) +   // k_s = g*b_s/mu
+                  (b01 + b11*T + b21*pow(T, 2))*pow(abs(S), 0.5) +
+                  (b02)*S;                                                         
     }
 
     //Properties coefficients
