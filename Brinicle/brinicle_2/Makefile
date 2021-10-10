@@ -114,7 +114,7 @@ clean:
 	@rm -rf *.x results/graph/*
 
 rclean:
-	@rm -rf *.x results/restart/*.msh results/restart/*.gf
+	@rm -rf *.x results/restart/*.msh results/restart/*.gf results/*.txt results/*.pdf
 	@echo '0          #Initial_time' >> settings/parameters.txt
 	@sed -i 52d settings/parameters.txt
 

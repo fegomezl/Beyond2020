@@ -10,8 +10,9 @@ void r_inv_hat_f(const Vector &x, Vector &f);
 //Fusion temperature dependent of salinity
 double T_fun(const double &salinity);
 
-//Variation on solid heat capacity
+//Variation of parameters
 double delta_c_s_fun(const double &temperature, const double &salinity);
+double delta_k_s_fun(const double &temperature, const double &salinity);
 
 void Artic_sea::assemble_system(){
     //Initialize the system
@@ -165,4 +166,9 @@ double delta_c_s_fun(const double &temperature, const double &salinity){
            b*temperature +
            c*salinity*temperature +
            d*salinity*pow(temperature, -2);
+}
+
+double delta_k_s_fun(const double &temperature, const double &salinity){
+    double a = 36.7;
+    return a*salinity*pow(temperature, -1);
 }

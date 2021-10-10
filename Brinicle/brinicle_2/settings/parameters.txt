@@ -1,9 +1,9 @@
 Mesh Parameters
 settings/square_6.geo #Mesh_script
 0       #Rmin
-30      #Rmax
+20      #Rmax
 0       #Zmin
-60      #Zmax
+20      #Zmax
 2       #Inflow_window_size
 10      #Outflow_window_size
 10      #Rcells
@@ -11,11 +11,11 @@ settings/square_6.geo #Mesh_script
 
 Simulation parameters
 0.0001  #Dt
-0.1     #Final_time
+0.02     #Final_time
 10      #Visualization_steps
 
 FE parameters
-1          #Refinements
+2          #Refinements
 1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
