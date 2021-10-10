@@ -1,6 +1,7 @@
 #Computer parameters
 MFEM_INSTALL_DIR = 
 SHARE_DIR = NULL
+PARAVIEW_PATH = 
 PROCCESORS = 1
 
 #Add variables from MFEM

@@ -8,12 +8,12 @@ settings/square.geo #Mesh_script
 10 #Zcells
 
 Simulation parameters
-0.0001  #Dt
-0.04       #Final_time
-50      #Visualization_steps
+0.001  #Dt
+1       #Final_time
+10      #Visualization_steps
 
 FE parameters
-4          #Refinements
+2          #Refinements
 1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
@@ -23,8 +23,8 @@ FE parameters
 
 Physical parameters
 0          #Fusion_temperature
-5          #nDeltaT
-5          #nEpsilonT
+9          #nDeltaT
+9          #nEpsilonT
 4.22       #Liquid_volumetric_heat_capacity
 1.88       #Solid_volumetric_heat_capacity
 33.3       #Liquid_thermal_conductivity
