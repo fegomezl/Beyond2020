@@ -1,5 +1,5 @@
 set g
-set title ''
+set title 'Interface position vs time'
 set xlabel 'Time (min)'
 set ylabel 'Interface (mm)'
 
@@ -15,16 +15,16 @@ set term pdf
 set o 'results/regression.pdf'
 set fit quiet
 
-f(x) = 2*A*x**B
-A=1.2775
+f(x) = A*x**B
+A=2.5550
 B=0.5
 
 fit[0:] f(x) file u 1:2:3 yerrors via A,B
 
-Fit = sprintf(" {/:Bold Parameters} \n y = ax^b \n a = %g +/- %g \n b = %g +/- %g", A, A_err, B, B_err)
+Fit = sprintf(" {/:Bold Parameters} \n y = ax^b \n a = %.4f ± %.4f \n b = %.5f ± %.5f", A, A_err, B, B_err)
 
-set obj 2 rect from graph 0, 1 to graph 0.50, 0.77 fc rgb "white"
+set obj 2 rect from graph 0, 1 to graph 0.28, 0.78 fc rgb "white"
 set lab 2 Fit at graph 0, 0.97
 
 
-plot file u 1:2:3 w yerrorbars ls 1 t 'Interface', f(x) w l t 'Fit' ls 2
+plot[0:1] file u 1:2:3 w yerrorbars ls 1 t 'Interface', f(x) w l t 'Fit' ls 2
