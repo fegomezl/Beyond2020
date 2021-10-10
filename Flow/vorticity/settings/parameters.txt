@@ -1,5 +1,5 @@
 Mesh Parameters
-settings/square.geo #Mesh_script
+settings/square_comparison.geo #Mesh_script
 0 #Rmin
 10 #Rmax
 0 #Zmin
