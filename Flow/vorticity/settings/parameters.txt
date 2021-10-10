@@ -9,9 +9,9 @@ settings/square.geo #Mesh_script
 
 FE parameters
 4 #Refinements
-2 #Order
+1 #Order
 
 Physical parameters
 0       #Fusion_temperature
 9       #n_DeltaT
-10      #n_epsilon_eta
+9      #n_epsilon_eta
