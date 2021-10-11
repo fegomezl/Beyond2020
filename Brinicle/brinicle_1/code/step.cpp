@@ -73,36 +73,38 @@ void Artic_sea::time_step(){
 
 void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     //Recover actual information
-    aux_theta.SetFromTrueDofs(X.GetBlock(0));
-    aux_phi.SetFromTrueDofs(X.GetBlock(1));
+    theta.SetFromTrueDofs(X.GetBlock(0));
+    phi.SetFromTrueDofs(X.GetBlock(1));
     rv.SetFromTrueDofs(rV); 
 
     //Associate the values of each auxiliar function
-    for (int ii = 0; ii < aux_theta.Size(); ii++){
-        double T = aux_theta(ii) - config.T_f - T_fun(aux_phi(ii));
+    for (int ii = 0; ii < theta.Size(); ii++){
+        double T = theta(ii) - config.T_f - T_fun(phi(ii));
 
         if (T > 0){
             aux_C(ii) = config.c_l;
             aux_K(ii) = config.k_l;
             aux_D(ii) = config.D_l;
         } else {
-            aux_C(ii) = config.c_s; + delta_c_s_fun(aux_theta(ii), aux_phi(ii));
-            aux_K(ii) = config.k_s;
+            aux_C(ii) = config.c_s;// + delta_c_s_fun(theta(ii), phi(ii));
+            aux_K(ii) = config.k_s;// + delta_k_s_fun(theta(ii), phi(ii));
             aux_D(ii) = config.D_s;
         }
+        aux_L(ii) = config.L;// + delta_l_s_fun(theta(ii), phi(ii));
 
-        aux_L(ii) = 0.5*config.L*(1 + tanh(5*config.invDeltaT*T));
-        aux_theta(ii) = T;
+        theta(ii) = T;
+        phase(ii) = 0.5*(1 + tanh(5*config.invDeltaT*T));
     }
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_C(&aux_C);
     GridFunctionCoefficient coeff_K(&aux_K);
     GridFunctionCoefficient coeff_D(&aux_D);
+    GridFunctionCoefficient coeff_L(&aux_L);
 
     //Construct latent heat term
-    GradientGridFunctionCoefficient dT(&aux_theta);
-    GradientGridFunctionCoefficient dH(&aux_L);
+    GradientGridFunctionCoefficient dT(&theta);
+    GradientGridFunctionCoefficient dH(&phase);
     
     dHdT.SetACoef(dH);  dT_2.SetACoef(dT);
     dHdT.SetBCoef(dT);  dT_2.SetBCoef(dT);
@@ -110,7 +112,8 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     SumCoefficient dT_2e(config.EpsilonT, dT_2);
     
     PowerCoefficient inv_dT_2(dT_2e, -1.);
-    ProductCoefficient LDeltaT(dHdT, inv_dT_2);
+    ProductCoefficient DeltaT(dHdT, inv_dT_2);
+    ProductCoefficient LDeltaT(coeff_L, DeltaT);
 
     SumCoefficient coeff_CL(coeff_C, LDeltaT);
 

@@ -81,7 +81,7 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreBoomerAMG T_theta_prec, T_phi_prec;
 
         //Auxiliar grid functions
-        ParGridFunction aux_phi, aux_theta;
+        ParGridFunction phi, theta, phase;
         ParGridFunction aux_C;
         ParGridFunction aux_K;
         ParGridFunction aux_D;
@@ -252,8 +252,10 @@ extern void r_inv_hat_f(const Vector &x, Vector &f);
 //Fusion temperature dependent of salinity
 extern double T_fun(const double &salinity);
 
-//Variation on solid heat capacity
+//Variation of parameters
 extern double delta_c_s_fun(const double &temperature, const double &salinity);
+extern double delta_k_s_fun(const double &temperature, const double &salinity);
+extern double delta_l_s_fun(const double &temperature, const double &salinity);
 
 //Brinicle conditions
 extern double Q;

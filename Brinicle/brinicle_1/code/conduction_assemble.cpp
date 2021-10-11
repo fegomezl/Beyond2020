@@ -26,7 +26,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     Z_theta(&fespace), Z_phi(&fespace),
     M_theta_solver(fespace.GetComm()), M_phi_solver(fespace.GetComm()),
     T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
-    aux_theta(&fespace), aux_phi(&fespace), rv(&fespace_v), 
+    theta(&fespace), phi(&fespace), phase(&fespace), rv(&fespace_v), 
     aux_C(&fespace), aux_K(&fespace), aux_D(&fespace), aux_L(&fespace),
     coeff_r(r_f), zero(dim, zero_f), 
     coeff_rC(coeff_r, coeff_r),
@@ -142,20 +142,18 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 //Initial conditions
 
 double initial_theta_f(const Vector &x){
-    //if (x(0) > L_in && Zmax - x(1) <= n_h)
-    if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
-        return theta_n;
-    else
+    //if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
+    //    return theta_n;
+    //else
         return theta_in;
 }
 
 double initial_phi_f(const Vector &x){
-    //if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
-    if (x(0) > L_in && Zmax - x(1) <= n_h/2.)
-        return phi_n;
-    else if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
-        return phi_n;
-    else
+    //if (x(0) > L_in && Zmax - x(1) <= n_h/2.)
+    //    return phi_n;
+    //else if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
+    //    return phi_n;
+    //else
         return phi_in;
 }
 
