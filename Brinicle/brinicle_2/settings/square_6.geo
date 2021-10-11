@@ -4,7 +4,7 @@ Rmin = 0;
 Rmax = 20;
 Zmin = 0;
 Zmax = 20;
-l = 2;
+l = 10;
 h = 10;
 
 NR = 10;
