@@ -83,6 +83,9 @@ main: main.x
 mesh: results/mesh.msh
 	@echo 'Mesh created.'
 
+dt: results/analysis.pdf
+	@xpdf $<
+
 graph:
 ifeq ($(SHARE_DIR), NULL)
 	@echo 'No share directory.'
@@ -109,6 +112,9 @@ results/mesh.msh: settings/parameters.txt
 	@echo -e 'Generating mesh ... \c'
 	@gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
+
+results/analysis.pdf:
+	@gnuplot settings/analysis.gp
 
 clean:
 	@rm -rf *.x results/graph/*

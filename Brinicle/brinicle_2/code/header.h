@@ -255,6 +255,7 @@ extern double T_fun(const double &salinity);
 //Variation of parameters
 extern double delta_c_s_fun(const double &temperature, const double &salinity);
 extern double delta_k_s_fun(const double &temperature, const double &salinity);
+extern double delta_l_s_fun(const double &temperature, const double &salinity);
 
 //Brinicle conditions
 extern double Q;

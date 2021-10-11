@@ -90,7 +90,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
             aux_K(ii) = config.k_s + delta_k_s_fun(theta(ii), phi(ii));
             aux_D(ii) = config.D_s;
         }
-        aux_L(ii) = config.L;
+        aux_L(ii) = config.L + delta_l_s_fun(theta(ii), phi(ii));
 
         theta(ii) = T;
         phase(ii) = 0.5*(1 + tanh(5*config.invDeltaT*T));
