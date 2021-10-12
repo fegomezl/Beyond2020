@@ -147,7 +147,7 @@ double initial_theta_f(const Vector &x){
     //if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
     //    return theta_n;
     //else
-    if (x(0) > L_in && x(1) < Zmax - n_h)
+    if (x(0) > L_in && x(1) > Zmax - n_h)
         return theta_n;
     else
         return theta_in;
@@ -159,7 +159,7 @@ double initial_phi_f(const Vector &x){
     //else if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
     //    return phi_n;
     //else
-    if (x(0) > L_in && x(1) < Zmax - n_h)
+    if (x(0) > L_in && x(1) > Zmax - n_h)
         return phi_n;
     else
         return phi_in;
