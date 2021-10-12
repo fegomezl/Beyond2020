@@ -4,8 +4,8 @@ settings/square_6.geo #Mesh_script
 20      #Rmax
 0       #Zmin
 20      #Zmax
-10      #Inflow_window_size
-10      #Outflow_window_size
+2       #Inflow_window_size
+5       #Outflow_window_size
 10      #Rcells
 10      #Zcells
 
@@ -45,7 +45,7 @@ Brinicle conditions
 5       #Nucleation_length
 1       #Nucleation_height
 -20.    #Nucleation_temperature
-3       #Nucleation_salinity
+3.5     #Nucleation_salinity
 
 Restart conditions
 0          #Restart?
