@@ -134,12 +134,12 @@ double r_f(const Vector &x){
 }
 
 double inv_r(const Vector &x){
-    return pow(x(0), -1);
+    return pow(x(0) + 1E-9, -1);
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.; f(0,1) = -1.;
-    f(1,0) = 1.; f(1,1) = 0.;
+    f(0,0) = 0.;  f(0,1) = 1.;
+    f(1,0) = -1.; f(1,1) = 0.;
 }
 
 void zero_f(const Vector &x, Vector &f){
@@ -160,9 +160,13 @@ double T_fun(const double &salinity){
 
 double delta_c_s_fun(const double &temperature, const double &salinity){
     double a = 0.00692;
-    double b = 16.6;
+    double b = -0.00307;
+    double c = 0.0000768;
+    double d = 16.6;
     return a*temperature +
-           b*salinity*pow(temperature, -2);
+           b*salinity +
+           c*temperature*salinity +
+           d*salinity*pow(temperature, -2);
 }
 
 double delta_k_s_fun(const double &temperature, const double &salinity){

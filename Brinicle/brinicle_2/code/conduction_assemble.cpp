@@ -55,14 +55,14 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 
     Array<int> ess_bdr_theta(attributes); ess_bdr_theta = 0;
     ess_bdr_theta  [0] = 0;   ess_bdr_theta  [1] = 0;   ess_bdr_theta  [3] = 0;
-    robin_bdr_theta[0] = 0;   robin_bdr_theta[1] = 0;   robin_bdr_theta[3] = 0;
+    robin_bdr_theta[0] = 0;   robin_bdr_theta[1] = 1;   robin_bdr_theta[3] = 0;
     ess_bdr_theta  [4] = 0;   ess_bdr_theta  [5] = 0;   
     robin_bdr_theta[4] = 1;   robin_bdr_theta[5] = 0;   
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_theta);
 
     Array<int> ess_bdr_phi(attributes); ess_bdr_phi = 0;
     ess_bdr_phi  [0] = 0;     ess_bdr_phi  [1] = 0;     ess_bdr_phi  [3] = 0; 
-    robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 0;     robin_bdr_phi[3] = 0;
+    robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 1;     robin_bdr_phi[3] = 0;
     ess_bdr_phi  [4] = 0;     ess_bdr_phi  [5] = 0;      
     robin_bdr_phi[4] = 1;     robin_bdr_phi[5] = 0;     
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_phi);
@@ -76,13 +76,11 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
         ParGridFunction theta(&fespace);
         FunctionCoefficient initial_theta(initial_theta_f);
         theta.ProjectCoefficient(initial_theta);
-        theta.ProjectBdrCoefficient(initial_theta, ess_bdr_theta);
         theta.GetTrueDofs(X.GetBlock(0));
         
         ParGridFunction phi(&fespace);
         FunctionCoefficient initial_phi(initial_phi_f);
         phi.ProjectCoefficient(initial_phi);
-        phi.ProjectBdrCoefficient(initial_phi, ess_bdr_phi);
         phi.GetTrueDofs(X.GetBlock(1));
     }
 
@@ -142,19 +140,11 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 //Initial conditions
 
 double initial_theta_f(const Vector &x){
-    /*if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
-        return theta_n;
-    else*/
-        return theta_in;
+    return theta_in;
 }
 
 double initial_phi_f(const Vector &x){
-    /*if (x(0) > L_in && Zmax - x(1) <= n_h/2.)
-        return phi_n;
-    else if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
-        return phi_n;
-    else*/
-        return phi_in;
+    return phi_in;
 }
 
 //Robin boundary conditions of the form kdu/dn = h(u-u_ref)

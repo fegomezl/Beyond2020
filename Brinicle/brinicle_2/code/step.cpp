@@ -86,7 +86,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
             aux_K(ii) = config.k_l;
             aux_D(ii) = config.D_l;
         } else {
-            aux_C(ii) = config.c_s + delta_c_s_fun(theta(ii), phi(ii));
+            aux_C(ii) = config.c_s;// + delta_c_s_fun(theta(ii), phi(ii));
             aux_K(ii) = config.k_s + delta_k_s_fun(theta(ii), phi(ii));
             aux_D(ii) = config.D_s;
         }
@@ -196,19 +196,19 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         eta(ii) = 0.5*(1 + tanh(5*config.invDeltaT*(T - T_f)));
         eta(ii) = config.EpsilonEta + pow(1-eta(ii), 2)/(pow(eta(ii), 3) + config.EpsilonEta);
 
-        double a00 = 10.27542, a01 = -0.83195,
-               a10 = -0.38667, a11 = 0.02801,
-               a20 = 0.00624,  
-               a30 = -0.00006;
+        double a00 = -10.27542, a01 = 0.83195,
+               a10 = 0.38667,   a11 = -0.02801,
+               a20 = -0.00624,  
+               a30 = 0.00006;
 
         theta(ii) = (a00 + a10*T + a20*pow(T, 2) + a30*pow(T, 3))*S +               // k_t = g*b_t/mu
                     (a01 + a11*T)*pow(abs(S), 1.5);                                  
 
-        double b00 = -2061.94264, b01 = 68.54083, b02 = -24.43573,
-               b10 = 10.27542,    b11 = -1.24793,
-               b20 = -0.19333,    b21 = 0.02101,
-               b30 = 0.00208,
-               b40 = -0.00001;
+        double b00 = 2061.94264, b01 = -68.54083, b02 = 24.43573,
+               b10 = -10.27542,  b11 = 1.24793,
+               b20 = 0.19333,    b21 = -0.02101,
+               b30 = -0.00208,
+               b40 = 0.00001;
 
         phi(ii) = (b00 + b10*T + b20*pow(T, 2) + b30*pow(T, 3) + b40*pow(T, 4)) +   // k_s = g*b_s/mu
                   (b01 + b11*T + b21*pow(T, 2))*pow(abs(S), 0.5) +

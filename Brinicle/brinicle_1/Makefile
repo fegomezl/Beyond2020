@@ -60,7 +60,9 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
 .PHONY: all main mesh graph clean oclean
 
-all: main.x results/mesh.msh
+all: results/mesh.msh main
+
+main: main.x
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
 						-Li $(LI) -Lo $(LO) \
@@ -76,9 +78,6 @@ all: main.x results/mesh.msh
 						-r $(R) -t_i $(T_IN)
 	@sed -i 52d settings/parameters.txt
 	@echo -e '\nDone!\n'
-
-main: main.x
-	@echo 'Program Compiled.'
 
 mesh: results/mesh.msh
 	@echo 'Mesh created.'

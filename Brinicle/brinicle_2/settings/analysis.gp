@@ -8,6 +8,8 @@ set ls 1 lc rgb "black" lt 1 lw 1 pt 2 ps 0.5
 file = 'results/progress.txt'
 
 set logscale y
+set ytics 1e-15,10,1e-3
+set format y "%.0s*10^{%S}"
 set key autotitle columnhead
 set key r b
 set term pdf
