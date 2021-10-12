@@ -134,7 +134,7 @@ double r_f(const Vector &x){
 }
 
 double inv_r(const Vector &x){
-    return pow(x(0) + 1E-9, -1);
+    return pow(x(0), -1);
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
