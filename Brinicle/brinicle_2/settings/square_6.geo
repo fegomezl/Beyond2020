@@ -4,8 +4,8 @@ Rmin = 0;
 Rmax = 20;
 Zmin = 0;
 Zmax = 20;
-l = 2;
-h = 5;
+l = 10;
+h = 10;
 
 NR = 10;
 NZ = 10;

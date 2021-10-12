@@ -4,8 +4,8 @@ settings/square_6.geo #Mesh_script
 20      #Rmax
 0       #Zmin
 20      #Zmax
-2       #Inflow_window_size
-5       #Outflow_window_size
+10      #Inflow_window_size
+10      #Outflow_window_size
 10      #Rcells
 10      #Zcells
 

@@ -129,7 +129,6 @@ int main(int argc, char *argv[]){
         tic();
         config.pid = pid;
         c_l = config.c_l;
-        config.c_s += delta_c_s_fun(-2, 3.5);
         config.invDeltaT = pow(10, nDeltaT);
         config.EpsilonT = pow(10, -nEpsilonT);
         config.EpsilonEta = pow(10, -nEpsilonEta);

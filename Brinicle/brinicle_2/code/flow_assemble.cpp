@@ -40,11 +40,11 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //                            0
     //
 
-    ess_bdr_w[0] = 0; ess_bdr_w[1] = 1;
+    ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 0;
-    ess_bdr_w[4] = 1; ess_bdr_w[5] = 0;
+    ess_bdr_w[4] = 0; ess_bdr_w[5] = 0;
   
-    ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
+    ess_bdr_psi[0] = 0; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
     ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 1;
 
