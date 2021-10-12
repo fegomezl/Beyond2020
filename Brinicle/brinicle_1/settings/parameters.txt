@@ -37,14 +37,14 @@ Physical parameters
 306.1   #Volumetric_latent_heat
 
 Brinicle conditions
-1000   #Volumetric_inflow
+10000   #Volumetric_inflow
 -2      #Initial_temperature
 -20     #Inflow_temperature
 3.5     #Initial_salinity
 22.5    #Inflow_salinity
 5       #Nucleation_length
 1       #Nucleation_height
--20.    #Nucleation_temperature
+-10.    #Nucleation_temperature
 3.5     #Nucleation_salinity
 
 Restart conditions
