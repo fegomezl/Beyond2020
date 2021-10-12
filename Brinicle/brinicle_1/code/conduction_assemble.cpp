@@ -54,17 +54,17 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //                            0
 
     Array<int> ess_bdr_theta(attributes); ess_bdr_theta = 0;
-    ess_bdr_theta  [0] = 0;   ess_bdr_theta  [1] = 0;   ess_bdr_theta  [3] = 0;
-    robin_bdr_theta[0] = 0;   robin_bdr_theta[1] = 1;   robin_bdr_theta[3] = 0;
+    ess_bdr_theta  [0] = 0;   ess_bdr_theta  [1] = 1;   ess_bdr_theta  [3] = 0;
+    robin_bdr_theta[0] = 0;   robin_bdr_theta[1] = 0;   robin_bdr_theta[3] = 0;
     ess_bdr_theta  [4] = 0;   ess_bdr_theta  [5] = 0;   
-    robin_bdr_theta[4] = 1;   robin_bdr_theta[5] = 0;   
+    robin_bdr_theta[4] = 1;   robin_bdr_theta[5] = 1;   
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_theta);
 
     Array<int> ess_bdr_phi(attributes); ess_bdr_phi = 0;
-    ess_bdr_phi  [0] = 0;     ess_bdr_phi  [1] = 0;     ess_bdr_phi  [3] = 0; 
-    robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 1;     robin_bdr_phi[3] = 0;
+    ess_bdr_phi  [0] = 0;     ess_bdr_phi  [1] = 1;     ess_bdr_phi  [3] = 0; 
+    robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 0;     robin_bdr_phi[3] = 0;
     ess_bdr_phi  [4] = 0;     ess_bdr_phi  [5] = 0;      
-    robin_bdr_phi[4] = 1;     robin_bdr_phi[5] = 0;     
+    robin_bdr_phi[4] = 1;     robin_bdr_phi[5] = 1;     
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_phi);
 
     //Check that the internal boundaries is always zero.
@@ -75,14 +75,16 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     if (!config.restart){
         ParGridFunction theta(&fespace);
         FunctionCoefficient initial_theta(initial_theta_f);
+        ConstantCoefficient theta_nu(theta_n);
         theta.ProjectCoefficient(initial_theta);
-        theta.ProjectBdrCoefficient(initial_theta, ess_bdr_theta);
+        theta.ProjectBdrCoefficient(theta_nu, ess_bdr_theta);
         theta.GetTrueDofs(X.GetBlock(0));
         
         ParGridFunction phi(&fespace);
         FunctionCoefficient initial_phi(initial_phi_f);
+        ConstantCoefficient phi_nu(phi_n);
         phi.ProjectCoefficient(initial_phi);
-        phi.ProjectBdrCoefficient(initial_phi, ess_bdr_phi);
+        phi.ProjectBdrCoefficient(phi_nu, ess_bdr_phi);
         phi.GetTrueDofs(X.GetBlock(1));
     }
 

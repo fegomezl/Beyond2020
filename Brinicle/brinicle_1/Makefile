@@ -113,7 +113,7 @@ results/mesh.msh: settings/parameters.txt
 	@gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
-results/analysis.pdf:
+results/analysis.pdf: settings/analysis.gp
 	@gnuplot settings/analysis.gp
 
 clean:
