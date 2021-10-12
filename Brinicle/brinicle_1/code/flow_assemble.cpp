@@ -98,5 +98,5 @@ double boundary_psi(const Vector &x){
         in = pow(x(0)/L_in, 2);
     if (x(1) < L_out)
         out = x(1)/L_out;
-    return -0.5*M_1_PI*Q*in*out;
+    return 0.5*M_1_PI*Q*in*out;
 }

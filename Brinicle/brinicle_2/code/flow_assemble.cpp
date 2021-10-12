@@ -93,5 +93,5 @@ double boundary_w(const Vector &x){
 }
 
 double boundary_psi(const Vector &x){
-    return -0.5*M_1_PI*Q*pow(x(0)/Rmax, 2);
+    return 0.5*M_1_PI*Q*pow(x(0)/Rmax, 2);
 }
