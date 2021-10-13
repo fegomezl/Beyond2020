@@ -6,9 +6,13 @@ double inv_r(const Vector &x);
 void zero_f(const Vector &x, Vector &f);
 void rot_f(const Vector &x, DenseMatrix &f);
 void r_inv_hat_f(const Vector &x, Vector &f);
+void r_hat_f(const Vector &x, Vector &f);
 
-//Fusion temperature dependent of salinity
+//Fusion temperature
 double T_fun(const double &salinity);
+
+//Density
+double rho_fun(const double temperature, const double &salinity);
 
 //Variation of parameters
 double delta_c_s_fun(const double &temperature, const double &salinity);
@@ -16,13 +20,6 @@ double delta_k_s_fun(const double &temperature, const double &salinity);
 double delta_l_s_fun(const double &temperature, const double &salinity);
 
 void Artic_sea::assemble_system(){
-    //Initialize the system
-    t = config.t_init;
-    dt = config.dt_init;
-    last = false;
-    vis_steps = config.vis_steps_max;
-    vis_impressions = 0;
-
     //Define solution x
     if (!config.restart){
         theta = new ParGridFunction(fespace);
@@ -148,7 +145,12 @@ void zero_f(const Vector &x, Vector &f){
 }
 
 void r_inv_hat_f(const Vector &x, Vector &f){
-    f(0) = pow(x(0), -1);
+    f(0) = pow(x(0), -1.);    
+    f(1) = 0.;
+}
+
+void r_hat_f(const Vector &x, Vector &f){
+    f(0) = x(0);    
     f(1) = 0.;
 }
 
@@ -156,6 +158,17 @@ double T_fun(const double &salinity){
     double a = 0.6037;
     double b = 0.00058123;
     return -(a*salinity + b*pow(salinity, 3));
+}
+
+double rho_fun(const double temperature, const double &salinity){
+    double a0 = 2617.9,  b0 = -58.0, c0 = 15.5,
+           a1 = -13.0,   b1 = 1.1,
+           a2 = 0.2,     b2 = -0.02,
+           a3 = -0.003,
+           a4 = 0.00002;
+    return (a0 + a1*temperature + a2*pow(temperature, 2) + a3*pow(temperature, 3) + a4*pow(temperature, 4))*salinity +
+           (b0 + b1*temperature + b2*pow(temperature, 2))*pow(abs(salinity), 1.5) +
+           (c0)*pow(salinity, 2);
 }
 
 double delta_c_s_fun(const double &temperature, const double &salinity){

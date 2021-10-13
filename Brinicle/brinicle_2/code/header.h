@@ -165,7 +165,7 @@ class Flow_Operator{
         FunctionCoefficient psi_coeff;
 
         //Construction rV
-        DiscreteLinearOperator grad;
+        ParDiscreteLinearOperator grad;
 
         VectorGridFunctionCoefficient Psi_grad;
         MatrixVectorProductCoefficient rot_Psi_grad;

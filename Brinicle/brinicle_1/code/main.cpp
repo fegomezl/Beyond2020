@@ -125,18 +125,16 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
+    c_l = config.c_l;
+    config.invDeltaT = pow(10, nDeltaT);
+    config.EpsilonT = pow(10, -nEpsilonT);
+    config.EpsilonEta = pow(10, -nEpsilonEta);
+    config.restart = (restart == 1);
+    config.t_init = config.restart ? config.t_init : 0.;
+    config.t_final += config.t_init;
+
     {
         tic();
-        config.pid = pid;
-        c_l = config.c_l;
-        config.c_s += delta_c_s_fun(-2, 3.5);
-        config.invDeltaT = pow(10, nDeltaT);
-        config.EpsilonT = pow(10, -nEpsilonT);
-        config.EpsilonEta = pow(10, -nEpsilonEta);
-        config.restart = (restart == 1);
-        config.t_init = config.restart ? config.t_init : 0.;
-        config.t_final += config.t_init;
-
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
     }

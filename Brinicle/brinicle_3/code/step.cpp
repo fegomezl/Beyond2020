@@ -188,42 +188,40 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     for (int ii = 0; ii < eta.Size(); ii++){
         double T = theta(ii);
         double S = phi(ii);
-        double T_f = config.T_f + T_fun(S);
+        double P = 0.5*(1 + tanh(5*config.invDeltaT*(T - config.T_f - T_fun(S))));
 
-        eta(ii) = 0.5*(1 + tanh(5*config.invDeltaT*(T - T_f)));
-        eta(ii) = config.EpsilonEta + pow(1-eta(ii), 2)/(pow(eta(ii), 3) + config.EpsilonEta);
+        eta(ii) = config.EpsilonEta + pow(1-P, 2)/(pow(P, 3) + config.EpsilonEta);
 
-        double a0 = 2617.9,  b0 = -58.0, c0 = 15.5,
-               a1 = -13.0,   b1 = 1.1,
-               a2 = 0.2,     b2 = -0.02,
-               a3 = -0.003,
-               a4 = 0.00002;
-
-        phi(ii) = (a0 + a1*T + a2*pow(T, 2) + a3*pow(T, 3) + a4*pow(T, 4)) +
-                  (b0 + b1*T + b2*pow(T, 2))*pow(abs(S), 0.5) +
-                  (c0)*S;                                                         
+        phi(ii) = rho_fun(T,S);
     }
-
-    phi.GetDerivative(1, 0, phi_dr);
 
     //Properties coefficients
     GridFunctionCoefficient Eta(&eta);
     ProductCoefficient neg_Eta(-1., Eta);
 
-    GridFunctionCoefficient Phi_dr(&phi_dr);
+        //rho.GetDerivative(1, 0, rho_dr);
+    grad.Mult(rho, rho_grad);
+    VectorGridFunctionCoefficient Rho_grad(&rho_grad);
 
     //Rotational coupled coefficients
     ScalarVectorProductCoefficient neg_Eta_r_inv_hat(neg_Eta, r_inv_hat);
-    ProductCoefficient k_r_Phi_dr(coeff_r, Phi_dr);
+
+    InnerProductCoefficient r_rho_dr(r_hat, Rho_grad);
 
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
+    w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
+
     psi.ProjectCoefficient(psi_coeff);
+    psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
+    psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
+    psi.ProjectBdrCoefficient(closed_down, bdr_psi_closed_down);
+    psi.ProjectBdrCoefficient(closed_up, bdr_psi_closed_up);
 
     //Define the non-constant RHS
     if (f) delete f;
     f = new ParLinearForm(&fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(k_r_Phi_dr));
+    f->AddDomainIntegrator(new DomainLFIntegrator(r_rho_dr));
     f->Assemble();
 
     //Define non-constant bilinear forms of the system

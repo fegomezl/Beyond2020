@@ -7,8 +7,6 @@ double initial_phi_f(const Vector &x);
 //Robin boundary terms
 double robin_h_theta_f(const Vector &x);
 double robin_h_phi_f(const Vector &x);
-double robin_ref_theta_f(const Vector &x);
-double robin_ref_phi_f(const Vector &x);
 
 Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
     config(config),
@@ -53,18 +51,26 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //            \-------------------------------/
     //                            0
 
-    Array<int> ess_bdr_theta(attributes); ess_bdr_theta = 0;
+    Array<int> ess_bdr_theta(attributes); 
+    ess_bdr_theta = 0; robin_bdr_theta = 0;
+
     ess_bdr_theta  [0] = 0;   ess_bdr_theta  [1] = 0;   ess_bdr_theta  [3] = 0;
     robin_bdr_theta[0] = 0;   robin_bdr_theta[1] = 0;   robin_bdr_theta[3] = 0;
+
     ess_bdr_theta  [4] = 0;   ess_bdr_theta  [5] = 0;   
     robin_bdr_theta[4] = 1;   robin_bdr_theta[5] = 0;   
+
     fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_theta);
 
-    Array<int> ess_bdr_phi(attributes); ess_bdr_phi = 0;
+    Array<int> ess_bdr_phi(attributes);
+    ess_bdr_phi = 0; robin_bdr_phi = 0;
+
     ess_bdr_phi  [0] = 0;     ess_bdr_phi  [1] = 0;     ess_bdr_phi  [3] = 0; 
     robin_bdr_phi[0] = 0;     robin_bdr_phi[1] = 0;     robin_bdr_phi[3] = 0;
+
     ess_bdr_phi  [4] = 0;     ess_bdr_phi  [5] = 0;      
     robin_bdr_phi[4] = 1;     robin_bdr_phi[5] = 0;     
+
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_phi);
 
     //Check that the internal boundaries is always zero.
@@ -89,10 +95,10 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     }
 
     //Set robin coefficients
-    FunctionCoefficient robin_ref_theta(robin_ref_theta_f);
+    ConstantCoefficient robin_ref_theta(theta_out);
     ProductCoefficient r_robin_h_ref_theta(r_robin_h_theta, robin_ref_theta);
 
-    FunctionCoefficient robin_ref_phi(robin_ref_phi_f);
+    ConstantCoefficient robin_ref_phi(phi_out);
     ProductCoefficient r_robin_h_ref_phi(r_robin_h_phi, robin_ref_phi);
 
     //Set RHS
@@ -144,9 +150,6 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 //Initial conditions
 
 double initial_theta_f(const Vector &x){
-    //if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
-    //    return theta_n;
-    //else
     if (x(0) > L_in && x(1) > Zmax - n_h)
         return theta_n;
     else
@@ -154,11 +157,6 @@ double initial_theta_f(const Vector &x){
 }
 
 double initial_phi_f(const Vector &x){
-    //if (x(0) > L_in && Zmax - x(1) <= n_h/2.)
-    //    return phi_n;
-    //else if (x(0) > L_in && (x(0)-L_in)/n_l <= 1-(Zmax-x(1))/n_h)
-    //    return phi_n;
-    //else
     if (x(0) > L_in && x(1) > Zmax - n_h)
         return phi_n;
     else
@@ -168,17 +166,9 @@ double initial_phi_f(const Vector &x){
 //Robin boundary conditions of the form kdu/dn = h(u-u_ref)
 
 double robin_h_theta_f(const Vector &x){
-    return c_l*Q*pow(L_in, -2)*M_1_PI;
+    return c_l*Vel*(1-pow(x(0)/L_in, 2));
 }
 
 double robin_h_phi_f(const Vector &x){
-    return Q*pow(L_in, -2)*M_1_PI;
-}
-
-double robin_ref_theta_f(const Vector &x){
-    return theta_out;
-}
-
-double robin_ref_phi_f(const Vector &x){
-    return phi_out;
+    return Vel*(1-pow(x(0)/L_in, 2));
 }

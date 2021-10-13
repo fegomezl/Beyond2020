@@ -123,6 +123,8 @@ class Flow_Operator{
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
         Array<int> ess_bdr_w, ess_bdr_psi;
+        Array<int> bdr_psi_in, bdr_psi_out;
+        Array<int> bdr_psi_closed_down, bdr_psi_closed_up;
 
         //System objects
         ParGridFunction psi;
@@ -148,24 +150,29 @@ class Flow_Operator{
 
         //Additional variables
         ParGridFunction theta;
-        ParGridFunction theta_dr;
         ParGridFunction phi;
-        ParGridFunction phi_dr;
         ParGridFunction eta;
+        ParGridFunction rho;
+        ParGridFunction rho_grad;
         ParGridFunction psi_grad;
       
         //Rotational coefficients
         FunctionCoefficient coeff_r;
         FunctionCoefficient inv_R;
         VectorFunctionCoefficient r_inv_hat;
+        VectorFunctionCoefficient r_hat;
         MatrixFunctionCoefficient rot;
 
         //Boundary coefficients
         FunctionCoefficient w_coeff;
         FunctionCoefficient psi_coeff;
+        FunctionCoefficient psi_in;
+        FunctionCoefficient psi_out;
+        ConstantCoefficient closed_down;
+        ConstantCoefficient closed_up;
 
         //Construction rV
-        DiscreteLinearOperator grad;
+        ParDiscreteLinearOperator grad;
 
         VectorGridFunctionCoefficient Psi_grad;
         MatrixVectorProductCoefficient rot_Psi_grad;
@@ -248,9 +255,13 @@ extern double inv_r(const Vector &x);
 extern void zero_f(const Vector &x, Vector &f);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void r_inv_hat_f(const Vector &x, Vector &f);
+extern void r_hat_f(const Vector &x, Vector &f);
 
 //Fusion temperature dependent of salinity
 extern double T_fun(const double &salinity);
+
+//Density dependent of temperature and salinity
+extern double rho_fun(const double temperature, const double &salinity);
 
 //Variation of parameters
 extern double delta_c_s_fun(const double &temperature, const double &salinity);
@@ -258,7 +269,7 @@ extern double delta_k_s_fun(const double &temperature, const double &salinity);
 extern double delta_l_s_fun(const double &temperature, const double &salinity);
 
 //Brinicle conditions
-extern double Q;
+extern double Q, Vel;
 extern double theta_in, theta_out;
 extern double phi_in, phi_out;
 extern double n_l, n_h;

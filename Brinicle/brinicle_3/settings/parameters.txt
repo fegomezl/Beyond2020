@@ -32,12 +32,12 @@ Physical parameters
 1.9     #Solid_volumetric_heat_capacity
 32.6    #Liquid_thermal_conductivity
 109.5   #Solid_thermal_conductivity
-1     #Liquid_diffusion_constant
+0.1     #Liquid_diffusion_constant
 0       #Solid_diffusion_constant
 326.1   #Volumetric_latent_heat
 
 Brinicle conditions
-1000    #Volumetric_inflow
+1000     #Velocity_inflow
 -2      #Initial_temperature
 -20     #Inflow_temperature
 3.5     #Initial_salinity

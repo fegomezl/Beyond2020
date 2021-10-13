@@ -9,7 +9,7 @@ double L_in;
 double L_out;
 
 //Brinicle conditions
-double Q;
+double Q, Vel;
 double theta_in, theta_out;
 double phi_in, phi_out;
 double n_l, n_h;
@@ -92,8 +92,8 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.L, "-L", "--L",
                    "Volumetric latent heat.");
 
-    args.AddOption(&Q, "-q", "--flux",
-                   "Volumetric inflow.");
+    args.AddOption(&Vel, "-v", "--vel",
+                   "Inflow velocity.");
     args.AddOption(&theta_in, "-Ti", "--Theta_in",
                    "Initial temperature.");
     args.AddOption(&theta_out, "-To", "--Theta_out",
@@ -125,18 +125,17 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
+    c_l = config.c_l;
+    Q = 0.25*Vel*pow(L_in, -2);
+    config.invDeltaT = pow(10, nDeltaT);
+    config.EpsilonT = pow(10, -nEpsilonT);
+    config.EpsilonEta = pow(10, -nEpsilonEta);
+    config.restart = (restart == 1);
+    config.t_init = config.restart ? config.t_init : 0.;
+    config.t_final += config.t_init;
+
     {
         tic();
-        config.pid = pid;
-        c_l = config.c_l;
-        config.c_s += delta_c_s_fun(-2, 3.5);
-        config.invDeltaT = pow(10, nDeltaT);
-        config.EpsilonT = pow(10, -nEpsilonT);
-        config.EpsilonEta = pow(10, -nEpsilonEta);
-        config.restart = (restart == 1);
-        config.t_init = config.restart ? config.t_init : 0.;
-        config.t_final += config.t_init;
-
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
     }

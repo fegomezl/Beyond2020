@@ -8,6 +8,8 @@ Config::Config(int pid, int nproc):
 
 Artic_sea::Artic_sea(Config config):
     config(config),
+    t(config.t_init), dt(config.dt_init), last(false),
+    vis_steps(config.vis_steps_max), vis_impressions(0),
     pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
     block_true_offsets(3),
     theta(NULL), phi(NULL), w(NULL), psi(NULL), v(NULL), rv(NULL), phase(NULL), 
