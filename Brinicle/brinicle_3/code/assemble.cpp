@@ -184,15 +184,21 @@ double delta_l_s_fun(const double &temperature, const double &salinity){
 }
 
 double delta_rho_t_fun(const double &temperature, const double &salinity){
+    //if (temperature < T_fun(salinity))
+    //    return 0.;
+
     double a0 = -13.0,  b0 = 1.1,
            a1 = 0.5,    b1 = -0.04,
            a2 = -0.008,  
            a3 = 0.0001;
     return (a0 + a1*temperature + a2*pow(temperature, 2) + a3*pow(temperature, 3))*salinity +
-           (b0 + b1*temperature)*pow(abs(salinity), 1.5);                           
+           (b0 + b1*temperature)*pow(abs(salinity), 1.5);
 }
 
 double delta_rho_p_fun(const double &temperature, const double &salinity){
+    //if (temperature < T_fun(salinity))
+    //    return 0.;
+
     double a0 = 2617.9, b0 = -87.0, c0 = 31.0,
            a1 = -13.0,  b1 = 1.6,
            a2 = 0.2,    b2 = -0.03,
