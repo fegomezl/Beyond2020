@@ -27,7 +27,7 @@ void Artic_sea::time_step(){
         psi->Distribute(&(Z.GetBlock(1)));
         v->Distribute(V);
         rv->Distribute(rV);
-        
+
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++){
             double T_f = config.T_f + T_fun((*phi)(ii));
@@ -35,12 +35,14 @@ void Artic_sea::time_step(){
         }
 
         //Normalize stream
-        double psi_local_max = psi->Max(), psi_max;
-        double psi_local_min = psi->Min(), psi_min;
-        MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-        for (int ii = 0; ii < psi->Size(); ii++)
-                (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+        if (config.rescale){
+            double psi_local_max = psi->Max(), psi_max;
+            double psi_local_min = psi->Min(), psi_min;
+            MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+            MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+            for (int ii = 0; ii < psi->Size(); ii++)
+                    (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+        }
 
         //Graph
         paraview_out->SetCycle(vis_impressions);
@@ -78,22 +80,17 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     rv.SetFromTrueDofs(rV); 
 
     //Associate the values of each auxiliar function
-    for (int ii = 0; ii < theta.Size(); ii++){
-        double T = theta(ii) - config.T_f - T_fun(phi(ii));
+    for (int ii = 0; ii < phase.Size(); ii++){
+        double DT = theta(ii) - config.T_f - T_fun(phi(ii));
+        double P = 0.5*(1 + tanh(5*config.invDeltaT*DT));
 
-        if (T > 0){
-            aux_C(ii) = config.c_l;
-            aux_K(ii) = config.k_l;
-            aux_D(ii) = config.D_l;
-        } else {
-            aux_C(ii) = config.c_s;// + delta_c_s_fun(theta(ii), phi(ii));
-            aux_K(ii) = config.k_s;// + delta_k_s_fun(theta(ii), phi(ii));
-            aux_D(ii) = config.D_s;
-        }
-        aux_L(ii) = config.L;// + delta_l_s_fun(theta(ii), phi(ii));
+        aux_C(ii) = config.c_s + (config.c_l-config.c_s)*P;
+        aux_K(ii) = config.k_s + (config.k_l-config.k_s)*P;
+        aux_D(ii) = config.d_s + (config.d_l-config.d_s)*P;
+        aux_L(ii) = config.L_s + (config.L_l-config.L_s)*P;
 
-        theta(ii) = T;
-        phase(ii) = 0.5*(1 + tanh(5*config.invDeltaT*T));
+        theta(ii) = DT;
+        phase(ii) = P;
     }
 
     //Set the associated coefficients
@@ -182,36 +179,43 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     //Update information
     theta.SetFromTrueDofs(X.GetBlock(0));
     phi.SetFromTrueDofs(X.GetBlock(1));
-    eta.SetFromTrueDofs(X.GetBlock(0));
+
+    theta.GetDerivative(1, 0, theta_dr);
+    phi.GetDerivative(1, 0, phi_dr);
 
     //Calculate eta and buoyancy coefficients
-    for (int ii = 0; ii < eta.Size(); ii++){
+    for (int ii = 0; ii < phase.Size(); ii++){
         double T = theta(ii);
         double S = phi(ii);
-        double P = 0.5*(1 + tanh(5*config.invDeltaT*(T - config.T_f - T_fun(S))));
+        double P = 0.5*(1 + tanh(5*config.invDeltaT*(theta(ii) - config.T_f - T_fun(phi(ii))))); 
 
         eta(ii) = config.EpsilonEta + pow(1-P, 2)/(pow(P, 3) + config.EpsilonEta);
 
-        phi(ii) = rho_fun(T,S);
+        theta(ii) = delta_rho_t_fun(T, S);
+        phi(ii) = delta_rho_p_fun(T, S);
     }
 
     //Properties coefficients
     GridFunctionCoefficient Eta(&eta);
     ProductCoefficient neg_Eta(-1., Eta);
 
-        //rho.GetDerivative(1, 0, rho_dr);
-    grad.Mult(rho, rho_grad);
-    VectorGridFunctionCoefficient Rho_grad(&rho_grad);
+    GridFunctionCoefficient Theta_dr(&theta_dr);
+    GridFunctionCoefficient k_t(&theta);
+    ProductCoefficient k_Theta_dr(k_t, Theta_dr);
+
+    GridFunctionCoefficient Phi_dr(&phi_dr);
+    GridFunctionCoefficient k_p(&phi);
+    ProductCoefficient k_Phi_dr(k_p, Phi_dr);
 
     //Rotational coupled coefficients
     ScalarVectorProductCoefficient neg_Eta_r_inv_hat(neg_Eta, r_inv_hat);
-
-    InnerProductCoefficient r_rho_dr(r_hat, Rho_grad);
+    ProductCoefficient k_r_Theta_dr(coeff_r, k_Theta_dr);
+    ProductCoefficient k_r_Phi_dr(coeff_r, k_Phi_dr);
 
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
     w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
-
+ 
     psi.ProjectCoefficient(psi_coeff);
     psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
     psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
@@ -221,7 +225,8 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     //Define the non-constant RHS
     if (f) delete f;
     f = new ParLinearForm(&fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(r_rho_dr));
+    f->AddDomainIntegrator(new DomainLFIntegrator(k_r_Theta_dr));
+    f->AddDomainIntegrator(new DomainLFIntegrator(k_r_Phi_dr));
     f->Assemble();
 
     //Define non-constant bilinear forms of the system

@@ -19,6 +19,7 @@ struct Config{
     double dt_init;
     double t_final;
     int vis_steps_max;
+    bool rescale;
 
     int refinements;
     int order;
@@ -34,8 +35,8 @@ struct Config{
     double EpsilonEta;
     double c_l, c_s;
     double k_l, k_s;
-    double D_l, D_s;
-    double L;
+    double d_l, d_s;
+    double L_l, L_s;
 
     bool restart;
     double t_init;
@@ -108,7 +109,7 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
     public:
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const BlockVector &X);
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
 
         void SetParameters(const BlockVector &X);
 
@@ -150,17 +151,17 @@ class Flow_Operator{
 
         //Additional variables
         ParGridFunction theta;
+        ParGridFunction theta_dr;
         ParGridFunction phi;
+        ParGridFunction phi_dr;
+        ParGridFunction phase;
         ParGridFunction eta;
-        ParGridFunction rho;
-        ParGridFunction rho_grad;
         ParGridFunction psi_grad;
       
         //Rotational coefficients
         FunctionCoefficient coeff_r;
         FunctionCoefficient inv_R;
         VectorFunctionCoefficient r_inv_hat;
-        VectorFunctionCoefficient r_hat;
         MatrixFunctionCoefficient rot;
 
         //Boundary coefficients
@@ -247,7 +248,7 @@ class Artic_sea{
 
 //Simulation parameters
 extern double Rmin, Rmax, Zmin, Zmax;
-extern double L_in, L_out;
+extern double R_in, Z_out;
 
 //Rotational functions
 extern double r_f(const Vector &x);
@@ -255,21 +256,21 @@ extern double inv_r(const Vector &x);
 extern void zero_f(const Vector &x, Vector &f);
 extern void rot_f(const Vector &x, DenseMatrix &f);
 extern void r_inv_hat_f(const Vector &x, Vector &f);
-extern void r_hat_f(const Vector &x, Vector &f);
 
 //Fusion temperature dependent of salinity
 extern double T_fun(const double &salinity);
-
-//Density dependent of temperature and salinity
-extern double rho_fun(const double temperature, const double &salinity);
 
 //Variation of parameters
 extern double delta_c_s_fun(const double &temperature, const double &salinity);
 extern double delta_k_s_fun(const double &temperature, const double &salinity);
 extern double delta_l_s_fun(const double &temperature, const double &salinity);
 
+//Parameters of buoyancy
+extern double delta_rho_t_fun(const double &temperature, const double &salinity);
+extern double delta_rho_p_fun(const double &temperature, const double &salinity);
+
 //Brinicle conditions
-extern double Q, Vel;
+extern double Vel, Q;
 extern double theta_in, theta_out;
 extern double phi_in, phi_out;
 extern double n_l, n_h;

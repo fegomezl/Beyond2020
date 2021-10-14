@@ -5,11 +5,11 @@ double Rmin;
 double Zmin;
 double Rmax;
 double Zmax;
-double L_in;
-double L_out;
+double R_in;
+double Z_out;
 
 //Brinicle conditions
-double Q, Vel;
+double Vel, Q;
 double theta_in, theta_out;
 double phi_in, phi_out;
 double n_l, n_h;
@@ -26,6 +26,7 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config(pid, nproc);
+    int rescale = 0;
     int nDeltaT = 0;
     int nEpsilonT = 0;
     int nEpsilonEta = 0;
@@ -42,9 +43,9 @@ int main(int argc, char *argv[]){
                    "Minimum Z border.");
     args.AddOption(&Zmax, "-Zmax", "--Zmax",
                    "Maximum Z border.");
-    args.AddOption(&L_in, "-Li", "--L_in",
+    args.AddOption(&R_in, "-Li", "--L_in",
                    "Inflow window size.");
-    args.AddOption(&L_out, "-Lo", "--L_out",
+    args.AddOption(&Z_out, "-Lo", "--L_out",
                    "Outflow window size.");
 
     args.AddOption(&config.dt_init, "-dt", "--time_step",
@@ -53,6 +54,8 @@ int main(int argc, char *argv[]){
                    "Final time.");
     args.AddOption(&config.vis_steps_max, "-v_s", "--visualization_steps",
                    "Visualize every n-th timestep.");
+    args.AddOption(&rescale, "-rc", "--rescale",
+                   "If the simulation rescales the stream (1) or not (0).");
 
     args.AddOption(&config.refinements, "-ref", "--refinements",
                    "Number of total uniform refinements.");
@@ -85,15 +88,19 @@ int main(int argc, char *argv[]){
                    "Liquid thermal conductivity.");
     args.AddOption(&config.k_s, "-k_s", "--k_s",
                    "Solid thermal conductivity.");
-    args.AddOption(&config.D_l, "-D_l", "--D_l",
+    args.AddOption(&config.d_l, "-d_l", "--d_l",
                    "Liquid diffusion constant.");
-    args.AddOption(&config.D_s, "-D_s", "--D_s",
+    args.AddOption(&config.d_s, "-d_s", "--d_s",
                    "Solid diffusion constant.");
-    args.AddOption(&config.L, "-L", "--L",
-                   "Volumetric latent heat.");
+    args.AddOption(&config.L_l, "-L_l", "--L_l",
+                   "Liquid volumetric latent heat.");
+    args.AddOption(&config.L_s, "-L_s", "--L_s",
+                   "Solid volumetric latent heat.");
 
     args.AddOption(&Vel, "-v", "--vel",
                    "Inflow velocity.");
+    args.AddOption(&Q, "-q", "--flux",
+                   "Volumetric inflow.");
     args.AddOption(&theta_in, "-Ti", "--Theta_in",
                    "Initial temperature.");
     args.AddOption(&theta_out, "-To", "--Theta_out",
@@ -125,16 +132,17 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-    c_l = config.c_l;
-    Q = 0.25*Vel*pow(L_in, -2);
-    config.invDeltaT = pow(10, nDeltaT);
-    config.EpsilonT = pow(10, -nEpsilonT);
-    config.EpsilonEta = pow(10, -nEpsilonEta);
-    config.restart = (restart == 1);
-    config.t_init = config.restart ? config.t_init : 0.;
-    config.t_final += config.t_init;
 
     {
+        c_l = config.c_l;
+        Q = 0.25*Vel*pow(R_in, -2);
+        config.rescale = (rescale == 1);
+        config.invDeltaT = pow(10, nDeltaT);
+        config.EpsilonT = pow(10, -nEpsilonT);
+        config.EpsilonEta = pow(10, -nEpsilonEta);
+        config.restart = (restart == 1);
+        config.t_init = config.restart ? config.t_init : 0.;
+        config.t_final += config.t_init;
         tic();
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);

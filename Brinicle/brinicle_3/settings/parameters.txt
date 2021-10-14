@@ -11,8 +11,9 @@ settings/square_6.geo #Mesh_script
 
 Simulation parameters
 0.001   #Dt
-0.5       #Final_time
+0.2     #Final_time
 10      #Visualization_steps
+0       #Rescale_stream?
 
 FE parameters
 2          #Refinements
@@ -34,17 +35,18 @@ Physical parameters
 109.5   #Solid_thermal_conductivity
 0.1     #Liquid_diffusion_constant
 0       #Solid_diffusion_constant
-326.1   #Volumetric_latent_heat
+344.9   #Liquid_volumetric_latent_heat
+307.1   #Solid_volumetric_latent_heat
 
 Brinicle conditions
-1000     #Velocity_inflow
+100    #Velocity_inflow
 -2      #Initial_temperature
 -20     #Inflow_temperature
 3.5     #Initial_salinity
 22.5    #Inflow_salinity
 5       #Nucleation_length
 0.5     #Nucleation_height
--10     #Nucleation_temperature
+-10.    #Nucleation_temperature
 3.5     #Nucleation_salinity
 
 Restart conditions

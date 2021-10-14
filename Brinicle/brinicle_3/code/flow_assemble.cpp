@@ -7,27 +7,28 @@ double boundary_psi(const Vector &x);
 double boundary_psi_in(const Vector &x);
 double boundary_psi_out(const Vector &x);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, const BlockVector &X):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
     config(config),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
+    Y(block_true_offsets), B(block_true_offsets),
     ess_bdr_psi(attributes), ess_bdr_w(attributes),
     bdr_psi_in(attributes), bdr_psi_out(attributes),
     bdr_psi_closed_down(attributes), bdr_psi_closed_up(attributes),
-    psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
     f(NULL), g(NULL),
     m(NULL), d(NULL), c(NULL), ct(NULL),
-    Y(block_true_offsets), B(block_true_offsets),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
-    theta(&fespace), phi(&fespace), eta(&fespace), 
-    rho(&fespace), rho_grad(&fespace_v), psi_grad(&fespace_v), 
-    coeff_r(r_f), inv_R(inv_r), r_inv_hat(dim, r_inv_hat_f), 
-    r_hat(dim, r_hat_f), rot(dim, rot_f),
+    psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
+    theta(&fespace), theta_dr(&fespace), 
+    phi(&fespace), phi_dr(&fespace), 
+    phase(&fespace), eta(&fespace), psi_grad(&fespace_v), 
+    coeff_r(r_f), inv_R(inv_r), r_inv_hat(dim, r_inv_hat_f),
     w_coeff(boundary_w), psi_coeff(boundary_psi), 
     psi_in(boundary_psi_in), psi_out(boundary_psi_out),
     closed_down(0.), closed_up(Q),
     grad(&fespace, &fespace_v),
-    Psi_grad(&psi_grad), rot_Psi_grad(rot, Psi_grad)
+    rot(dim, rot_f), Psi_grad(&psi_grad),
+    rot_Psi_grad(rot, Psi_grad)
 { 
     //Define essential boundary conditions
     //   
@@ -58,14 +59,14 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
 
     bdr_psi_in = 0;
     bdr_psi_in[4] = ess_bdr_psi[4];
-
+    
     bdr_psi_out = 0;
     bdr_psi_out[5] = ess_bdr_psi[5];
-
+    
     bdr_psi_closed_down = 0;
     bdr_psi_closed_down[0] = ess_bdr_psi[0];
     bdr_psi_closed_down[2] = ess_bdr_psi[2];
-
+    
     bdr_psi_closed_up = 0;
     bdr_psi_closed_up[1] = ess_bdr_psi[1];
     bdr_psi_closed_up[3] = ess_bdr_psi[3];
@@ -73,7 +74,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
     w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
-
+ 
     psi.ProjectCoefficient(psi_coeff);
     psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
     psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
@@ -83,7 +84,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //Define the constant RHS
     g = new ParLinearForm(&fespace);
     g->Assemble();
- 
+
     //Define constant bilinear forms of the system
     m = new ParBilinearForm (&fespace);
     m->AddDomainIntegrator(new MassIntegrator);
@@ -121,22 +122,22 @@ double boundary_w(const Vector &x){
 }
 
 double boundary_psi(const Vector &x){
-    double x_rel = x(0)/L_in;
-    double y_rel = x(1)/L_out;
+    double x_rel = x(0)/R_in;
+    double y_rel = x(1)/Z_out;
     double in = 1., out = 1.;
-    if (x(0) < L_in)
+    if (x(0) < R_in)
         in = pow(x_rel, 2)*(2-pow(x_rel, 2));
-    if (x(1) < L_out)
+    if (x(1) < Z_out)
         out = pow(y_rel, 2)*(3-2*y_rel);
     return Q*in*out;
 }
 
 double boundary_psi_in(const Vector &x){
-    double x_rel = x(0)/L_in;
+    double x_rel = x(0)/R_in;
     return Q*pow(x_rel, 2)*(2-pow(x_rel, 2));
 }
 
 double boundary_psi_out(const Vector &x){
-    double y_rel = x(1)/L_out;
+    double y_rel = x(1)/Z_out;
     return Q*pow(y_rel, 2)*(3-2*y_rel);
 }

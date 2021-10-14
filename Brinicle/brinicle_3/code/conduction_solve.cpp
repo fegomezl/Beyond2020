@@ -67,7 +67,7 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double
     HypreParVector Theta_new(&fespace), Phi_new(&fespace);
     HypreParVector Theta(&fespace),     Phi(&fespace);
     for (int ii = block_true_offsets[0]; ii < block_true_offsets[1]; ii++)
-        Theta(ii) = X(ii);
+        Theta(ii - block_true_offsets[0]) = X(ii);
     for (int ii = block_true_offsets[1]; ii < block_true_offsets[2]; ii++)
         Phi(ii - block_true_offsets[1]) = X(ii);
     Z_theta = 0.;   Z_phi = 0.;
@@ -88,7 +88,7 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double
 
     //Recover solution on block vector
     for (int ii = block_true_offsets[0]; ii < block_true_offsets[1]; ii++)
-        X_new(ii) = Theta_new(ii);
+        X_new(ii) = Theta_new(ii - block_true_offsets[0]);
     for (int ii = block_true_offsets[1]; ii < block_true_offsets[2]; ii++)
         X_new(ii) = Phi_new(ii - block_true_offsets[1]);
 
