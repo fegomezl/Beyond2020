@@ -234,7 +234,13 @@ void Flow_Operator::SetParameters(const BlockVector &X){
 
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
+    w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
+ 
     psi.ProjectCoefficient(psi_coeff);
+    psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
+    psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
+    psi.ProjectBdrCoefficient(closed_down, bdr_psi_closed_down);
+    psi.ProjectBdrCoefficient(closed_up, bdr_psi_closed_up);
 
     //Define the non-constant RHS
     if (f) delete f;
