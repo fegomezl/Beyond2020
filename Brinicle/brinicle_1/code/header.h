@@ -123,6 +123,8 @@ class Flow_Operator{
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
         Array<int> ess_bdr_w, ess_bdr_psi;
+        Array<int> bdr_psi_in, bdr_psi_out;
+        Array<int> bdr_psi_closed_down, bdr_psi_closed_up;
 
         //System objects
         ParGridFunction psi;
@@ -163,6 +165,10 @@ class Flow_Operator{
         //Boundary coefficients
         FunctionCoefficient w_coeff;
         FunctionCoefficient psi_coeff;
+        FunctionCoefficient psi_in;
+        FunctionCoefficient psi_out;
+        ConstantCoefficient closed_down;
+        ConstantCoefficient closed_up;
 
         //Construction rV
         ParDiscreteLinearOperator grad;
@@ -258,7 +264,7 @@ extern double delta_k_s_fun(const double &temperature, const double &salinity);
 extern double delta_l_s_fun(const double &temperature, const double &salinity);
 
 //Brinicle conditions
-extern double Q;
+extern double Vel, Q;
 extern double theta_in, theta_out;
 extern double phi_in, phi_out;
 extern double n_l, n_h;

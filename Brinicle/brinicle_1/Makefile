@@ -37,7 +37,7 @@ D_S=$(shell sed -n 36p settings/parameters.txt | tr -d -c 0-9.)
 L=$(shell sed -n 37p settings/parameters.txt | tr -d -c 0-9.)
 
 #Brinicle conditions
-Q=$(shell sed -n 40p settings/parameters.txt | tr -d -c 0-9.)
+V=$(shell sed -n 40p settings/parameters.txt | tr -d -c 0-9.)
 Ti=$(shell sed -n 41p settings/parameters.txt | tr -d -c 0-9.-)
 To=$(shell sed -n 42p settings/parameters.txt | tr -d -c 0-9.-)
 Si=$(shell sed -n 43p settings/parameters.txt | tr -d -c 0-9.)
@@ -73,7 +73,7 @@ main: main.x
 						-T_f $(T_FU) -DT $(DELTA_T) -ET $(EPSILON_T) -EEta $(EPSILON_ETA) \
 						-c_l $(C_L) -c_s $(C_S) \
 						-k_l $(K_L) -k_s $(K_S) -D_l $(D_L) -D_s $(D_S) -L $(L) \
-						-q $(Q) -Ti $(Ti) -To $(To) -Si $(Si) -So $(So) \
+						-v $(V) -Ti $(Ti) -To $(To) -Si $(Si) -So $(So) \
 						-nl $(Nl) -nh $(Nh) -Tn $(Tn) -Sn $(Sn) \
 						-r $(R) -t_i $(T_IN)
 	@sed -i 52d settings/parameters.txt

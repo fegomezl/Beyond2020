@@ -168,11 +168,11 @@ double initial_phi_f(const Vector &x){
 //Robin boundary conditions of the form kdu/dn = h(u-u_ref)
 
 double robin_h_theta_f(const Vector &x){
-    return c_l*Q*pow(L_in, -2)*M_1_PI;
+    return c_l*Vel*(1-pow(x(0)/L_in, 2));
 }
 
 double robin_h_phi_f(const Vector &x){
-    return Q*pow(L_in, -2)*M_1_PI;
+    return Vel*(1-pow(x(0)/L_in, 2));
 }
 
 double robin_ref_theta_f(const Vector &x){
