@@ -142,14 +142,14 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 //Initial conditions
 
 double initial_theta_f(const Vector &x){
-    if (x(0) > R_in && x(1) > Zmax - n_h)
+    if ((x(0) > R_in && x(1) > Zmax - n_h) || pow(x(0)-(R_in+n_l), 2) + pow(x(1)-(Zmax-n_h), 2) < pow(n_l, 2))
         return theta_n;
     else
         return theta_in;
 }
 
 double initial_phi_f(const Vector &x){
-    if (x(0) > R_in && x(1) > Zmax - n_h)
+    if ((x(0) > R_in && x(1) > Zmax - n_h) || pow(x(0)-(R_in+n_l), 2) + pow(x(1)-(Zmax-n_h), 2) < pow(n_l, 2))
         return phi_n;
     else
         return phi_in;

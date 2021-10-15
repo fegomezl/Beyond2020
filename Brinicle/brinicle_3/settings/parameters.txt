@@ -44,7 +44,7 @@ Brinicle conditions
 -20     #Inflow_temperature
 3.5     #Initial_salinity
 22.5    #Inflow_salinity
-5       #Nucleation_length
+1       #Nucleation_length
 1       #Nucleation_height
 -10     #Nucleation_temperature
 3.5     #Nucleation_salinity
