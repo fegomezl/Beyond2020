@@ -15,6 +15,7 @@ void Artic_sea::time_step(){
     //Normalize the salinity
     double m_in, m_out;
     ConstantCoefficient zero(0.);
+    phi->SetFromTrueDofs(X.GetBlock(1));
     m_in = phi->ComputeL1Error(zero, irs);
     for (int ii = 0; ii < phi->Size(); ii++){
         if ((*phi)(ii) < 0)
@@ -22,6 +23,7 @@ void Artic_sea::time_step(){
     }
     m_out = phi->ComputeL1Error(zero, irs);
     *phi *= m_in/m_out; 
+    phi->GetTrueDofs(X.GetBlock(1));
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
