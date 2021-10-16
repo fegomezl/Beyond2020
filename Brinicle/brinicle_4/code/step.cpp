@@ -14,16 +14,29 @@ void Artic_sea::time_step(){
 
     //Normalize the salinity
     double m_in, m_out;
-    ConstantCoefficient zero(0.);
-    phi->SetFromTrueDofs(X.GetBlock(1));
-    m_in = phi->ComputeL1Error(zero, irs);
-    for (int ii = 0; ii < phi->Size(); ii++){
-        if ((*phi)(ii) < 0)
-            (*phi)(ii) = 0.;
+    ConstantCoefficient low_cap(0.);
+    ParGridFunction phi_aux(*phi);
+    phi_aux.SetFromTrueDofs(X.GetBlock(1));
+    phi_aux -= phi_in;
+
+    m_in = phi_aux.ComputeL1Error(low_cap, irs);
+    for (int ii = 0; ii < phi_aux.Size(); ii++){
+        if (phi_aux(ii) < 0)
+            phi_aux(ii) = 0;
     }
-    m_out = phi->ComputeL1Error(zero, irs);
-    *phi *= 2-m_in/m_out; 
-    phi->GetTrueDofs(X.GetBlock(1));
+    m_out = phi_aux.ComputeL1Error(low_cap, irs);
+    phi_aux *= 2-m_in/m_out; 
+
+    m_in = phi_aux.ComputeL1Error(low_cap, irs);
+    for (int ii = 0; ii < phi_aux.Size(); ii++){
+        if (phi_aux(ii) > phi_out-phi_in)
+            phi_aux(ii) = phi_out-phi_in;
+    }
+    m_out = phi_aux.ComputeL1Error(low_cap, irs);
+    phi_aux *= m_in/m_out; 
+
+    phi_aux += phi_in;
+    phi_aux.GetTrueDofs(X.GetBlock(1));
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
