@@ -22,7 +22,7 @@ void Artic_sea::time_step(){
             (*phi)(ii) = 0.;
     }
     m_out = phi->ComputeL1Error(zero, irs);
-    *phi *= m_in/m_out; 
+    *phi *= 2-m_in/m_out; 
     phi->GetTrueDofs(X.GetBlock(1));
 
     //Update visualization steps
