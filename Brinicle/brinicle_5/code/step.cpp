@@ -11,40 +11,24 @@ void Artic_sea::time_step(){
 
     //Normalize the salinity
     double m_in, m_out;
-    ConstantCoefficient low_cap(phi_in);
+    ConstantCoefficient low_cap(Phi_Min);
     phi->SetFromTrueDofs(X.GetBlock(1));
 
     m_in = phi->ComputeL1Error(low_cap, irs);
     for (int ii = 0; ii < phi->Size(); ii++){
-        if ((*phi)(ii) < phi_in)
-            (*phi)(ii) = phi_in;
+        if ((*phi)(ii) < Phi_Min)
+            (*phi)(ii) = Phi_Min;
     }
     m_out = phi->ComputeL1Error(low_cap, irs);
     (*phi) *= 2-m_in/m_out;
 
-    phi->ImposeBounds(0, Weigths, phi_in, phi_out);
+    //phi->ImposeBounds(0, Weigths, Phi_Min, Phi_Max);
     for (int ii = 0; ii < phi->Size(); ii++){
-        if ((*phi)(ii) > phi_out)
-            (*phi)(ii) = phi_out;
+        if ((*phi)(ii) > Phi_Max)
+            (*phi)(ii) = Phi_Max;
     }
     
     phi->GetTrueDofs(X.GetBlock(1));
-
-    /*
-    phi->SetFromTrueDofs(X.GetBlock(1));
-    double phi_min = phi->Min(), phi_Min = 0.;
-    MPI_Allreduce(&phi_Min, &phi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-    for (int ii = 0; ii < phi->Size(); ii++)
-        (*phi)(ii) = abs((*phi)(ii) - phi_Min);
-    phi->ImposeBounds(0, Weigths, phi_in-phi_Min, phi_out-phi_Min);
-    *phi += phi_Min;
-    for (int ii = 0; ii < phi->Size(); ii++){
-        if ((*phi)(ii) < phi_in)
-            (*phi)(ii) = phi_in;
-        if ((*phi)(ii) > phi_out)
-            (*phi)(ii) = phi_in;
-    }
-    phi->GetTrueDofs(X.GetBlock(1));*/
 
     //Calculate velocity field
     flow_oper->SetParameters(X);

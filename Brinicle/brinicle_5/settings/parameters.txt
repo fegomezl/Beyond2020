@@ -46,9 +46,9 @@ Brinicle conditions
 22.5    #Inflow_salinity
 0       #Nucleation_length
 5       #Nucleation_height
--10     #Nucleation_temperature
-3.5     #Nucleation_salinity
+-2      #Nucleation_temperature
+0       #Nucleation_salinity
 
 Restart conditions
 0         #Restart?
-0.0501486       #Initial_time
+0          #Initial_time

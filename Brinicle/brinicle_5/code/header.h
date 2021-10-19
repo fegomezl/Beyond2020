@@ -231,10 +231,12 @@ class Artic_sea{
 
         BlockVector X;              //theta and phi
         BlockVector Z;              //w and psi
-        Vector Weigths;
         HypreParVector *rV;
         HypreParVector *V;
 
+        double Phi_Min;
+        double Phi_Max;
+        Vector Weigths;
         const IntegrationRule *irs[Geometry::NumGeom];
 
         //Operators

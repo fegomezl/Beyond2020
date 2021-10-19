@@ -79,6 +79,8 @@ void Artic_sea::assemble_system(){
     ParGridFunction norm(fespace);
     norm.ProjectCoefficient(one);
     norm.ComputeElementL1Errors(zero,  Weigths, irs);
+    Phi_Min = phi_in < phi_n ? phi_in : phi_n;
+    Phi_Max = phi_out > phi_n ? phi_out : phi_n;
  
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++){

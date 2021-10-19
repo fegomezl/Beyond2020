@@ -1,9 +1,0 @@
-Size: 15426
-Vectorial size: 22816
-Mesh Size: 0.197257
-Serial refinements: 1
-Parallel refinements: 1
-Total refinements: 2
-Total iterations: 528
-Total printing: 52
-Total execution time: 311.279 s
