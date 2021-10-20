@@ -1,0 +1,17 @@
+Mesh Parameters
+settings/square_comparison.geo #Mesh_script
+0 #Rmin
+10 #Rmax
+0 #Zmin
+10 #Zmax
+100 #Rcells
+100 #Zcells
+
+FE parameters
+4 #Refinements
+1 #Order
+
+Physical parameters
+0       #Fusion_temperature
+9       #n_DeltaT
+9      #n_epsilon_eta
