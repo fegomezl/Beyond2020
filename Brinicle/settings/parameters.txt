@@ -3,19 +3,20 @@ settings/square_6.geo #Mesh_script
 0       #Rmin
 10      #Rmax
 0       #Zmin
-20      #Zmax
-1.5     #Inflow_window_size
+40      #Zmax
+2       #Inflow_window_size
 5       #Outflow_window_size
-100     #Rcells
-200     #Zcells
+10      #Rcells
+10      #Zcells
 
 Simulation parameters
-0.0001  #Dt
-0.03     #Final_time
-10      #Visualization_steps
+0.01   #Dt
+5.0     #Final_time
+20      #Visualization_steps
+0       #Rescale_stream?
 
 FE parameters
-2          #Refinements
+3          #Refinements
 1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
@@ -28,24 +29,25 @@ Physical parameters
 9       #nDeltaT
 9       #nEpsilonT
 9       #nEpsilonEta
-3.88    #Liquid_volumetric_heat_capacity
-1.92    #Solid_volumetric_heat_capacity
+3.9     #Liquid_volumetric_heat_capacity
+1.9     #Solid_volumetric_heat_capacity
 32.6    #Liquid_thermal_conductivity
-134.8   #Solid_thermal_conductivity
-6       #Liquid_diffusion_constant
+109.5   #Solid_thermal_conductivity
+0.1     #Liquid_diffusion_constant
 0       #Solid_diffusion_constant
-316.7   #Volumetric_latent_heat
+344.9   #Liquid_volumetric_latent_heat
+307.1   #Solid_volumetric_latent_heat
 
 Brinicle conditions
-1000     #Volumetric_inflow
+175     #Velocity_inflow
 -2      #Initial_temperature
 -20     #Inflow_temperature
 3.5     #Initial_salinity
-22.5    #Inflow_salinity
-5       #Nucleation_length
-1       #Nucleation_height
--20.    #Nucleation_temperature
-0       #Nucleation_salinity
+20.0    #Inflow_salinity
+1       #Nucleation_length
+4.0       #Nucleation_height
+-10     #Nucleation_temperature
+22.5     #Nucleation_salinity
 
 Restart conditions
 0          #Restart?

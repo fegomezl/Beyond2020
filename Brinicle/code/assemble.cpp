@@ -10,17 +10,16 @@ void r_inv_hat_f(const Vector &x, Vector &f);
 //Fusion temperature dependent of salinity
 double T_fun(const double &salinity);
 
-//Variation on solid heat capacity
+//Variation of parameters
 double delta_c_s_fun(const double &temperature, const double &salinity);
+double delta_k_s_fun(const double &temperature, const double &salinity);
+double delta_l_s_fun(const double &temperature, const double &salinity);
+
+//Parameters of buoyancy
+double delta_rho_t_fun(const double &temperature, const double &salinity);
+double delta_rho_p_fun(const double &temperature, const double &salinity);
 
 void Artic_sea::assemble_system(){
-    //Initialize the system
-    t = config.t_init;
-    dt = config.dt_init;
-    last = false;
-    vis_steps = config.vis_steps_max;
-    vis_impressions = 0;
-
     //Define solution x
     if (!config.restart){
         theta = new ParGridFunction(fespace);
@@ -52,21 +51,27 @@ void Artic_sea::assemble_system(){
     rV = new HypreParVector(fespace_v);
     V = new HypreParVector(fespace_v);
 
+    //Integration setup
+    int order_quad = max(2, 2*config.order+1);
+    for (int ii=0; ii < Geometry::NumGeom; ++ii)
+        irs[ii] = &(IntRules.Get(ii, order_quad));
+
     //Initialize operators
     cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
     flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
 
     //Solve initial velocity field
+    flow_oper->SetParameters(X);
     flow_oper->Solve(Z, *V, *rV);
 
-    //Read initial global state
+    //Set initial state
     theta->Distribute(&(X.GetBlock(0)));
     phi->Distribute(&(X.GetBlock(1)));
     w->Distribute(&(Z.GetBlock(0)));
     psi->Distribute(&(Z.GetBlock(1)));
     v->Distribute(V);
     rv->Distribute(rV);
-
+    
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++){
         double T_f = config.T_f + T_fun((*phi)(ii));
@@ -74,12 +79,14 @@ void Artic_sea::assemble_system(){
     }
 
     //Normalize stream
-    double psi_local_max = psi->Max(), psi_max;
-    double psi_local_min = psi->Min(), psi_min;
-    MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-    MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-    for (int ii = 0; ii < psi->Size(); ii++)
-            (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+    if (config.rescale){
+        double psi_local_max = psi->Max(), psi_max;
+        double psi_local_min = psi->Min(), psi_min;
+        MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        for (int ii = 0; ii < psi->Size(); ii++)
+                (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+    }
 
     //Set the ODE solver type
     arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT);
@@ -106,7 +113,7 @@ void Artic_sea::assemble_system(){
     paraview_out->Save();
 
     //Start program check
-    if (config.master)
+    if (config.master){
         cout << left << setw(12)
              << "--------------------------------------------------\n"
              << left << setw(12)
@@ -116,6 +123,15 @@ void Artic_sea::assemble_system(){
              << "Progress"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
+
+        ofstream out;
+        out.open("results/progress.txt", std::ios::trunc);
+        out << left << setw(12) 
+            << "Step" << setw(12)
+            << "Dt" << setw(12)
+            << "Time" << setw(12)
+            << "Progress" << "\n";
+    }
 }
 
 double r_f(const Vector &x){
@@ -127,8 +143,8 @@ double inv_r(const Vector &x){
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.; f(0,1) = -1.;
-    f(1,0) = 1.; f(1,1) = 0.;
+    f(0,0) = 0.;  f(0,1) = 1.;
+    f(1,0) = -1.; f(1,1) = 0.;
 }
 
 void zero_f(const Vector &x, Vector &f){
@@ -148,12 +164,55 @@ double T_fun(const double &salinity){
 }
 
 double delta_c_s_fun(const double &temperature, const double &salinity){
-    double a = -0.00313;
-    double b = -0.00704;
-    double c = -0.0000783;
-    double d = 16.9;
-    return a*salinity +
-           b*temperature +
-           c*salinity*temperature +
+    double a = 0.00692;
+    double b = -0.00307;
+    double c = 0.0000768;
+    double d = 16.6;
+    return a*temperature +
+           b*salinity +
+           c*temperature*salinity +
            d*salinity*pow(temperature, -2);
 }
+
+double delta_k_s_fun(const double &temperature, const double &salinity){
+    double a = 36.7;
+    return a*salinity/temperature;
+}
+
+double delta_l_s_fun(const double &temperature, const double &salinity){
+    double a = -1.94;
+    double b = 16.6;
+    double c = -0.0035;
+    return a*temperature +
+           b*salinity +
+           c*salinity/temperature;
+}
+
+double delta_rho_t_fun(const double &temperature, const double &salinity){
+    //if (temperature < T_fun(salinity))
+    //    return 0.;
+
+    double a0 = -13.0,  b0 = 1.1,
+           a1 = 0.5,    b1 = -0.04,
+           a2 = -0.008,  
+           a3 = 0.0001;
+    return (a0 + a1*temperature + a2*pow(temperature, 2) + a3*pow(temperature, 3))*salinity +
+           (b0 + b1*temperature)*pow(abs(salinity), 1.5);
+}
+
+double delta_rho_p_fun(const double &temperature, const double &salinity){
+    //if (temperature < T_fun(salinity))
+    //    return 0.;
+
+    double a0 = 2617.9, b0 = -87.0, c0 = 31.0,
+           a1 = -13.0,  b1 = 1.6,
+           a2 = 0.2,    b2 = -0.03,
+           a3 = -0.003,
+           a4 = 0.00002;
+    return (a0 + a1*temperature + a2*pow(temperature, 2) + a3*pow(temperature, 3) + a4*pow(temperature, 4)) +
+           (b0 + b1*temperature + b2*pow(temperature, 2))*pow(abs(salinity), 0.5) +
+           (c0)*salinity;
+}
+
+
+

@@ -12,6 +12,32 @@ void Artic_sea::time_step(){
     flow_oper->SetParameters(X);
     flow_oper->Solve(Z, *V, *rV);
 
+    //Normalize the salinity
+    double m_in, m_out;
+    ConstantCoefficient low_cap(0.);
+    ParGridFunction phi_aux(*phi);
+    phi_aux.SetFromTrueDofs(X.GetBlock(1));
+    phi_aux -= phi_in;
+
+    m_in = phi_aux.ComputeL1Error(low_cap, irs);
+    for (int ii = 0; ii < phi_aux.Size(); ii++){
+      if (phi_aux(ii) < 0)
+	phi_aux(ii) = 0;
+    }
+    m_out = phi_aux.ComputeL1Error(low_cap, irs);
+    phi_aux *= 2-m_in/m_out; 
+    
+    m_in = phi_aux.ComputeL1Error(low_cap, irs);
+    for (int ii = 0; ii < phi_aux.Size(); ii++){
+      if (phi_aux(ii) > phi_out-phi_in)
+	phi_aux(ii) = phi_out-phi_in;
+}
+m_out = phi_aux.ComputeL1Error(low_cap, irs);
+phi_aux *= m_in/m_out; 
+
+phi_aux += phi_in;
+phi_aux.GetTrueDofs(X.GetBlock(1));
+
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
 
@@ -27,7 +53,7 @@ void Artic_sea::time_step(){
         psi->Distribute(&(Z.GetBlock(1)));
         v->Distribute(V);
         rv->Distribute(rV);
-        
+
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++){
             double T_f = config.T_f + T_fun((*phi)(ii));
@@ -35,12 +61,14 @@ void Artic_sea::time_step(){
         }
 
         //Normalize stream
-        double psi_local_max = psi->Max(), psi_max;
-        double psi_local_min = psi->Min(), psi_min;
-        MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-        for (int ii = 0; ii < psi->Size(); ii++)
-                (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+        if (config.rescale){
+            double psi_local_max = psi->Max(), psi_max;
+            double psi_local_min = psi->Min(), psi_min;
+            MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+            MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+            for (int ii = 0; ii < psi->Size(); ii++)
+                    (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+        }
 
         //Graph
         paraview_out->SetCycle(vis_impressions);
@@ -61,44 +89,45 @@ void Artic_sea::time_step(){
         cout.flush();
 
         std::ofstream out;
-        out.open("results/progress.txt");
-        out << iteration << "\t" << dt << "\t" << t << "\t" << progress << endl;
+        out.open("results/progress.txt", std::ios::app);
+        out << left << setw(12)
+            << iteration << setw(12)
+            << dt << setw(12)
+            << t  << setw(12)
+            << progress << "\n";
         out.close();
     }
 }
 
 void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     //Recover actual information
-    aux_theta.SetFromTrueDofs(X.GetBlock(0));
-    aux_phi.SetFromTrueDofs(X.GetBlock(1));
+    theta.SetFromTrueDofs(X.GetBlock(0));
+    phi.SetFromTrueDofs(X.GetBlock(1));
     rv.SetFromTrueDofs(rV); 
 
     //Associate the values of each auxiliar function
-    for (int ii = 0; ii < aux_theta.Size(); ii++){
-        double T = aux_theta(ii) - config.T_f - T_fun(aux_phi(ii));
+    for (int ii = 0; ii < phase.Size(); ii++){
+        double DT = theta(ii) - config.T_f - T_fun(phi(ii));
+        double P = 0.5*(1 + tanh(5*config.invDeltaT*DT));
 
-        if (T > 0){
-            aux_C(ii) = config.c_l;
-            aux_K(ii) = config.k_l;
-            aux_D(ii) = config.D_l;
-        } else {
-            aux_C(ii) = config.c_s; + delta_c_s_fun(aux_theta(ii), aux_phi(ii));
-            aux_K(ii) = config.k_s;
-            aux_D(ii) = config.D_s;
-        }
+        aux_C(ii) = config.c_s + (config.c_l-config.c_s)*P;
+        aux_K(ii) = config.k_s + (config.k_l-config.k_s)*P;
+        aux_D(ii) = config.d_s + (config.d_l-config.d_s)*P;
+        aux_L(ii) = config.L_s + (config.L_l-config.L_s)*P;
 
-        aux_L(ii) = 0.5*config.L*(1 + tanh(5*config.invDeltaT*T));
-        aux_theta(ii) = T;
+        theta(ii) = DT;
+        phase(ii) = P;
     }
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_C(&aux_C);
     GridFunctionCoefficient coeff_K(&aux_K);
     GridFunctionCoefficient coeff_D(&aux_D);
+    GridFunctionCoefficient coeff_L(&aux_L);
 
     //Construct latent heat term
-    GradientGridFunctionCoefficient dT(&aux_theta);
-    GradientGridFunctionCoefficient dH(&aux_L);
+    GradientGridFunctionCoefficient dT(&theta);
+    GradientGridFunctionCoefficient dH(&phase);
     
     dHdT.SetACoef(dH);  dT_2.SetACoef(dT);
     dHdT.SetBCoef(dT);  dT_2.SetBCoef(dT);
@@ -106,7 +135,8 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     SumCoefficient dT_2e(config.EpsilonT, dT_2);
     
     PowerCoefficient inv_dT_2(dT_2e, -1.);
-    ProductCoefficient LDeltaT(dHdT, inv_dT_2);
+    ProductCoefficient DeltaT(dHdT, inv_dT_2);
+    ProductCoefficient LDeltaT(coeff_L, DeltaT);
 
     SumCoefficient coeff_CL(coeff_C, LDeltaT);
 
@@ -164,7 +194,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     if(K_0_phi) delete K_0_phi;
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV)); //
+    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
     k_phi->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_phi), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
@@ -175,29 +205,20 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     //Update information
     theta.SetFromTrueDofs(X.GetBlock(0));
     phi.SetFromTrueDofs(X.GetBlock(1));
-    eta.SetFromTrueDofs(X.GetBlock(0));
 
     theta.GetDerivative(1, 0, theta_dr);
     phi.GetDerivative(1, 0, phi_dr);
 
     //Calculate eta and buoyancy coefficients
-    for (int ii = 0; ii < eta.Size(); ii++){
+    for (int ii = 0; ii < phase.Size(); ii++){
         double T = theta(ii);
         double S = phi(ii);
-        double T_f = config.T_f + T_fun(S);
+        double P = 0.5*(1 + tanh(5*config.invDeltaT*(theta(ii) - config.T_f - T_fun(phi(ii))))); 
 
-        eta(ii) = 0.5*(1 + tanh(5*config.invDeltaT*(T - T_f)));
-        eta(ii) = config.EpsilonEta + pow(1-eta(ii), 2)/(pow(eta(ii), 3) + config.EpsilonEta);
+        eta(ii) = config.EpsilonEta + pow(1-P, 2)/(pow(P, 3) + config.EpsilonEta);
 
-        double a1 = -25.6446,
-               a2 = -10.894,
-               a3 = 6.6907;
-        theta(ii) = a1 + a2*T + a3*S;               // k_t = g*b_t/mu
-
-        double b1 = -1944.52,
-               b2 = 7.3226,
-               b3 = -14.3925;
-        phi(ii) = b1 + b2*T + b3*S;               // k_s = g*b_s/mu
+        theta(ii) = delta_rho_t_fun(T, S);
+        phi(ii) = delta_rho_p_fun(T, S);
     }
 
     //Properties coefficients
@@ -219,7 +240,13 @@ void Flow_Operator::SetParameters(const BlockVector &X){
 
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
+    w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
+ 
     psi.ProjectCoefficient(psi_coeff);
+    psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
+    psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
+    psi.ProjectBdrCoefficient(closed_down, bdr_psi_closed_down);
+    psi.ProjectBdrCoefficient(closed_up, bdr_psi_closed_up);
 
     //Define the non-constant RHS
     if (f) delete f;
