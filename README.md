@@ -23,10 +23,14 @@ In each of the simulations, the domain is a cylinder, sometimes hollow, with an 
   - onephase:
     Benchmark time dependent heat equation with convergence analysis, in which only one phase is present.
   - twophase:
-    Stefan problem simulation.
+    Simulation with initial conditions set on different phases.
+  - twophase_exact:
+    Stefan problem simulation with comparison according to the exact Stefan solution.
 - Flow
   - vorticity:
-    Quasi-static flow problem with a stream function-vorticity formulation.
+    Quasi-static flow problem with a stream function-vorticity formulation and a frozen region.
+  - vorticity_barrier:
+    Quasi-static flow problem with a stream function-vorticity formulation and an obstacle.
   - vorticity_exact:
     Benchmark quasi-static flow problem with a stream function-vorticity formulation, including a convergence analysis.
 - Coupled

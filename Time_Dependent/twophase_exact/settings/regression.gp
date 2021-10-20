@@ -1,5 +1,5 @@
 set g
-set title ''
+set title 'Interface position vs time'
 set xlabel 'Time (min)'
 set ylabel 'Interface (mm)'
 
