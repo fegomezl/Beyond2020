@@ -16,25 +16,41 @@ void Artic_sea::solve_system(){
     //Create block preconditioner
     HypreParVector M_d(MPI_COMM_WORLD, M->GetGlobalNumRows(), M->GetRowStarts());
     M->GetDiag(M_d);
-    HypreBoomerAMG M_solver(*M);
+    /*HypreBoomerAMG M_solver(*M);
     M_solver.iterative_mode = false;
-    M_solver.SetPrintLevel(0);
+    M_solver.SetPrintLevel(0);*/
 
     HypreParMatrix S(*C);    
     S.InvScaleRows(M_d);
     S = *ParMult(Ct, &S);
-    S = *Add(1., *D, -1., S);
-    HypreBoomerAMG S_solver(S);
+    S = *Add(-1., *D, 1., S);
+    /*HypreBoomerAMG S_solver(S);
     S_solver.iterative_mode = false;
-    S_solver.SetPrintLevel(0);
+    S_solver.SetPrintLevel(0);*/
 
-    //BlockDiagonalPreconditioner P(block_true_offsets);
+    /*//BlockDiagonalPreconditioner P(block_true_offsets);
     BlockLowerTriangularPreconditioner P(block_true_offsets);
     P.SetBlock(1,0,Ct);
     P.SetDiagonalBlock(0, &M_solver);
-    P.SetDiagonalBlock(1, &S_solver);
+    P.SetDiagonalBlock(1, &S_solver);*/
 
-    //Solve system
+    BlockOperator P(block_true_offsets);
+    P.SetBlock(0,0,M);
+    P.SetBlock(1,0,Ct);
+    P.SetBlock(1,1,&S);
+ 
+    // Solver using PETSc
+    PetscLinearSolver solver(MPI_COMM_WORLD);
+    PetscFieldSplitSolver prec(MPI_COMM_WORLD,H,"prec_");
+    solver.SetOperator(H, P);
+    solver.SetPreconditioner(prec);
+    solver.SetAbsTol(0.0);
+    solver.SetTol(1e-12);
+    solver.SetMaxIter(300);
+    solver.SetPrintLevel(0);
+    solver.Mult(B, X);
+
+    /*//Solve system
     GMRESSolver solver(MPI_COMM_WORLD);
     solver.SetAbsTol(0);
     solver.SetRelTol(1E-8);
@@ -42,32 +58,7 @@ void Artic_sea::solve_system(){
     solver.SetOperator(H);
     solver.SetPreconditioner(P);
     solver.SetPrintLevel(1);
-    solver.Mult(B, X);
-
-/*
-    //Create the complete bilinear operator:
-    //
-    //   H = [ M     C ] 
-    //       [ C^t   D ] 
-    Array2D<HypreParMatrix*> HBlocks(2,2);
-    HBlocks = NULL;
-    HBlocks(0, 0) = M;
-    HBlocks(0, 1) = C;
-    HBlocks(1, 0) = Ct;
-    HBlocks(1, 1) = D;
-
-    HypreParMatrix *H = HypreParMatrixFromBlocks(HBlocks);
-    SuperLURowLocMatrix A(*H);
-
-    SuperLUSolver superlu(MPI_COMM_WORLD);
-    superlu.SetOperator(A);
-    superlu.SetPrintStatistics(true);
-    superlu.SetSymmetricPattern(true);
-    superlu.SetColumnPermutation(superlu::PARMETIS);
-    superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
-
-    //Solve the linear system Ax=B
-    superlu.Mult(B, X);*/
+    solver.Mult(B, X);*/
 
     //Recover the solution on each proccesor
     w->Distribute(&(X.GetBlock(0)));    

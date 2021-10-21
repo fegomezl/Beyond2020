@@ -42,7 +42,6 @@ void Artic_sea::assemble_system(){
     FunctionCoefficient psi_coeff(boundary_psi);
 
     //Rotational coupled coefficients
-    ScalarVectorProductCoefficient eta_r_inv_hat(eta, r_inv_hat);
     ScalarVectorProductCoefficient neg_eta_r_inv_hat(neg_eta, r_inv_hat);
     ProductCoefficient r_f(r, f_coeff);
 
@@ -88,8 +87,8 @@ void Artic_sea::assemble_system(){
     M = m.ParallelAssemble();
 
     ParBilinearForm d(fespace);
-    d.AddDomainIntegrator(new DiffusionIntegrator(eta));
-    d.AddDomainIntegrator(new ConvectionIntegrator(eta_r_inv_hat));
+    d.AddDomainIntegrator(new DiffusionIntegrator(neg_eta));
+    d.AddDomainIntegrator(new ConvectionIntegrator(neg_eta_r_inv_hat));
     d.Assemble();
     d.EliminateEssentialBC(ess_bdr_psi, *psi, f, Operator::DIAG_KEEP);
     d.Finalize();
