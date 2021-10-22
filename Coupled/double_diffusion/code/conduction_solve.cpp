@@ -22,8 +22,6 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     K_0_phi->Mult(-1., Phi, 1., Z_phi);
     EliminateBC(*M_phi, *M_e_phi, ess_tdof_phi, dPhi_dt, Z_phi);
 
-    Z_theta += F_theta;   Z_phi += F_phi;
-
     //Solve the system
     M_theta_solver.Mult(Z_theta, dTheta_dt); M_phi_solver.Mult(Z_phi, dPhi_dt);
 
@@ -38,22 +36,19 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
     //Setup the ODE Jacobian T = M + gamma*K
 
     //Create LHS
-    if (T_theta) delete T_theta;
-    if (T_e_theta) delete T_e_theta;
+    delete T_theta;
+    delete T_e_theta;
     T_theta = Add(1., *M_0_theta, scaled_dt, *K_0_theta);
     T_e_theta = T_theta->EliminateRowsCols(ess_tdof_theta);
     T_theta_prec.SetOperator(*T_theta);
     T_theta_solver.SetOperator(*T_theta);
 
-    if (T_phi) delete T_phi;
-    if (T_e_phi) delete T_e_phi;
+    delete T_phi;
+    delete T_e_phi;
     T_phi = Add(1., *M_0_phi, scaled_dt, *K_0_phi);
     T_e_phi = T_phi->EliminateRowsCols(ess_tdof_phi);
     T_phi_prec.SetOperator(*T_phi);
     T_phi_solver.SetOperator(*T_phi);
-
-    //Create RHS
-    dt_F_theta.Set(scaled_dt, F_theta); dt_F_phi.Set(scaled_dt, F_phi);
 
     *j_status = 1;
     return 0;
@@ -80,8 +75,6 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double
 
     M_0_phi->Mult(Phi, Z_phi);
     EliminateBC(*T_phi, *T_e_phi, ess_tdof_phi, Phi_new, Z_phi);
-
-    Z_theta += dt_F_theta;   Z_phi += dt_F_phi;
 
     //Solve the system
     T_theta_solver.Mult(Z_theta, Theta_new); T_phi_solver.Mult(Z_phi, Phi_new);

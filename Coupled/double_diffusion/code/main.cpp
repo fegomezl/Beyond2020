@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.vis_steps_max, "-v_s", "--visualization_steps",
                    "Visualize every n-th timestep.");
 
-    args.AddOption(&config.refinements, "-r", "--refinements",
+    args.AddOption(&config.refinements, "-ref", "--refinements",
                    "Number of total uniform refinements.");
     args.AddOption(&config.order, "-o", "--order",
                    "Finite element order (polynomial degree) or -1 for isoparametric space.");
@@ -53,8 +53,6 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.reltol_sundials, "-reltol_s", "--tolrelativeSUNDIALS",
                    "Relative tolerance of SUNDIALS.");
 
-    args.AddOption(&config.T_f, "-T_f", "--temperature_fusion",
-                   "Fusion temperature of the material.");
     args.AddOption(&nDeltaT, "-DT", "--DeltaT",
                    "Temperature interface interval (10^(-n)).");
     args.AddOption(&nEpsilonT, "-ET", "--EpsilonT",
@@ -67,12 +65,14 @@ int main(int argc, char *argv[]){
                    "Liquid thermal conductivity.");
     args.AddOption(&config.k_s, "-k_s", "--k_s",
                    "Solid thermal conductivity.");
-    args.AddOption(&config.D_l, "-D_l", "--D_l",
+    args.AddOption(&config.d_l, "-d_l", "--d_l",
                    "Liquid diffusion constant.");
-    args.AddOption(&config.D_s, "-D_s", "--D_s",
+    args.AddOption(&config.d_s, "-d_s", "--d_s",
                    "Solid diffusion constant.");
-    args.AddOption(&config.L, "-L", "--L",
-                   "Volumetric latent heat.");
+    args.AddOption(&config.L_l, "-L_l", "--L_l",
+                   "Liquid volumetric latent heat.");
+    args.AddOption(&config.L_s, "-L_s", "--L_s",
+                   "Solid volumetric latent heat.");
 
     //Check if parameters were read correctly
     args.Parse();

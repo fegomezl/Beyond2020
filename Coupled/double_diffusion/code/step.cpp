@@ -22,8 +22,9 @@ void Artic_sea::time_step(){
         phi->Distribute(&(X.GetBlock(1)));
 
         //Calculate phases
+        double T_f;
         for (int ii = 0; ii < phase->Size(); ii++){
-            double T_f = config.T_f + T_fun((*phi)(ii));
+            T_f = T_fun((*phi)(ii));
             (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
         }
 
@@ -49,34 +50,31 @@ void Artic_sea::time_step(){
 
 void Conduction_Operator::SetParameters(const BlockVector &X){
     //Recover actual information
-    aux_theta.Distribute(&(X.GetBlock(0)));
-    aux_phi.Distribute(&(X.GetBlock(1)));
+    theta.Distribute(&(X.GetBlock(0)));
+    phi.Distribute(&(X.GetBlock(1)));
 
     //Associate the values of each auxiliar function
-    for (int ii = 0; ii < aux_theta.Size(); ii++){
-        aux_theta(ii) -= config.T_f + T_fun(aux_phi(ii));
-
-        if (aux_theta(ii) > 0){
-            aux_C(ii) = config.c_l;
-            aux_K(ii) = config.k_l;
-            aux_D(ii) = config.D_l;
-        } else {
-            aux_C(ii) = config.c_s + delta_c_s_fun(aux_theta(ii), aux_phi(ii));
-            aux_K(ii) = config.k_s;
-            aux_D(ii) = config.D_s;
-        }
-
-        aux_L(ii) = 0.5*config.L*(1 + tanh(5*config.invDeltaT*aux_theta(ii)));
+    double DT = 0.;
+    for (int ii = 0; ii < phase.Size(); ii++){
+        DT = theta(ii) - T_fun(phi(ii)); 
+        theta(ii) = DT;
+        phase(ii) = 0.5*(1 + tanh(5*config.invDeltaT*DT));
     }
+
+    aux_C.Set(config.c_l-config.c_s, phase); aux_C += config.c_s;
+    aux_K.Set(config.k_l-config.k_s, phase); aux_K += config.k_s;
+    aux_D.Set(config.d_l-config.d_s, phase); aux_D += config.d_s;
+    aux_L.Set(config.L_l-config.L_s, phase); aux_L += config.L_s;
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_C(&aux_C);
     GridFunctionCoefficient coeff_K(&aux_K);
     GridFunctionCoefficient coeff_D(&aux_D);
+    GridFunctionCoefficient coeff_L(&aux_L);
 
     //Construct latent heat term
-    GradientGridFunctionCoefficient dT(&aux_theta);
-    GradientGridFunctionCoefficient dH(&aux_L);
+    GradientGridFunctionCoefficient dT(&theta);
+    GradientGridFunctionCoefficient dH(&phase);
     
     dHdT.SetACoef(dH);  dT_2.SetACoef(dT);
     dHdT.SetBCoef(dT);  dT_2.SetBCoef(dT);
@@ -84,7 +82,8 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     SumCoefficient dT_2e(config.EpsilonT, dT_2);
     
     PowerCoefficient inv_dT_2(dT_2e, -1.);
-    ProductCoefficient LDeltaT(dHdT, inv_dT_2);
+    ProductCoefficient DeltaT(dHdT, inv_dT_2);
+    ProductCoefficient LDeltaT(coeff_L, DeltaT);
 
     SumCoefficient coeff_CL(coeff_C, LDeltaT);
 
@@ -94,10 +93,10 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     coeff_rD.SetBCoef(coeff_D); 
 
     //Create corresponding bilinear forms
-    if (m_theta) delete m_theta;
-    if (M_theta) delete M_theta;
-    if (M_e_theta) delete M_e_theta;
-    if (M_0_theta) delete M_0_theta;
+    delete m_theta;
+    delete M_theta;
+    delete M_e_theta;
+    delete M_0_theta;
     m_theta = new ParBilinearForm(&fespace);
     m_theta->AddDomainIntegrator(new MassIntegrator(coeff_rC));
     m_theta->Assemble();
@@ -109,10 +108,10 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     M_theta_prec.SetOperator(*M_theta);
     M_theta_solver.SetOperator(*M_theta);
 
-    if (m_phi) delete m_phi;
-    if (M_phi) delete M_phi;
-    if (M_e_phi) delete M_e_phi;
-    if (M_0_phi) delete M_0_phi;
+    delete m_phi;
+    delete M_phi;
+    delete M_e_phi;
+    delete M_0_phi;
     m_phi = new ParBilinearForm(&fespace);
     m_phi->AddDomainIntegrator(new MassIntegrator(coeff_r));
     m_phi->Assemble();
@@ -124,20 +123,18 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     M_phi_prec.SetOperator(*M_phi);
     M_phi_solver.SetOperator(*M_phi);
 
-    if(k_theta) delete k_theta;
-    if(K_0_theta) delete K_0_theta;
+    delete k_theta;
+    delete K_0_theta;
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
-    k_theta->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_theta), robin_bdr_theta);
     k_theta->Assemble();
     k_theta->Finalize();
     K_0_theta = k_theta->ParallelAssemble();
 
-    if(k_phi) delete k_phi;
-    if(K_0_phi) delete K_0_phi;
+    delete k_phi;
+    delete K_0_phi;
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_phi), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
     K_0_phi = k_phi->ParallelAssemble();

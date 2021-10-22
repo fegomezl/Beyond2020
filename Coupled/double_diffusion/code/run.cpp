@@ -7,6 +7,8 @@ Config::Config(bool master, int nproc):
 
 Artic_sea::Artic_sea(Config config):
     config(config),
+    dt(config.dt_init), last(false),
+    vis_steps(config.vis_steps_max), vis_impressions(0),
     pmesh(NULL), fec(NULL), fespace(NULL),
     block_true_offsets(3),
     theta(NULL), phi(NULL), phase(NULL),
