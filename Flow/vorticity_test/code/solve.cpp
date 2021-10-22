@@ -13,36 +13,10 @@ void Artic_sea::solve_system(){
     H.SetBlock(1,0,Ct);
     H.SetBlock(1,1,D);
 
-    //Create block preconditioner
-    HypreParVector M_d(MPI_COMM_WORLD, M->GetGlobalNumRows(), M->GetRowStarts());
-    M->GetDiag(M_d);
-    /*HypreBoomerAMG M_solver(*M);
-    M_solver.iterative_mode = false;
-    M_solver.SetPrintLevel(0);*/
-
-    HypreParMatrix S(*C);    
-    S.InvScaleRows(M_d);
-    S = *ParMult(Ct, &S);
-    S = *Add(-1., *D, 1., S);
-    /*HypreBoomerAMG S_solver(S);
-    S_solver.iterative_mode = false;
-    S_solver.SetPrintLevel(0);*/
-
-    /*//BlockDiagonalPreconditioner P(block_true_offsets);
-    BlockLowerTriangularPreconditioner P(block_true_offsets);
-    P.SetBlock(1,0,Ct);
-    P.SetDiagonalBlock(0, &M_solver);
-    P.SetDiagonalBlock(1, &S_solver);*/
-
-    BlockOperator P(block_true_offsets);
-    P.SetBlock(0,0,M);
-    P.SetBlock(1,0,Ct);
-    P.SetBlock(1,1,&S);
- 
     // Solver using PETSc
     PetscLinearSolver solver(MPI_COMM_WORLD);
-    PetscFieldSplitSolver prec(MPI_COMM_WORLD,H,"prec_");
-    solver.SetOperator(H, P);
+    PetscFieldSplitSolver prec(MPI_COMM_WORLD, H,"prec_");
+    solver.SetOperator(H);
     solver.SetPreconditioner(prec);
     solver.SetAbsTol(0.0);
     solver.SetTol(1e-12);
@@ -50,7 +24,28 @@ void Artic_sea::solve_system(){
     solver.SetPrintLevel(0);
     solver.Mult(B, X);
 
-    /*//Solve system
+    /*//Create block preconditioner
+    HypreParVector M_d(MPI_COMM_WORLD, M->GetGlobalNumRows(), M->GetRowStarts());
+    M->GetDiag(M_d);
+    HypreBoomerAMG M_solver(*M);
+    M_solver.iterative_mode = false;
+    M_solver.SetPrintLevel(0);
+
+    HypreParMatrix S(*C);    
+    S.InvScaleRows(M_d);
+    S = *ParMult(Ct, &S);
+    S = *Add(-1., *D, 1., S);
+    HypreBoomerAMG S_solver(S);
+    S_solver.iterative_mode = false;
+    S_solver.SetPrintLevel(0);
+
+    //BlockDiagonalPreconditioner P(block_true_offsets);
+    BlockLowerTriangularPreconditioner P(block_true_offsets);
+    P.SetBlock(1,0,Ct);
+    P.SetDiagonalBlock(0, &M_solver);
+    P.SetDiagonalBlock(1, &S_solver);
+
+    //Solve system
     GMRESSolver solver(MPI_COMM_WORLD);
     solver.SetAbsTol(0);
     solver.SetRelTol(1E-8);
