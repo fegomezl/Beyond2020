@@ -77,7 +77,7 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double
     M_0_theta->Mult(Theta, Z_theta);   
     //EliminateBC(*T_theta, *T_e_theta, ess_tdof_theta, Theta_new, Z_theta);
     HypreParVector dZ_theta(&fespace);
-    T_e_phi->Mult(Theta_new, dZ_theta);
+    T_e_theta->Mult(Theta_new, dZ_theta);
     Z_theta -= dZ_theta;
     HypreParVector T_theta_d(MPI_COMM_WORLD, T_theta->GetGlobalNumRows(), T_theta->GetRowStarts());
     T_theta->GetDiag(T_theta_d);
@@ -87,7 +87,16 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double
     } 
 
     M_0_phi->Mult(Phi, Z_phi);
-    EliminateBC(*T_phi, *T_e_phi, ess_tdof_phi, Phi_new, Z_phi);
+    //EliminateBC(*T_phi, *T_e_phi, ess_tdof_phi, Phi_new, Z_phi);
+    HypreParVector dZ_phi(&fespace);
+    T_e_phi->Mult(Phi_new, dZ_phi);
+    Z_phi -= dZ_phi;
+    HypreParVector T_phi_d(MPI_COMM_WORLD, T_phi->GetGlobalNumRows(), T_phi->GetRowStarts());
+    T_phi->GetDiag(T_phi_d);
+    for (int ii = 0; ii < ess_tdof_phi.Size(); ii++){
+        double jj = ess_tdof_phi[ii];
+        Z_phi(jj) = Phi_new(jj)*T_phi_d(jj);
+    } 
 
     //Solve the system
     T_theta_solver.Mult(Z_theta, Theta_new); T_phi_solver.Mult(Z_phi, Phi_new);
