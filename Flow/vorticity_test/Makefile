@@ -23,9 +23,11 @@ RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 
-.PHONY: all mesh graph clean oclean
+.PHONY: all main mesh graph clean oclean
 
-all: main.x results/mesh.msh
+all: results/mesh.msh main
+
+main: main.x
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
   					-r $(REF) -o $(ORDER) \
