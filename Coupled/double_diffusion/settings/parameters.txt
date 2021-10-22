@@ -31,4 +31,4 @@ Physical parameters
 344.9   #Liquid_volumetric_latent_heat
 307.1   #Solid_volumetric_latent_heat
 9       #n_DeltaT
-4       #n_EpsilonT
+9       #n_EpsilonT

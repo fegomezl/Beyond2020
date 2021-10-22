@@ -89,7 +89,7 @@ results/mesh.msh: settings/parameters.txt
 	@echo -e 'Done!\n'
 
 clean:
-	@rm -rf *.x results/*
+	@rm -rf *.x results/graph/*
 
 oclean:
 	@rm -rf .objects/*.o
