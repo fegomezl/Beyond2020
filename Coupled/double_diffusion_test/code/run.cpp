@@ -45,6 +45,11 @@ Conduction_Operator::~Conduction_Operator(){
     delete T_e_theta; 
     delete T_phi; 
     delete T_e_phi; 
+    delete M_0;
+    delete K_0;
+    delete M;
+    delete T;
+    delete T_e;
 }
 
 Artic_sea::~Artic_sea(){

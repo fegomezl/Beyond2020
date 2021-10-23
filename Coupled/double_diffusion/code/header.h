@@ -27,8 +27,7 @@ struct Config{
     double reltol_sundials;
     double abstol_sundials;
 
-    double c_l, c_s;
-    double k_l, k_s;
+    double a_l, a_s;
     double d_l, d_s;
     double L_l, L_s;
     double invDeltaT;
@@ -73,8 +72,7 @@ class Conduction_Operator : public TimeDependentOperator{
 
         //Auxiliar grid functions
         ParGridFunction phi, theta, phase;
-        ParGridFunction aux_C;
-        ParGridFunction aux_K;
+        ParGridFunction aux_A;
         ParGridFunction aux_D;
         ParGridFunction aux_L;
 
@@ -82,9 +80,9 @@ class Conduction_Operator : public TimeDependentOperator{
         FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
 
-        ProductCoefficient coeff_rC;
-        ProductCoefficient coeff_rK; 
+        ProductCoefficient coeff_rA;
         ProductCoefficient coeff_rD; 
+        ProductCoefficient coeff_rL; 
         
         InnerProductCoefficient dHdT;
         InnerProductCoefficient dT_2;

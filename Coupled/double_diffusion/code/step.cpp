@@ -61,14 +61,12 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
         phase(ii) = 0.5*(1 + tanh(5*config.invDeltaT*DT));
     }
 
-    aux_C.Set(config.c_l-config.c_s, phase); aux_C += config.c_s;
-    aux_K.Set(config.k_l-config.k_s, phase); aux_K += config.k_s;
+    aux_A.Set(config.a_l-config.a_s, phase); aux_A += config.a_s;
     aux_D.Set(config.d_l-config.d_s, phase); aux_D += config.d_s;
     aux_L.Set(config.L_l-config.L_s, phase); aux_L += config.L_s;
 
     //Set the associated coefficients
-    GridFunctionCoefficient coeff_C(&aux_C);
-    GridFunctionCoefficient coeff_K(&aux_K);
+    GridFunctionCoefficient coeff_A(&aux_A);
     GridFunctionCoefficient coeff_D(&aux_D);
     GridFunctionCoefficient coeff_L(&aux_L);
 
@@ -85,12 +83,10 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     ProductCoefficient DeltaT(dHdT, inv_dT_2);
     ProductCoefficient LDeltaT(coeff_L, DeltaT);
 
-    SumCoefficient coeff_CL(coeff_C, LDeltaT);
-
     //Construct final coefficients
-    coeff_rC.SetBCoef(coeff_CL);
-    coeff_rK.SetBCoef(coeff_K); 
+    coeff_rA.SetBCoef(coeff_A);
     coeff_rD.SetBCoef(coeff_D); 
+    coeff_rL.SetBCoef(LDeltaT); 
 
     //Create corresponding bilinear forms
     delete m_theta;
@@ -98,7 +94,8 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     delete M_e_theta;
     delete M_0_theta;
     m_theta = new ParBilinearForm(&fespace);
-    m_theta->AddDomainIntegrator(new MassIntegrator(coeff_rC));
+    m_theta->AddDomainIntegrator(new MassIntegrator(coeff_r));
+    m_theta->AddDomainIntegrator(new MassIntegrator(coeff_rL));
     m_theta->Assemble();
     m_theta->Finalize();
     M_theta = m_theta->ParallelAssemble();
@@ -126,7 +123,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     delete k_theta;
     delete K_0_theta;
     k_theta = new ParBilinearForm(&fespace);
-    k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
+    k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rA));
     k_theta->Assemble();
     k_theta->Finalize();
     K_0_theta = k_theta->ParallelAssemble();

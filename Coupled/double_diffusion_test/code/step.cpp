@@ -105,9 +105,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     M_e_theta = M_theta->EliminateRowsCols(ess_tdof_theta);
     M_0_theta = m_theta->ParallelAssemble();
 
-    M_theta_prec.SetOperator(*M_theta);
-    M_theta_solver.SetOperator(*M_theta);
-
     delete m_phi;
     delete M_phi;
     delete M_e_phi;
@@ -119,9 +116,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     M_phi = m_phi->ParallelAssemble();
     M_e_phi = M_phi->EliminateRowsCols(ess_tdof_phi);
     M_0_phi = m_phi->ParallelAssemble();
-
-    M_phi_prec.SetOperator(*M_phi);
-    M_phi_solver.SetOperator(*M_phi);
 
     delete k_theta;
     delete K_0_theta;
@@ -138,4 +132,23 @@ void Conduction_Operator::SetParameters(const BlockVector &X){
     k_phi->Assemble();
     k_phi->Finalize();
     K_0_phi = k_phi->ParallelAssemble();
+
+    //Set solver objects 
+    delete M_0;
+    M_0 = new BlockOperator(block_true_offsets);
+    M_0->SetDiagonalBlock(0, M_0_theta);
+    M_0->SetDiagonalBlock(1, M_0_phi);
+
+    delete K_0;
+    K_0 = new BlockOperator(block_true_offsets);
+    K_0->SetDiagonalBlock(0, K_0_theta, -1.);
+    K_0->SetDiagonalBlock(1, K_0_phi, -1.);
+
+    delete M;
+    M = new BlockOperator(block_true_offsets);
+    M->SetDiagonalBlock(0, M_theta);
+    M->SetDiagonalBlock(1, M_phi);
+
+    M_prec.SetOperator(*M);
+    M_solver.SetOperator(*M);
 }

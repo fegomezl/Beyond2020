@@ -18,11 +18,11 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     M_theta_solver(fespace.GetComm()), M_phi_solver(fespace.GetComm()),
     T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
     theta(&fespace), phi(&fespace), phase(&fespace), 
-    aux_C(&fespace), aux_K(&fespace), aux_D(&fespace), aux_L(&fespace),
+    aux_A(&fespace), aux_D(&fespace), aux_L(&fespace),
     coeff_r(r_f), zero(dim, zero_f), 
-    coeff_rC(coeff_r, coeff_r),
-    coeff_rK(coeff_r, coeff_r),
+    coeff_rA(coeff_r, coeff_r),
     coeff_rD(coeff_r, coeff_r),
+    coeff_rL(coeff_r, coeff_r),
     dHdT(zero, zero), dT_2(zero, zero)
 {
     //Define essential boundary conditions

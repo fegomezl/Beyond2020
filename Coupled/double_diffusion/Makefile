@@ -22,16 +22,14 @@ ABST_S=$(shell sed -n 21p settings/parameters.txt | tr -d -c 0-9.)
 RELT_S=$(shell sed -n 22p settings/parameters.txt | tr -d -c 0-9.)
 
 #Physical parameters
-C_L=$(shell sed -n 25p settings/parameters.txt | tr -d -c 0-9.)
-C_S=$(shell sed -n 26p settings/parameters.txt | tr -d -c 0-9.)
-K_L=$(shell sed -n 27p settings/parameters.txt | tr -d -c 0-9.)
-K_S=$(shell sed -n 28p settings/parameters.txt | tr -d -c 0-9.)
-D_L=$(shell sed -n 29p settings/parameters.txt | tr -d -c 0-9.)
-D_S=$(shell sed -n 30p settings/parameters.txt | tr -d -c 0-9.)
-L_L=$(shell sed -n 31p settings/parameters.txt | tr -d -c 0-9.)
-L_S=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
-DELTA_T=$(shell sed -n 33p settings/parameters.txt | tr -d -c 0-9.)
-EPSILON_T=$(shell sed -n 34p settings/parameters.txt | tr -d -c 0-9.)
+A_L=$(shell sed -n 25p settings/parameters.txt | tr -d -c 0-9.)
+A_S=$(shell sed -n 26p settings/parameters.txt | tr -d -c 0-9.)
+D_L=$(shell sed -n 27p settings/parameters.txt | tr -d -c 0-9.)
+D_S=$(shell sed -n 28p settings/parameters.txt | tr -d -c 0-9.)
+L_L=$(shell sed -n 29p settings/parameters.txt | tr -d -c 0-9.)
+L_S=$(shell sed -n 30p settings/parameters.txt | tr -d -c 0-9.)
+DELTA_T=$(shell sed -n 31p settings/parameters.txt | tr -d -c 0-9.)
+EPSILON_T=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
@@ -51,8 +49,7 @@ main: main.x
 			  -ref $(REF) -o $(ORDER) \
 			  -abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 			  -abstol_s $(ABST_S) -reltol_s $(RELT_S) \
-			  -c_l $(C_L) -c_s $(C_S) \
-			  -k_l $(K_L) -k_s $(K_S) \
+			  -a_l $(A_L) -a_s $(A_S) \
 			  -d_l $(D_L) -d_s $(D_S) \
 			  -L_l $(L_L) -L_s $(L_S) \
 			  -DT $(DELTA_T) -ET $(EPSILON_T)

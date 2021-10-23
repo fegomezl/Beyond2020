@@ -54,6 +54,7 @@ class Conduction_Operator : public TimeDependentOperator{
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
         Array<int> ess_tdof_theta, ess_tdof_phi;
+        Array<int> ess_tdof_list;
 
         //System objects
         ParBilinearForm *m_theta, *m_phi;        //Mass operators
@@ -63,13 +64,16 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreParMatrix *K_0_theta,                          *K_0_phi;
         HypreParMatrix *T_theta, *T_e_theta,                *T_phi, *T_e_phi;
 
-        mutable HypreParVector Z_theta, Z_phi;
+        BlockOperator *M_0, *K_0;
+        BlockOperator *M, *T;
+        BlockOperator *T_e;
+
+        mutable BlockVector Z; 
+        BlockVector dZ, T_d;
 
         //Solver objects
-        HyprePCG M_theta_solver, M_phi_solver;
-        HyprePCG T_theta_solver, T_phi_solver;
-        HypreBoomerAMG M_theta_prec, M_phi_prec;
-        HypreBoomerAMG T_theta_prec, T_phi_prec;
+        PetscLinearSolver M_solver, T_solver;
+        PetscFieldSplitSolver M_prec, T_prec;
 
         //Auxiliar grid functions
         ParGridFunction phi, theta, phase;

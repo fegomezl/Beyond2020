@@ -14,9 +14,13 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     M_theta(NULL), M_e_theta(NULL), M_0_theta(NULL), M_phi(NULL), M_e_phi(NULL), M_0_phi(NULL),
     K_0_theta(NULL),                                 K_0_phi(NULL),
     T_theta(NULL), T_e_theta(NULL),                  T_phi(NULL), T_e_phi(NULL),
-    Z_theta(&fespace), Z_phi(&fespace),
-    M_theta_solver(fespace.GetComm()), M_phi_solver(fespace.GetComm()),
-    T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
+    M_0(NULL), K_0(NULL),
+    M(NULL), T(NULL),
+    T_e(NULL),
+    Z(block_true_offsets),
+    dZ(block_true_offsets), T_d(block_true_offsets),
+    M_solver(fespace.GetComm()), T_solver(fespace.GetComm()),
+    M_prec(fespace.GetComm(), M_solver, "prec_"), T_prec(fespace.GetComm(), T_solver, "prec_"), 
     theta(&fespace), phi(&fespace), phase(&fespace), 
     aux_C(&fespace), aux_K(&fespace), aux_D(&fespace), aux_L(&fespace),
     coeff_r(r_f), zero(dim, zero_f), 
@@ -45,6 +49,11 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     ess_bdr_phi  [2] = 0;     ess_bdr_phi  [3] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_phi);
 
+    ess_tdof_list = ess_tdof_theta;
+    ess_tdof_list.Append(ess_tdof_phi);
+    for (int ii = ess_tdof_theta.Size(); ii < ess_tdof_list.Size(); ii++)
+        ess_tdof_list[ii] += block_true_offsets[1];
+
     //Apply initial conditions
     ParGridFunction theta(&fespace);
     FunctionCoefficient initial_theta(initial_theta_f);
@@ -57,38 +66,17 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     phi.GetTrueDofs(X.GetBlock(1));
 
     //Configure M solvers
-    M_theta_solver.iterative_mode = false;
-    M_theta_solver.SetTol(config.reltol_conduction);
-    M_theta_solver.SetAbsTol(config.abstol_conduction);
-    M_theta_solver.SetMaxIter(config.iter_conduction);
-    M_theta_solver.SetPrintLevel(0);
-    M_theta_prec.SetPrintLevel(0);
-    M_theta_solver.SetPreconditioner(M_theta_prec);
+    M_solver.SetAbsTol(config.abstol_conduction);
+    M_solver.SetTol(config.reltol_conduction);
+    M_solver.SetMaxIter(config.iter_conduction);
+    M_solver.SetPreconditioner(M_prec);
+    M_solver.SetPrintLevel(0);
 
-    M_phi_solver.iterative_mode = false;
-    M_phi_solver.SetTol(config.reltol_conduction);
-    M_phi_solver.SetAbsTol(config.abstol_conduction);
-    M_phi_solver.SetMaxIter(config.iter_conduction);
-    M_phi_solver.SetPrintLevel(0);
-    M_phi_prec.SetPrintLevel(0);
-    M_phi_solver.SetPreconditioner(M_phi_prec);
-
-    //Configure T solvers
-    T_theta_solver.iterative_mode = false;
-    T_theta_solver.SetTol(config.reltol_conduction);
-    T_theta_solver.SetAbsTol(config.abstol_conduction);
-    T_theta_solver.SetMaxIter(config.iter_conduction);
-    T_theta_solver.SetPrintLevel(0);
-    T_theta_prec.SetPrintLevel(0);
-    T_theta_solver.SetPreconditioner(T_theta_prec);
-
-    T_phi_solver.iterative_mode = false;
-    T_phi_solver.SetTol(config.reltol_conduction);
-    T_phi_solver.SetAbsTol(config.abstol_conduction);
-    T_phi_solver.SetMaxIter(config.iter_conduction);
-    T_phi_solver.SetPrintLevel(0);
-    T_phi_prec.SetPrintLevel(0);
-    T_phi_solver.SetPreconditioner(T_phi_prec);
+    T_solver.SetAbsTol(config.abstol_conduction);
+    T_solver.SetTol(config.reltol_conduction);
+    T_solver.SetMaxIter(config.iter_conduction);
+    T_solver.SetPreconditioner(T_prec);
+    T_solver.SetPrintLevel(0);
 
     SetParameters(X);
 }
