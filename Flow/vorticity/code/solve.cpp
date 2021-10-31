@@ -17,8 +17,8 @@ void Artic_sea::solve_system(){
     HBlocks(1, 0) = Ct;
     HBlocks(1, 1) = D;
 
-    HypreParMatrix *H = HypreParMatrixFromBlocks(HBlocks);
-    SuperLURowLocMatrix A(*H);
+    HypreParMatrix H = *HypreParMatrixFromBlocks(HBlocks);
+    SuperLURowLocMatrix A(H);
 
     SuperLUSolver superlu(MPI_COMM_WORLD);
     superlu.SetOperator(A);
@@ -51,9 +51,6 @@ void Artic_sea::solve_system(){
     MatrixVectorProductCoefficient rV(rot, Psi_grad);
     ScalarVectorProductCoefficient V(Inv_r, rV);
     v->ProjectDiscCoefficient(V, GridFunction::ARITHMETIC);
-
-    //Delete used memory
-    delete H;
 }
 
 void rot_f(const Vector &x, DenseMatrix &f){
