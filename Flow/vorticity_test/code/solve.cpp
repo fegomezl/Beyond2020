@@ -56,8 +56,8 @@ void Artic_sea::solve_system(){
     solver.Mult(B, X);*/
 
     //Recover the solution on each proccesor
-    w->Distribute(&(X.GetBlock(0)));    
-    psi->Distribute(&(X.GetBlock(1)));
+    w->Distribute(X.GetBlock(0));    
+    psi->Distribute(X.GetBlock(1));
 
     //Calculate velocity
     v = new ParGridFunction(fespace_v);

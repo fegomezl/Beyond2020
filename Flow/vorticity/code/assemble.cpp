@@ -113,8 +113,8 @@ void Artic_sea::assemble_system(){
     Ct = ct.ParallelAssemble();
 
     //Transfer to TrueDofs
-    w->ParallelAverage(X.GetBlock(0));
-    psi->ParallelAverage(X.GetBlock(1));
+    w->ParallelAssemble(X.GetBlock(0));
+    psi->ParallelAssemble(X.GetBlock(1));
 
     g.ParallelAssemble(B.GetBlock(0));
     f.ParallelAssemble(B.GetBlock(1));
