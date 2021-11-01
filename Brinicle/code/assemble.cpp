@@ -10,11 +10,6 @@ void r_inv_hat_f(const Vector &x, Vector &f);
 //Fusion temperature dependent of salinity
 double T_fun(const double &salinity);
 
-//Variation of parameters
-double delta_c_s_fun(const double &temperature, const double &salinity);
-double delta_k_s_fun(const double &temperature, const double &salinity);
-double delta_l_s_fun(const double &temperature, const double &salinity);
-
 //Parameters of buoyancy
 double delta_rho_t_fun(const double &temperature, const double &salinity);
 double delta_rho_p_fun(const double &temperature, const double &salinity);
@@ -163,34 +158,9 @@ double T_fun(const double &salinity){
     return -(a*salinity + b*pow(salinity, 3));
 }
 
-double delta_c_s_fun(const double &temperature, const double &salinity){
-    double a = 0.00692;
-    double b = -0.00307;
-    double c = 0.0000768;
-    double d = 16.6;
-    return a*temperature +
-           b*salinity +
-           c*temperature*salinity +
-           d*salinity*pow(temperature, -2);
-}
-
-double delta_k_s_fun(const double &temperature, const double &salinity){
-    double a = 36.7;
-    return a*salinity/temperature;
-}
-
-double delta_l_s_fun(const double &temperature, const double &salinity){
-    double a = -1.94;
-    double b = 16.6;
-    double c = -0.0035;
-    return a*temperature +
-           b*salinity +
-           c*salinity/temperature;
-}
-
 double delta_rho_t_fun(const double &temperature, const double &salinity){
-    //if (temperature < T_fun(salinity))
-    //    return 0.;
+    if (temperature < T_fun(salinity))
+        return 0.;
 
     double a0 = -13.0,  b0 = 1.1,
            a1 = 0.5,    b1 = -0.04,
@@ -201,8 +171,8 @@ double delta_rho_t_fun(const double &temperature, const double &salinity){
 }
 
 double delta_rho_p_fun(const double &temperature, const double &salinity){
-    //if (temperature < T_fun(salinity))
-    //    return 0.;
+    if (temperature < T_fun(salinity))
+        return 0.;
 
     double a0 = 2617.9, b0 = -87.0, c0 = 31.0,
            a1 = -13.0,  b1 = 1.6,
@@ -213,6 +183,3 @@ double delta_rho_p_fun(const double &temperature, const double &salinity){
            (b0 + b1*temperature + b2*pow(temperature, 2))*pow(abs(salinity), 0.5) +
            (c0)*salinity;
 }
-
-
-

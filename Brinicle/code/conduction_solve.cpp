@@ -17,11 +17,9 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
 
     //Set up RHS
     K_0_theta->Mult(-1., Theta, 1., Z_theta);   
-    Z_theta += F_theta;   
     EliminateBC(*M_theta, *M_e_theta, ess_tdof_theta, dTheta_dt, Z_theta);
 
     K_0_phi->Mult(-1., Phi, 1., Z_phi);
-    Z_phi += F_phi;
     EliminateBC(*M_phi, *M_e_phi, ess_tdof_phi, dPhi_dt, Z_phi);
 
     //Solve the system
@@ -52,9 +50,6 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
     T_phi_prec.SetOperator(*T_phi);
     T_phi_solver.SetOperator(*T_phi);
 
-    //Create RHS
-    dt_F_theta.Set(scaled_dt, F_theta); dt_F_phi.Set(scaled_dt, F_phi);
-
     *j_status = 1;
     return 0;
 }
@@ -76,11 +71,9 @@ int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double
 
     //Set up RHS
     M_0_theta->Mult(Theta, Z_theta);   
-    Z_theta += dt_F_theta;   
     EliminateBC(*T_theta, *T_e_theta, ess_tdof_theta, Theta_new, Z_theta);
 
     M_0_phi->Mult(Phi, Z_phi);
-    Z_phi += dt_F_phi;
     EliminateBC(*T_phi, *T_e_phi, ess_tdof_phi, Phi_new, Z_phi);
 
     //Solve the system

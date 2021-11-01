@@ -61,8 +61,6 @@ class Conduction_Operator : public TimeDependentOperator{
         Array<int> block_true_offsets;
         Array<int> ess_tdof_theta, ess_tdof_phi;
 
-        Array<int> robin_bdr_theta, robin_bdr_phi;
-
         //System objects
         ParBilinearForm *m_theta, *m_phi;        //Mass operators
         ParBilinearForm *k_theta, *k_phi;        //Difussion operators
@@ -71,8 +69,6 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreParMatrix *K_0_theta,                          *K_0_phi;
         HypreParMatrix *T_theta, *T_e_theta,                *T_phi, *T_e_phi;
 
-        HypreParVector F_theta, F_phi;
-        HypreParVector dt_F_theta, dt_F_phi;
         mutable HypreParVector Z_theta, Z_phi;
 
         //Solver objects
@@ -102,9 +98,6 @@ class Conduction_Operator : public TimeDependentOperator{
 
         InnerProductCoefficient dHdT;
         InnerProductCoefficient dT_2;
-
-        FunctionCoefficient robin_h_theta, robin_h_phi;
-        ProductCoefficient r_robin_h_theta, r_robin_h_phi;
 };
 
 class Flow_Operator{
@@ -261,11 +254,6 @@ extern void r_inv_hat_f(const Vector &x, Vector &f);
 
 //Fusion temperature dependent of salinity
 extern double T_fun(const double &salinity);
-
-//Variation of parameters
-extern double delta_c_s_fun(const double &temperature, const double &salinity);
-extern double delta_k_s_fun(const double &temperature, const double &salinity);
-extern double delta_l_s_fun(const double &temperature, const double &salinity);
 
 //Parameters of buoyancy
 extern double delta_rho_t_fun(const double &temperature, const double &salinity);

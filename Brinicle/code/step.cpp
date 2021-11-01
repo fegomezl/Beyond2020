@@ -21,22 +21,22 @@ void Artic_sea::time_step(){
 
     m_in = phi_aux.ComputeL1Error(low_cap, irs);
     for (int ii = 0; ii < phi_aux.Size(); ii++){
-      if (phi_aux(ii) < 0)
-	phi_aux(ii) = 0;
+        if (phi_aux(ii) < 0)
+            phi_aux(ii) = 0;
     }
     m_out = phi_aux.ComputeL1Error(low_cap, irs);
     phi_aux *= 2-m_in/m_out; 
     
     m_in = phi_aux.ComputeL1Error(low_cap, irs);
     for (int ii = 0; ii < phi_aux.Size(); ii++){
-      if (phi_aux(ii) > phi_out-phi_in)
-	phi_aux(ii) = phi_out-phi_in;
-}
-m_out = phi_aux.ComputeL1Error(low_cap, irs);
-phi_aux *= m_in/m_out; 
+        if (phi_aux(ii) > phi_out-phi_in)
+            phi_aux(ii) = phi_out-phi_in;
+    }
+    m_out = phi_aux.ComputeL1Error(low_cap, irs);
+    phi_aux *= m_in/m_out; 
 
-phi_aux += phi_in;
-phi_aux.GetTrueDofs(X.GetBlock(1));
+    phi_aux += phi_in;
+    phi_aux.GetTrueDofs(X.GetBlock(1));
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
@@ -184,7 +184,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
-    k_theta->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_theta), robin_bdr_theta);
     k_theta->Assemble();
     k_theta->Finalize();
     K_0_theta = k_theta->ParallelAssemble();
@@ -194,7 +193,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
     k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_phi), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
     K_0_phi = k_phi->ParallelAssemble();
