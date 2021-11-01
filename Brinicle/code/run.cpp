@@ -23,7 +23,7 @@ void Artic_sea::run(const char *mesh_file){
     //Run the program
     make_grid(mesh_file);
     assemble_system();
-    if (t != 0)
+    if (config.t_final != 0)
         for (iteration = 1, vis_iteration = 1; !last; iteration++, vis_iteration++)
             time_step();
     else

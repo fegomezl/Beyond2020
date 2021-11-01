@@ -1,5 +1,5 @@
 Mesh Parameters
-settings/quad.geo #Mesh_script
+settings/tri.geo #Mesh_script
 0       #Rmin
 10      #Rmax
 0       #Zmin
@@ -11,7 +11,7 @@ settings/quad.geo #Mesh_script
 
 Simulation parameters
 0.001   #Dt
-0       #Final_time
+0.01    #Final_time
 10      #Visualization_steps
 0       #Rescale_stream?
 
