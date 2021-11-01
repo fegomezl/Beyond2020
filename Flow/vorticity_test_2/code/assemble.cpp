@@ -71,12 +71,12 @@ void Artic_sea::assemble_system(){
     HypreParVector W(fespace);
     w =  new ParGridFunction(fespace);
     w->ProjectCoefficient(w_coeff);
-    w->ParallelAssemble(W);
+    w->ParallelProject(W);
 
     HypreParVector Psi(fespace);
     psi = new ParGridFunction(fespace);
     psi->ProjectCoefficient(psi_coeff);
-    psi->ParallelAssemble(Psi);
+    psi->ParallelProject(Psi);
 
     //Define the RHS
     HypreParVector B_w(fespace);
