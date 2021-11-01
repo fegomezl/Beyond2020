@@ -53,16 +53,14 @@ Conduction_Operator::~Conduction_Operator(){
 }
 
 Flow_Operator::~Flow_Operator(){
-    delete f;
-    delete g;
-    delete m;
-    delete d;
-    delete c;
-    delete ct;
     delete M;
+    delete M_e;
     delete D;
+    delete D_e;
     delete C;
+    delete C_e;
     delete Ct;
+    delete Ct_e;
 }
 
 Artic_sea::~Artic_sea(){

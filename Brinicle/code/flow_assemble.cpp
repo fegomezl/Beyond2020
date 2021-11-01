@@ -11,13 +11,13 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     config(config),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
-    B(block_true_offsets),
+    W(&fespace), Psi(&fespace),
+    B_w(&fespace), B_psi(&fespace),
     ess_bdr_psi(attributes), ess_bdr_w(attributes),
     bdr_psi_in(attributes), bdr_psi_out(attributes),
     bdr_psi_closed_down(attributes), bdr_psi_closed_up(attributes),
-    f(NULL), g(NULL),
-    m(NULL), d(NULL), c(NULL), ct(NULL),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
+    M_e(NULL), D_e(NULL), C_e(NULL), Ct_e(NULL),
     psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
     theta(&fespace), theta_dr(&fespace), 
     phi(&fespace), phi_dr(&fespace), 
@@ -51,11 +51,13 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 0;
     ess_bdr_w[4] = 0; ess_bdr_w[5] = 0;
+    fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_w);
   
     ess_bdr_psi = 0;
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
     ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 1;
+    fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_psi);
 
     bdr_psi_in = 0;
     bdr_psi_in[4] = ess_bdr_psi[4];
@@ -74,36 +76,42 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
     w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
+    w.ParallelProject(W);
  
     psi.ProjectCoefficient(psi_coeff);
     psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
     psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
     psi.ProjectBdrCoefficient(closed_down, bdr_psi_closed_down);
     psi.ProjectBdrCoefficient(closed_up, bdr_psi_closed_up);
-
-    //Define the constant RHS
-    g = new ParLinearForm(&fespace);
-    g->Assemble();
+    psi.ParallelProject(Psi);
 
     //Define constant bilinear forms of the system
-    m = new ParBilinearForm (&fespace);
-    m->AddDomainIntegrator(new MassIntegrator);
-    m->Assemble();
-    m->EliminateEssentialBC(ess_bdr_w, w, *g, Operator::DIAG_ONE);
-    m->Finalize();
-    M = m->ParallelAssemble();
+    ParBilinearForm m(&fespace);
+    m.AddDomainIntegrator(new MassIntegrator);
+    m.Assemble();
+    m.Finalize();
+    M = m.ParallelAssemble();
+    M_e = M->EliminateRowsCols(ess_tdof_w);
 
-    c = new ParMixedBilinearForm (&fespace, &fespace);
-    c->AddDomainIntegrator(new MixedGradGradIntegrator);
-    c->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
-    c->Assemble();
-    c->EliminateTrialDofs(ess_bdr_psi, psi, *g);
-    c->EliminateTestDofs(ess_bdr_w);
-    c->Finalize();
-    C = c->ParallelAssemble();
+    ParMixedBilinearForm c(&fespace, &fespace);
+    c.AddDomainIntegrator(new MixedGradGradIntegrator);
+    c.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
+    c.Assemble();
+    c.Finalize();
+    C = c.ParallelAssemble();
+    C->EliminateRows(ess_tdof_w);
+    C_e = C->EliminateCols(ess_tdof_psi);
 
-    //Transfer to TrueDofs
-    g->ParallelAssemble(B.GetBlock(0));
+    Ct = C->Transpose();
+    Ct->EliminateRows(ess_tdof_psi);
+    Ct_e = Ct->EliminateCols(ess_tdof_w);
+
+    //Define the constant RHS
+    ParLinearForm g(&fespace);
+    g.Assemble();
+    g.ParallelAssemble(B_w);
+    C_e->Mult(Psi, B_w, -1., 1.);
+    EliminateBC(*M, *M_e, ess_tdof_w, W, B_w);
 
     //Create gradient interpolator
     grad.AddDomainIntegrator(new GradientInterpolator);

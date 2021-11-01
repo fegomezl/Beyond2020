@@ -119,6 +119,7 @@ class Flow_Operator{
         Array<int> ess_bdr_w, ess_bdr_psi;
         Array<int> bdr_psi_in, bdr_psi_out;
         Array<int> bdr_psi_closed_down, bdr_psi_closed_up;
+        Array<int> ess_tdof_w, ess_tdof_psi;
 
         //System objects
         ParGridFunction psi;
@@ -126,20 +127,16 @@ class Flow_Operator{
         ParGridFunction v;
         ParGridFunction rv;
 
-        ParLinearForm *f;
-        ParLinearForm *g;
-        ParBilinearForm *m;
-        ParBilinearForm *d;
-        ParMixedBilinearForm *c;
-        ParMixedBilinearForm *ct;
-
         //Solver objects
-        BlockVector B;
+        HypreParVector W;
+        HypreParVector Psi;
+        HypreParVector B_w;
+        HypreParVector B_psi;
 
-        HypreParMatrix *M;
-        HypreParMatrix *D;
-        HypreParMatrix *C;
-        HypreParMatrix *Ct;
+        HypreParMatrix *M,  *M_e;
+        HypreParMatrix *D,  *D_e;
+        HypreParMatrix *C,  *C_e;
+        HypreParMatrix *Ct, *Ct_e;
 
         //Additional variables
         ParGridFunction theta;

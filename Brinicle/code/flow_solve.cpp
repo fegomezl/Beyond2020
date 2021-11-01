@@ -1,7 +1,7 @@
 #include "header.h"
 
 void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
-    //Create the complete bilinear operator:
+    //Create the complete bilinear operator
     //
     //   H = [ M    C ]
     //       [ C^t  D ]
@@ -14,6 +14,12 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     HypreParMatrix H = *HypreParMatrixFromBlocks(HBlocks);
     SuperLURowLocMatrix A(H);
 
+    //Create the complete RHS
+    BlockVector B(block_true_offsets);
+    B.GetBlock(0) = B_w;
+    B.GetBlock(1) = B_psi;
+
+    //Set solver
     SuperLUSolver superlu(MPI_COMM_WORLD);
     superlu.SetOperator(A);
     superlu.SetPrintStatistics(false);
@@ -26,6 +32,7 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     superlu.DismantleGrid();
 
     //Recover the solution on each proccesor
+    w.Distribute(Z.GetBlock(0));
     psi.Distribute(Z.GetBlock(1));
 
     //Calculate velocity
