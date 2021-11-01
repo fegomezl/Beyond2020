@@ -134,7 +134,6 @@ class Flow_Operator{
         ParMixedBilinearForm *ct;
 
         //Solver objects
-        BlockVector Y;
         BlockVector B;
 
         HypreParMatrix *M;

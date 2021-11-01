@@ -11,7 +11,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     config(config),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
-    Y(block_true_offsets), B(block_true_offsets),
+    B(block_true_offsets),
     ess_bdr_psi(attributes), ess_bdr_w(attributes),
     bdr_psi_in(attributes), bdr_psi_out(attributes),
     bdr_psi_closed_down(attributes), bdr_psi_closed_up(attributes),
@@ -103,8 +103,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     C = c->ParallelAssemble();
 
     //Transfer to TrueDofs
-    w.ParallelProject(Y.GetBlock(0));
-    psi.ParallelProject(Y.GetBlock(1));
     g->ParallelAssemble(B.GetBlock(0));
 
     //Create gradient interpolator
