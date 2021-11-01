@@ -47,10 +47,10 @@ void Artic_sea::time_step(){
         vis_impressions++;
 
         //Update information
-        theta->Distribute(&(X.GetBlock(0)));
-        phi->Distribute(&(X.GetBlock(1)));
-        w->Distribute(&(Z.GetBlock(0)));
-        psi->Distribute(&(Z.GetBlock(1)));
+        theta->Distribute(X.GetBlock(0));
+        phi->Distribute(X.GetBlock(1));
+        w->Distribute(Z.GetBlock(0));
+        psi->Distribute(Z.GetBlock(1));
         v->Distribute(V);
         rv->Distribute(rV);
 
@@ -101,9 +101,9 @@ void Artic_sea::time_step(){
 
 void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     //Recover actual information
-    theta.SetFromTrueDofs(X.GetBlock(0));
-    phi.SetFromTrueDofs(X.GetBlock(1));
-    rv.SetFromTrueDofs(rV); 
+    theta.Distribute(X.GetBlock(0));
+    phi.Distribute(X.GetBlock(1));
+    rv.Distribute(rV); 
 
     //Associate the values of each auxiliar function
     double DT = 0.;
@@ -200,8 +200,8 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
 
 void Flow_Operator::SetParameters(const BlockVector &X){
     //Update information
-    theta.SetFromTrueDofs(X.GetBlock(0));
-    phi.SetFromTrueDofs(X.GetBlock(1));
+    theta.Distribute(X.GetBlock(0));
+    phi.Distribute(X.GetBlock(1));
 
     theta.GetDerivative(1, 0, theta_dr);
     phi.GetDerivative(1, 0, phi_dr);

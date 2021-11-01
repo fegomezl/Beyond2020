@@ -26,8 +26,8 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     superlu.DismantleGrid();
 
     //Recover the solution on each proccesor
-    w.Distribute(&(Y.GetBlock(0)));
-    psi.Distribute(&(Y.GetBlock(1)));
+    w.Distribute(Y.GetBlock(0));
+    psi.Distribute(Y.GetBlock(1));
 
     //Calculate velocity
     grad.Mult(psi, psi_grad);

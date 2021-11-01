@@ -29,12 +29,12 @@ void Artic_sea::assemble_system(){
         in.open(n_theta.c_str(),std::ios::in);
         theta = new ParGridFunction(pmesh, in);
         in.close();
-        theta->GetTrueDofs(X.GetBlock(0));
+        theta->ParallelProject(X.GetBlock(0));
 
         in.open(n_phi.c_str(),std::ios::in);
         phi = new ParGridFunction(pmesh, in);
         in.close();
-        phi->GetTrueDofs(X.GetBlock(1));
+        phi->ParallelProject(X.GetBlock(1));
     }
 
     w = new ParGridFunction(fespace);
@@ -60,10 +60,10 @@ void Artic_sea::assemble_system(){
     flow_oper->Solve(Z, *V, *rV);
 
     //Set initial state
-    theta->Distribute(&(X.GetBlock(0)));
-    phi->Distribute(&(X.GetBlock(1)));
-    w->Distribute(&(Z.GetBlock(0)));
-    psi->Distribute(&(Z.GetBlock(1)));
+    theta->Distribute(X.GetBlock(0));
+    phi->Distribute(X.GetBlock(1));
+    w->Distribute(Z.GetBlock(0));
+    psi->Distribute(Z.GetBlock(1));
     v->Distribute(V);
     rv->Distribute(rV);
     

@@ -62,14 +62,14 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
         ConstantCoefficient theta_nu(theta_n);
         theta.ProjectCoefficient(initial_theta);
         theta.ProjectBdrCoefficient(theta_nu, ess_bdr_theta);
-        theta.GetTrueDofs(X.GetBlock(0));
+        theta.ParallelProject(X.GetBlock(0));
         
         ParGridFunction phi(&fespace);
         FunctionCoefficient initial_phi(initial_phi_f);
         ConstantCoefficient phi_nu(phi_n);
         phi.ProjectCoefficient(initial_phi);
         phi.ProjectBdrCoefficient(phi_nu, ess_bdr_phi);
-        phi.GetTrueDofs(X.GetBlock(1));
+        phi.ParallelProject(X.GetBlock(1));
     }
 
     //Configure M solvers

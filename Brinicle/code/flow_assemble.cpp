@@ -103,8 +103,8 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     C = c->ParallelAssemble();
 
     //Transfer to TrueDofs
-    w.ParallelAssemble(Y.GetBlock(0));
-    psi.ParallelAssemble(Y.GetBlock(1));
+    w.ParallelProject(Y.GetBlock(0));
+    psi.ParallelProject(Y.GetBlock(1));
     g->ParallelAssemble(B.GetBlock(0));
 
     //Create gradient interpolator
