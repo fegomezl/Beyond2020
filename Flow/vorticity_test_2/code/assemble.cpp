@@ -114,15 +114,16 @@ void Artic_sea::assemble_system(){
     //c.EliminateTestDofs(ess_bdr_w);
     c.Finalize();
     C = c.ParallelAssemble();
+    Ct = C->Transpose();
 
-    ParMixedBilinearForm ct(fespace, fespace);
+    /*ParMixedBilinearForm ct(fespace, fespace);
     ct.AddDomainIntegrator(new MixedGradGradIntegrator);
     ct.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
     ct.Assemble();
     //ct.EliminateTrialDofs(ess_bdr_w, *w, f);
     //ct.EliminateTestDofs(ess_bdr_psi);
     ct.Finalize();
-    Ct = ct.ParallelAssemble();
+    Ct = ct.ParallelAssemble();*/
 
     //Eliminate essential DOFs
     HypreParMatrix *M_e = M->EliminateRowsCols(ess_tdof_w);
