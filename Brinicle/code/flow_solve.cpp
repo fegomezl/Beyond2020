@@ -33,16 +33,17 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     grad.Mult(psi, psi_grad);
     Psi_grad.SetGridFunction(&psi_grad);
     rot_Psi_grad.SetBCoef(Psi_grad);
+    rv.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
+
     FunctionCoefficient inv_R(inv_r);
     ScalarVectorProductCoefficient coeff_V(inv_R, rot_Psi_grad);
     v.ProjectDiscCoefficient(coeff_V, GridFunction::ARITHMETIC);
-    rv.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
 
     //Export flow information
-    w.ParallelAverage(Z.GetBlock(0));
-    psi.ParallelAverage(Z.GetBlock(1));
-    v.ParallelAverage(V);
-    rv.ParallelAverage(rV);
+    w.ParallelProject(Z.GetBlock(0));
+    psi.ParallelProject(Z.GetBlock(1));
+    rv.ParallelProject(rV);
+    v.ParallelProject(V);
 
     delete H;
 }
