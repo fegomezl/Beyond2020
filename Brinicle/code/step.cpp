@@ -106,18 +106,17 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     rv.SetFromTrueDofs(rV); 
 
     //Associate the values of each auxiliar function
+    double DT = 0.;
     for (int ii = 0; ii < phase.Size(); ii++){
-        double DT = theta(ii) - config.T_f - T_fun(phi(ii));
-        double P = 0.5*(1 + tanh(5*config.invDeltaT*DT));
-
-        aux_C(ii) = config.c_s + (config.c_l-config.c_s)*P;
-        aux_K(ii) = config.k_s + (config.k_l-config.k_s)*P;
-        aux_D(ii) = config.d_s + (config.d_l-config.d_s)*P;
-        aux_L(ii) = config.L_s + (config.L_l-config.L_s)*P;
-
+        DT = theta(ii) - config.T_f - T_fun(phi(ii));
         theta(ii) = DT;
-        phase(ii) = P;
+        phase(ii) = 0.5*(1 + tanh(5*config.invDeltaT*DT));
     }
+
+    aux_C.Set(config.c_l-config.c_s, phase); aux_C += config.c_s;
+    aux_K.Set(config.k_l-config.k_s, phase); aux_K += config.k_s;
+    aux_D.Set(config.d_l-config.d_s, phase); aux_D += config.d_s;
+    aux_L.Set(config.L_l-config.L_s, phase); aux_L += config.L_s;
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_C(&aux_C);
