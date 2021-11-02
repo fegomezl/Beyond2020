@@ -7,28 +7,17 @@ double boundary_psi(const Vector &x);
 double boundary_psi_in(const Vector &x);
 double boundary_psi_out(const Vector &x);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets):
     config(config),
-    fespace(fespace),
+    fespace(fespace), fespace_v(fespace_v),
     block_true_offsets(block_true_offsets),
     W(&fespace), Psi(&fespace),
     B_w(&fespace), B_psi(&fespace),
-    ess_bdr_psi(attributes), ess_bdr_w(attributes),
-    bdr_psi_in(attributes), bdr_psi_out(attributes),
-    bdr_psi_closed_down(attributes), bdr_psi_closed_up(attributes),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
     M_e(NULL), D_e(NULL), C_e(NULL), Ct_e(NULL),
-    psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
-    theta(&fespace), theta_dr(&fespace), 
-    phi(&fespace), phi_dr(&fespace), 
-    phase(&fespace), eta(&fespace), psi_grad(&fespace_v), 
-    coeff_r(r_f), inv_R(inv_r), r_inv_hat(dim, r_inv_hat_f),
-    w_coeff(boundary_w), psi_coeff(boundary_psi), 
-    psi_in(boundary_psi_in), psi_out(boundary_psi_out),
-    closed_down(0.), closed_up(Q),
-    grad(&fespace, &fespace_v),
-    rot(dim, rot_f), Psi_grad(&psi_grad),
-    rot_Psi_grad(rot, Psi_grad)
+    psi(&fespace), w(&fespace),
+    coeff_r(r_f), r_inv_hat(dim, r_inv_hat_f), rot(dim, rot_f), inv_R(inv_r), 
+    grad(&fespace, &fespace_v)
 { 
     //Define essential boundary conditions
     //   
@@ -47,31 +36,39 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //                            0
     //
 
-    ess_bdr_w = 0;
+    Array<int> ess_bdr_w(attributes);   ess_bdr_w = 0;
     ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 0;
     ess_bdr_w[4] = 0; ess_bdr_w[5] = 0;
     fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_w);
   
-    ess_bdr_psi = 0;
+    Array<int> ess_bdr_psi(attributes);   ess_bdr_psi = 0;
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
     ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 1;
     fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_psi);
 
-    bdr_psi_in = 0;
+    Array<int> bdr_psi_in(attributes);   bdr_psi_in = 0;
     bdr_psi_in[4] = ess_bdr_psi[4];
     
-    bdr_psi_out = 0;
+    Array<int> bdr_psi_out(attributes);   bdr_psi_out = 0;
     bdr_psi_out[5] = ess_bdr_psi[5];
     
-    bdr_psi_closed_down = 0;
+    Array<int> bdr_psi_closed_down(attributes);   bdr_psi_closed_down = 0;
     bdr_psi_closed_down[0] = ess_bdr_psi[0];
     bdr_psi_closed_down[2] = ess_bdr_psi[2];
     
-    bdr_psi_closed_up = 0;
+    Array<int> bdr_psi_closed_up(attributes);   bdr_psi_closed_up = 0;
     bdr_psi_closed_up[1] = ess_bdr_psi[1];
     bdr_psi_closed_up[3] = ess_bdr_psi[3];
+
+    //Setup boundary coefficients
+    FunctionCoefficient w_coeff(boundary_w);
+    FunctionCoefficient psi_coeff(boundary_psi);
+    FunctionCoefficient psi_in(boundary_psi_in);
+    FunctionCoefficient psi_out(boundary_psi_out);
+    ConstantCoefficient closed_down(0.);
+    ConstantCoefficient closed_up(Q);
 
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
@@ -117,9 +114,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     grad.AddDomainIntegrator(new GradientInterpolator);
     grad.Assemble();
     grad.Finalize();
-
-    //Set initial system
-    SetParameters(X);
 }
 
 //Boundary values

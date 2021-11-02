@@ -7,7 +7,7 @@ double initial_phi_f(const Vector &x);
 Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
     config(config),
     TimeDependentOperator(2*fespace.GetTrueVSize(), config.t_init),
-    fespace(fespace),
+    fespace(fespace), fespace_v(fespace_v),
     block_true_offsets(block_true_offsets),
     M_theta(NULL), M_e_theta(NULL), M_0_theta(NULL), M_phi(NULL), M_e_phi(NULL), M_0_phi(NULL),
     K_0_theta(NULL),                                 K_0_phi(NULL),
@@ -15,14 +15,7 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     Z_theta(&fespace), Z_phi(&fespace),
     M_theta_solver(fespace.GetComm()), M_phi_solver(fespace.GetComm()),
     T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
-    theta(&fespace), phi(&fespace), phase(&fespace), rv(&fespace_v), 
-    aux_C(&fespace), aux_K(&fespace), aux_D(&fespace), aux_L(&fespace),
-    coeff_r(r_f), zero(dim, zero_f), 
-    coeff_rC(coeff_r, coeff_r),
-    coeff_rK(coeff_r, coeff_r),
-    coeff_rD(coeff_r, coeff_r),
-    coeff_rV(&rv), coeff_rCV(coeff_r, zero), 
-    dHdT(zero, zero), dT_2(zero, zero)
+    coeff_r(r_f), zero(dim, zero_f) 
 {
     //Define essential boundary conditions
     //   
@@ -118,7 +111,6 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
 }
 
 //Initial conditions
-
 double initial_theta_f(const Vector &x){
     if ((x(0) > R_in && x(1) > Zmax - n_h) || pow(x(0)-(R_in+n_l), 2) + pow(x(1)-(Zmax-n_h), 2) < pow(n_l, 2))
         return -10;
@@ -127,9 +119,6 @@ double initial_theta_f(const Vector &x){
 }
 
 double initial_phi_f(const Vector &x){
-  // if (x(0) < R_in && x(1) > Zmax - n_h/4)
-  // return ((phi_out-phi_in)/n_h)*(x(1)-Zmax+n_h*1.2)+phi_in;
-      
     if ((x(0) > R_in && x(1) > Zmax - n_h) || pow(x(0)-(R_in+n_l), 2) + pow(x(1)-(Zmax-n_h), 2) < pow(n_l, 2))
         return phi_in;
     else

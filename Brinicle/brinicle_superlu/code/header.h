@@ -29,7 +29,6 @@ struct Config{
     double reltol_sundials;
     double abstol_sundials;
 
-    double T_f;
     double invDeltaT;
     double EpsilonT;
     double EpsilonEta;
@@ -57,7 +56,7 @@ class Conduction_Operator : public TimeDependentOperator{
         //Global parameters
         Config config;
 
-        ParFiniteElementSpace &fespace;
+        ParFiniteElementSpace &fespace, &fespace_v;
         Array<int> block_true_offsets;
         Array<int> ess_tdof_theta, ess_tdof_phi;
 
@@ -74,32 +73,14 @@ class Conduction_Operator : public TimeDependentOperator{
         HypreBoomerAMG M_theta_prec, M_phi_prec;
         HypreBoomerAMG T_theta_prec, T_phi_prec;
 
-        //Auxiliar grid functions
-        ParGridFunction phi, theta, phase;
-        ParGridFunction aux_C;
-        ParGridFunction aux_K;
-        ParGridFunction aux_D;
-        ParGridFunction aux_L;
-        ParGridFunction rv;
-
         //Coefficients
         FunctionCoefficient coeff_r;
         VectorFunctionCoefficient zero;
-
-        ProductCoefficient coeff_rC;
-        ProductCoefficient coeff_rK; 
-        ProductCoefficient coeff_rD;
-
-        VectorGridFunctionCoefficient coeff_rV;
-        ScalarVectorProductCoefficient coeff_rCV;
-
-        InnerProductCoefficient dHdT;
-        InnerProductCoefficient dT_2;
 };
 
 class Flow_Operator{
     public:
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets);
 
         void SetParameters(const BlockVector &X);
 
@@ -111,18 +92,13 @@ class Flow_Operator{
         Config config;
 
         //Mesh objects
-        ParFiniteElementSpace &fespace;
+        ParFiniteElementSpace &fespace, &fespace_v;
         Array<int> block_true_offsets;
-        Array<int> ess_bdr_w, ess_bdr_psi;
-        Array<int> bdr_psi_in, bdr_psi_out;
-        Array<int> bdr_psi_closed_down, bdr_psi_closed_up;
         Array<int> ess_tdof_w, ess_tdof_psi;
 
         //System objects
         ParGridFunction psi;
         ParGridFunction w;
-        ParGridFunction v;
-        ParGridFunction rv;
 
         //Solver objects
         HypreParVector W;
@@ -134,35 +110,15 @@ class Flow_Operator{
         HypreParMatrix *D,  *D_e;
         HypreParMatrix *C,  *C_e;
         HypreParMatrix *Ct, *Ct_e;
-
-        //Additional variables
-        ParGridFunction theta;
-        ParGridFunction theta_dr;
-        ParGridFunction phi;
-        ParGridFunction phi_dr;
-        ParGridFunction phase;
-        ParGridFunction eta;
-        ParGridFunction psi_grad;
       
         //Rotational coefficients
         FunctionCoefficient coeff_r;
-        FunctionCoefficient inv_R;
         VectorFunctionCoefficient r_inv_hat;
         MatrixFunctionCoefficient rot;
-
-        //Boundary coefficients
-        FunctionCoefficient w_coeff;
-        FunctionCoefficient psi_coeff;
-        FunctionCoefficient psi_in;
-        FunctionCoefficient psi_out;
-        ConstantCoefficient closed_down;
-        ConstantCoefficient closed_up;
+        FunctionCoefficient inv_R;
 
         //Construction rV
         ParDiscreteLinearOperator grad;
-
-        VectorGridFunctionCoefficient Psi_grad;
-        MatrixVectorProductCoefficient rot_Psi_grad;
 };
 
 class Artic_sea{

@@ -11,8 +11,8 @@ settings/tri.geo #Mesh_script
 
 Simulation parameters
 0.001   #Dt
-0.01    #Final_time
-10      #Visualization_steps
+0.05    #Final_time
+1       #Visualization_steps
 0       #Rescale_stream?
 
 FE parameters
@@ -25,7 +25,6 @@ FE parameters
 0.00001    #reltol(SUNDIALS)
 
 Physical parameters
-0       #Fusion_temperature
 9       #nDeltaT
 9       #nEpsilonT
 9       #nEpsilonEta
@@ -47,7 +46,7 @@ Brinicle conditions
 0       #Nucleation_length
 4       #Nucleation_height
 -10     #Nucleation_temperature
-22.5     #Nucleation_salinity
+22.5    #Nucleation_salinity
 
 Restart conditions
 0          #Restart?

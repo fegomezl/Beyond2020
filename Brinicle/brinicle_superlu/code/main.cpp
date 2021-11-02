@@ -72,8 +72,6 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.reltol_sundials, "-reltol_s", "--tolrelativeSUNDIALS",
                    "Relative tolerance of SUNDIALS.");
 
-    args.AddOption(&config.T_f, "-T_f", "--temperature_fusion",
-                   "Fusion temperature of the material.");
     args.AddOption(&nDeltaT, "-DT", "--DeltaT",
                    "Temperature interface interval (10^(-n)).");
     args.AddOption(&nEpsilonT, "-ET", "--EpsilonT",

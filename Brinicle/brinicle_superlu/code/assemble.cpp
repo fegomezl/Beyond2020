@@ -53,7 +53,7 @@ void Artic_sea::assemble_system(){
 
     //Initialize operators
     cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets);
 
     //Solve initial velocity field
     flow_oper->SetParameters(X);
@@ -69,7 +69,7 @@ void Artic_sea::assemble_system(){
     
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++){
-        double T_f = config.T_f + T_fun((*phi)(ii));
+        double T_f = T_fun((*phi)(ii));
         (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
     }
 

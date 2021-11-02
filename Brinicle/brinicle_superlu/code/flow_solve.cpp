@@ -36,12 +36,16 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     psi.Distribute(Z.GetBlock(1));
 
     //Calculate velocity
+    ParGridFunction psi_grad(&fespace_v);
     grad.Mult(psi, psi_grad);
-    Psi_grad.SetGridFunction(&psi_grad);
-    rot_Psi_grad.SetBCoef(Psi_grad);
+
+    ParGridFunction rv(&fespace_v);
+    VectorGridFunctionCoefficient Psi_grad(&psi_grad);
+    MatrixVectorProductCoefficient rot_Psi_grad(rot, Psi_grad);
     rv.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
     rv.ParallelProject(rV);
 
+    ParGridFunction v(&fespace_v);
     FunctionCoefficient inv_R(inv_r);
     ScalarVectorProductCoefficient coeff_V(inv_R, rot_Psi_grad);
     v.ProjectDiscCoefficient(coeff_V, GridFunction::ARITHMETIC);
