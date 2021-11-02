@@ -11,21 +11,13 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     H.SetBlock(0,1,C);
     H.SetBlock(1,0,Ct);
     H.SetBlock(1,1,D);
+    solver.SetOperator(H);
+    prec.SetOperator(H);
 
     //Create the complete RHS
     BlockVector B(block_true_offsets);
     B.GetBlock(0) = B_w;
     B.GetBlock(1) = B_psi;
-
-    // Solver using PETSc
-    PetscLinearSolver solver(MPI_COMM_WORLD);
-    PetscFieldSplitSolver prec(MPI_COMM_WORLD, H,"prec_");
-    solver.SetOperator(H);
-    solver.SetPreconditioner(prec);
-    solver.SetAbsTol(0.0);
-    solver.SetTol(1e-12);
-    solver.SetMaxIter(300);
-    solver.SetPrintLevel(0);
 
     //Solve the linear system Ax=B
     solver.Mult(B, Z);

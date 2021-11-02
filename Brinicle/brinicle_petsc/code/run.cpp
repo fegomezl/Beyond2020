@@ -34,10 +34,6 @@ void Artic_sea::run(const char *mesh_file){
 
 Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
-    delete m_theta; 
-    delete m_phi;
-    delete k_theta;
-    delete k_phi;
     delete M_theta; 
     delete M_e_theta; 
     delete M_0_theta; 

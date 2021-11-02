@@ -149,53 +149,35 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     coeff_rCV.SetBCoef(coeff_rV);
 
     //Create corresponding bilinear forms
-    delete m_theta;
     delete M_theta;
     delete M_e_theta;
     delete M_0_theta;
-    m_theta = new ParBilinearForm(&fespace);
-    m_theta->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    m_theta->Assemble();
-    m_theta->Finalize();
-    M_theta = m_theta->ParallelAssemble();
+    ParBilinearForm m_theta(&fespace);
+    m_theta.AddDomainIntegrator(new MassIntegrator(coeff_rC));
+    m_theta.Assemble();
+    m_theta.Finalize();
+    M_theta = m_theta.ParallelAssemble();
     M_e_theta = M_theta->EliminateRowsCols(ess_tdof_theta);
-    M_0_theta = m_theta->ParallelAssemble();
+    M_0_theta = m_theta.ParallelAssemble();
 
     M_theta_prec.SetOperator(*M_theta);
     M_theta_solver.SetOperator(*M_theta);
 
-    delete m_phi;
-    delete M_phi;
-    delete M_e_phi;
-    delete M_0_phi;
-    m_phi = new ParBilinearForm(&fespace);
-    m_phi->AddDomainIntegrator(new MassIntegrator(coeff_r));
-    m_phi->Assemble();
-    m_phi->Finalize();
-    M_phi = m_phi->ParallelAssemble();
-    M_e_phi = M_phi->EliminateRowsCols(ess_tdof_phi);
-    M_0_phi = m_phi->ParallelAssemble();
-
-    M_phi_prec.SetOperator(*M_phi);
-    M_phi_solver.SetOperator(*M_phi);
-
-    delete k_theta;
     delete K_0_theta;
-    k_theta = new ParBilinearForm(&fespace);
-    k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
-    k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
-    k_theta->Assemble();
-    k_theta->Finalize();
-    K_0_theta = k_theta->ParallelAssemble();
+    ParBilinearForm k_theta(&fespace);
+    k_theta.AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
+    k_theta.AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
+    k_theta.Assemble();
+    k_theta.Finalize();
+    K_0_theta = k_theta.ParallelAssemble();
 
-    delete k_phi;
     delete K_0_phi;
-    k_phi = new ParBilinearForm(&fespace);
-    k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi->Assemble();
-    k_phi->Finalize();
-    K_0_phi = k_phi->ParallelAssemble();
+    ParBilinearForm k_phi(&fespace);
+    k_phi.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
+    k_phi.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k_phi.Assemble();
+    k_phi.Finalize();
+    K_0_phi = k_phi.ParallelAssemble();
 }
 
 void Flow_Operator::SetParameters(const BlockVector &X){

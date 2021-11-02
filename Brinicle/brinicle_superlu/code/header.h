@@ -62,9 +62,6 @@ class Conduction_Operator : public TimeDependentOperator{
         Array<int> ess_tdof_theta, ess_tdof_phi;
 
         //System objects
-        ParBilinearForm *m_theta, *m_phi;        //Mass operators
-        ParBilinearForm *k_theta, *k_phi;        //Difussion operators
-
         HypreParMatrix *M_theta, *M_e_theta, *M_0_theta,    *M_phi, *M_e_phi, *M_0_phi;
         HypreParMatrix *K_0_theta,                          *K_0_phi;
         HypreParMatrix *T_theta, *T_e_theta,                *T_phi, *T_e_phi;

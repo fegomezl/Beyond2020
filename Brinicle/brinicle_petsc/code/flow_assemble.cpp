@@ -11,6 +11,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     config(config),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
+    psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
     W(&fespace), Psi(&fespace),
     B_w(&fespace), B_psi(&fespace),
     ess_bdr_psi(attributes), ess_bdr_w(attributes),
@@ -18,7 +19,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     bdr_psi_closed_down(attributes), bdr_psi_closed_up(attributes),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
     M_e(NULL), D_e(NULL), C_e(NULL), Ct_e(NULL),
-    psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
+    solver(MPI_COMM_WORLD), prec(MPI_COMM_WORLD, solver, "prec_"),
     theta(&fespace), theta_dr(&fespace), 
     phi(&fespace), phi_dr(&fespace), 
     phase(&fespace), eta(&fespace), psi_grad(&fespace_v), 
@@ -112,6 +113,13 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     g.ParallelAssemble(B_w);
     C_e->Mult(Psi, B_w, -1., 1.);
     EliminateBC(*M, *M_e, ess_tdof_w, W, B_w);
+
+    //Create solver
+    solver.SetAbsTol(0.0);
+    solver.SetTol(1e-12);
+    solver.SetMaxIter(300);
+    solver.SetPrintLevel(0);
+    solver.SetPreconditioner(prec);
 
     //Create gradient interpolator
     grad.AddDomainIntegrator(new GradientInterpolator);

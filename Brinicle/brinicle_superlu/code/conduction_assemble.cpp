@@ -9,8 +9,6 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     TimeDependentOperator(2*fespace.GetTrueVSize(), config.t_init),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
-    m_theta(NULL), m_phi(NULL),
-    k_theta(NULL), k_phi(NULL),
     M_theta(NULL), M_e_theta(NULL), M_0_theta(NULL), M_phi(NULL), M_e_phi(NULL), M_0_phi(NULL),
     K_0_theta(NULL),                                 K_0_phi(NULL),
     T_theta(NULL), T_e_theta(NULL),                  T_phi(NULL), T_e_phi(NULL),
@@ -105,6 +103,18 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     T_phi_solver.SetPrintLevel(0);
     T_phi_prec.SetPrintLevel(0);
     T_phi_solver.SetPreconditioner(T_phi_prec);
+
+    //Set constant bilinear forms
+    ParBilinearForm m_phi(&fespace);
+    m_phi.AddDomainIntegrator(new MassIntegrator(coeff_r));
+    m_phi.Assemble();
+    m_phi.Finalize();
+    M_phi = m_phi.ParallelAssemble();
+    M_e_phi = M_phi->EliminateRowsCols(ess_tdof_phi);
+    M_0_phi = m_phi.ParallelAssemble();
+
+    M_phi_prec.SetOperator(*M_phi);
+    M_phi_solver.SetOperator(*M_phi);
 }
 
 //Initial conditions
