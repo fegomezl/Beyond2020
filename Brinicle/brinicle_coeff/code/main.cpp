@@ -130,8 +130,6 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-    const char *petscrc_file = "settings/petsc_settings";
-    MFEMInitializePetsc(NULL, NULL, petscrc_file, NULL);
 
     {
         c_l = config.c_l;
@@ -147,8 +145,6 @@ int main(int argc, char *argv[]){
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
     }
-
-    MFEMFinalizePetsc();
 
     MPI_Finalize();
 

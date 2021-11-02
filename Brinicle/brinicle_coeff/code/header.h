@@ -110,9 +110,6 @@ class Flow_Operator{
         HypreParMatrix *D,  *D_e;
         HypreParMatrix *C,  *C_e;
         HypreParMatrix *Ct, *Ct_e;
-
-        PetscLinearSolver solver;
-        PetscFieldSplitSolver prec;
       
         //Rotational coefficients
         FunctionCoefficient coeff_r;
@@ -191,6 +188,18 @@ class Artic_sea{
 
         //Print parameters
         ParaViewDataCollection *paraview_out;
+};
+
+class PhaseCoefficient : public Coefficient{
+    public:
+        PhaseCoefficient(const GridFunction *Theta, const GridFunction *Phi, double v_l, double v_s, double inv_DT);
+        virtual double Eval(ElementTransformation &T, const IntegrationPoint &ip);
+    private:
+        const GridFunction *Theta;
+        const GridFunction *Phi;
+        double v_l;
+        double v_s;
+        double inv_DT;
 };
 
 //Simulation parameters

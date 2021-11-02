@@ -68,10 +68,14 @@ void Artic_sea::assemble_system(){
     rv->Distribute(rV);
     
     //Calculate phases
-    for (int ii = 0; ii < phase->Size(); ii++){
+    //GridFunctionCoefficient Theta(theta);
+    //GridFunctionCoefficient Phi(phi);
+    PhaseCoefficient Phase(theta, phi, 1, 0, config.invDeltaT);
+    phase->ProjectCoefficient(Phase);
+    /*for (int ii = 0; ii < phase->Size(); ii++){
         double T_f = T_fun((*phi)(ii));
         (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
-    }
+    }*/
 
     //Normalize stream
     if (config.rescale){

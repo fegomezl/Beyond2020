@@ -1,26 +1,35 @@
 #include "header.h"
 
 void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
-
-    //Create block operator
+    //Create the complete bilinear operator
     //
     //   H = [ M    C ]
     //       [ C^t  D ]
-    BlockOperator H(block_true_offsets);
-    H.SetBlock(0,0,M);
-    H.SetBlock(0,1,C);
-    H.SetBlock(1,0,Ct);
-    H.SetBlock(1,1,D);
-    solver.SetOperator(H);
-    prec.SetOperator(H);
+    Array2D<HypreParMatrix*> HBlocks(2,2);
+    HBlocks(0, 0) = M;
+    HBlocks(0, 1) = C;
+    HBlocks(1, 0) = Ct;
+    HBlocks(1, 1) = D;
+
+    HypreParMatrix H = *HypreParMatrixFromBlocks(HBlocks);
+    SuperLURowLocMatrix A(H);
 
     //Create the complete RHS
     BlockVector B(block_true_offsets);
     B.GetBlock(0) = B_w;
     B.GetBlock(1) = B_psi;
 
+    //Set solver
+    SuperLUSolver superlu(MPI_COMM_WORLD);
+    superlu.SetOperator(A);
+    superlu.SetPrintStatistics(false);
+    superlu.SetSymmetricPattern(true);
+    superlu.SetColumnPermutation(superlu::PARMETIS);
+    superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
+
     //Solve the linear system Ax=B
-    solver.Mult(B, Z);
+    superlu.Mult(B, Z);
+    superlu.DismantleGrid();
 
     //Recover the solution on each proccesor
     w.Distribute(Z.GetBlock(0));

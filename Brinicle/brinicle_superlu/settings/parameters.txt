@@ -12,7 +12,7 @@ settings/tri.geo #Mesh_script
 Simulation parameters
 0.001   #Dt
 0.05    #Final_time
-1       #Visualization_steps
+10      #Visualization_steps
 0       #Rescale_stream?
 
 FE parameters
