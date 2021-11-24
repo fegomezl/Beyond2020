@@ -1,7 +1,6 @@
 #include "header.h"
 
 void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
-
     //Create block operator
     //
     //   H = [ M    C ]
@@ -11,6 +10,7 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     H.SetBlock(0,1,C);
     H.SetBlock(1,0,Ct);
     H.SetBlock(1,1,D);
+
     solver.SetOperator(H);
     prec.SetOperator(H);
 

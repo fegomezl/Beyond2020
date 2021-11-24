@@ -130,7 +130,6 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-
     {
         c_l = config.c_l;
         Q = 0.25*Vel*pow(R_in, -2);
