@@ -67,17 +67,17 @@ void Transport_Operator::SetParameters(const Vector &X){
     GridFunctionCoefficient coeff_A(&aux);
     coeff_rA.SetBCoef(coeff_A);
     
-    config.sigma = 1.;
-    config.kappa = 1.;
-    config.eta   = 1.;
+    config.sigma = -1.;
+    config.kappa = pow((config.order+1),2);
+    config.eta   = 0.;
 
     //Create RHS
     ConstantCoefficient bdr_s(H_s), bdr_l(H_l);
     if (b) delete b;
     if (B) delete B;
     b = new ParLinearForm(&fespace);
-    //b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_l, coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
-    //b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_s, coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
+    b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_l, coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
+    b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_s, coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
     b->Assemble();
     B = b->ParallelAssemble();
 
@@ -88,11 +88,10 @@ void Transport_Operator::SetParameters(const Vector &X){
     k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rA_s));
     k->AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_s, config.sigma, config.kappa));
     //k->AddInteriorFaceIntegrator(new DGDiffusionBR2Integrator(&fespace, config.eta));
-    //k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
-    //k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
-    //k->AddBdrFaceIntegrator(new DGDiffusionBR2Integrator(&fespace, config.eta), ess_bdr);
+    k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
+    k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
+    k->AddBdrFaceIntegrator(new DGDiffusionBR2Integrator(&fespace, config.eta), ess_bdr);
     k->Assemble();
-
     k->Finalize();
     K = k->ParallelAssemble();    
 }
@@ -104,7 +103,7 @@ void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     dX_dt = 0.;
     
     K->Mult(-1., X, 1., Z);
-    Z += *B;
+    //Z += *B;
 
     M_solver.Mult(Z, dX_dt);
 }
@@ -133,7 +132,7 @@ int Transport_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double 
     X_new = X;
 
     M->Mult(X, Z);
-    Z += *B_dt;
+    //Z += *B_dt;
 
     T_solver.Mult(Z, X_new);
     return 0;

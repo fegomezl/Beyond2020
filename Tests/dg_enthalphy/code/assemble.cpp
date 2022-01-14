@@ -90,8 +90,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     ess_bdr_l = 0; ess_bdr_l[1] = 1;
 
     ess_bdr_s = 0; ess_bdr_s[0] = 1;*/
-
-    ess_bdr   = 0;
+    ess_bdr = 0;
     ess_bdr_l = 0;
     ess_bdr_s = 0;
 
@@ -119,12 +118,13 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     M_solver.SetOperator(*M);
 
     //Configure T solver
+    T_prec.SetPrintLevel(0);
+
     T_solver.SetRelTol(config.reltol_conduction);
     T_solver.SetAbsTol(config.abstol_conduction);
     T_solver.SetMaxIter(config.iter_conduction);
     T_solver.SetKDim(10);
     T_solver.SetPrintLevel(0);
-    T_prec.SetPrintLevel(0);
     T_solver.SetPreconditioner(T_prec);
 
     SetParameters(X);
@@ -140,6 +140,10 @@ void zero_f(const Vector &x, Vector &f){
 }
 
 double H_0(const Vector &x){
+    if (x(1) < Z/2)
+        return H_s;
+    else
+        return H_l;
     return H_s + (H_l-H_s)*x(1)/Z;
 }
 
