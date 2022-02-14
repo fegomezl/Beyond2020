@@ -59,8 +59,8 @@ ifeq ($(SHARE_DIR), NULL)
 	@echo 'No share directory.'
 else
 	@echo -e 'Moving graphs ... \c'
-	@rm -rf $(SHARE_DIR)/enthalphy
-	@cp -r results $(SHARE_DIR)/enthalphy
+	@rm -rf $(SHARE_DIR)/dg_enthalphy
+	@cp -r results $(SHARE_DIR)/dg_enthalphy
 	@echo -e 'Done!'
 endif
 
