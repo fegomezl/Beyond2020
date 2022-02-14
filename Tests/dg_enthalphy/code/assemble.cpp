@@ -84,15 +84,13 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     //            \------------/
     //                  0
     
-    /*ess_bdr[0] = 1;  ess_bdr[1] = 1;
+    ess_bdr = 0;
+    ess_bdr[0] = 1;  ess_bdr[1] = 1;
     ess_bdr[2] = 0;  ess_bdr[3] = 0;
 
     ess_bdr_l = 0; ess_bdr_l[1] = 1;
 
-    ess_bdr_s = 0; ess_bdr_s[0] = 1;*/
-    ess_bdr = 0; ess_bdr[0] = 1;
-    ess_bdr_l = 0;
-    ess_bdr_s = 0;
+    ess_bdr_s = 0; ess_bdr_s[0] = 1;
 
     //Define initial condition
     FunctionCoefficient H_0_coeff(H_0);
@@ -140,10 +138,10 @@ void zero_f(const Vector &x, Vector &f){
 }
 
 double H_0(const Vector &x){
-    if (x(1) < Z/2)
+    /*if (x(1) < Z/2)
         return H_s;
     else
-        return H_l;
+        return H_l;*/
     return H_s + (H_l-H_s)*x(1)/Z;
 }
 

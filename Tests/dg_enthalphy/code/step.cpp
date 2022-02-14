@@ -48,8 +48,10 @@ void Transport_Operator::SetParameters(const Vector &X){
     for (int ii = 0; ii < aux.Size(); ii++){
         //Map option
         double H = aux(ii);
-        aux(ii) = config.a_s*(0.5*(1 - tanh(5*JumpScale*(H+1))))
-                + config.a_l*(0.5*(1 + tanh(5*JumpScale*(H-1))));
+        aux(ii) = config.a_s*(0.5*(1 - tanh(5*JumpScale*(H))))
+                + config.a_l*(0.5*(1 + tanh(5*JumpScale*(H))));
+        //aux(ii) = config.a_s*(0.5*(1 - tanh(5*JumpScale*(H+1))))
+        //        + config.a_l*(0.5*(1 + tanh(5*JumpScale*(H-1))));
 
         //Conditional option
         /*
@@ -67,8 +69,8 @@ void Transport_Operator::SetParameters(const Vector &X){
     GridFunctionCoefficient coeff_A(&aux);
     coeff_rA.SetBCoef(coeff_A);
     
-    config.sigma = -1.;
-    config.kappa = pow((config.order+1),2);
+    config.sigma = 1.;
+    config.kappa = 0.;//pow((config.order+1),2);
     config.eta   = 0.;
 
     //Create RHS
@@ -76,9 +78,8 @@ void Transport_Operator::SetParameters(const Vector &X){
     if (b) delete b;
     if (B) delete B;
     b = new ParLinearForm(&fespace);
-    b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_l, coeff_rA_l, config.sigma, config.kappa), ess_bdr);
-    //b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_l, coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
-    //b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_s, coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
+    b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_l, coeff_rA, config.sigma, config.kappa), ess_bdr_l);
+    b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_s, coeff_rA, config.sigma, config.kappa), ess_bdr_s);
     b->Assemble();
     B = b->ParallelAssemble();
 
@@ -86,11 +87,10 @@ void Transport_Operator::SetParameters(const Vector &X){
     if (k) delete k;
     if (K) delete K;
     k = new ParBilinearForm(&fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rA_l));
-    k->AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa));
-    k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa), ess_bdr);
-    //k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
-    //k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
+    k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rA));
+    k->AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rA, config.sigma, config.kappa));
+    k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA, config.sigma, config.kappa), ess_bdr_l);
+    k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA, config.sigma, config.kappa), ess_bdr_s);
 
     //Dont know how it works
     //k->AddInteriorFaceIntegrator(new DGDiffusionBR2Integrator(&fespace, config.eta));
