@@ -90,7 +90,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     ess_bdr_l = 0; ess_bdr_l[1] = 1;
 
     ess_bdr_s = 0; ess_bdr_s[0] = 1;*/
-    ess_bdr = 0;
+    ess_bdr = 0; ess_bdr[0] = 1;
     ess_bdr_l = 0;
     ess_bdr_s = 0;
 

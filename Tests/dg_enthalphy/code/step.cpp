@@ -76,8 +76,9 @@ void Transport_Operator::SetParameters(const Vector &X){
     if (b) delete b;
     if (B) delete B;
     b = new ParLinearForm(&fespace);
-    b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_l, coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
-    b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_s, coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
+    b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_l, coeff_rA_l, config.sigma, config.kappa), ess_bdr);
+    //b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_l, coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
+    //b->AddBdrFaceIntegrator(new DGDirichletLFIntegrator(bdr_s, coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
     b->Assemble();
     B = b->ParallelAssemble();
 
@@ -85,12 +86,16 @@ void Transport_Operator::SetParameters(const Vector &X){
     if (k) delete k;
     if (K) delete K;
     k = new ParBilinearForm(&fespace);
-    k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rA_s));
-    k->AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_s, config.sigma, config.kappa));
+    k->AddDomainIntegrator(new DiffusionIntegrator(coeff_rA_l));
+    k->AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa));
+    k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa), ess_bdr);
+    //k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
+    //k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
+
+    //Dont know how it works
     //k->AddInteriorFaceIntegrator(new DGDiffusionBR2Integrator(&fespace, config.eta));
-    k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_l, config.sigma, config.kappa), ess_bdr_l);
-    k->AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rA_s, config.sigma, config.kappa), ess_bdr_s);
-    k->AddBdrFaceIntegrator(new DGDiffusionBR2Integrator(&fespace, config.eta), ess_bdr);
+    //k->AddBdrFaceIntegrator(new DGDiffusionBR2Integrator(&fespace, config.eta), ess_bdr);
+
     k->Assemble();
     k->Finalize();
     K = k->ParallelAssemble();    
@@ -103,12 +108,12 @@ void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     dX_dt = 0.;
     
     K->Mult(-1., X, 1., Z);
-    //Z += *B;
+    Z.Add(1., *B);
 
     M_solver.Mult(Z, dX_dt);
 }
 
-int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
+int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &RHS, int j_update, int *j_status, double scaled_dt){
     //Setup the ODE Jacobian T = M + dt*K
     if (T) delete T;
     T = Add(1., *M, scaled_dt, *K);
@@ -118,8 +123,7 @@ int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j
     //Set dt for RHS
     if (B_dt) delete B_dt;
     B_dt = new HypreParVector(&fespace);
-    *B_dt = *B;
-    *B_dt *= scaled_dt;
+    B_dt->Set(scaled_dt, *B);
 
     *j_status = 1;
     return 0;
@@ -132,7 +136,7 @@ int Transport_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double 
     X_new = X;
 
     M->Mult(X, Z);
-    //Z += *B_dt;
+    Z.Add(1., *B_dt);
 
     T_solver.Mult(Z, X_new);
     return 0;

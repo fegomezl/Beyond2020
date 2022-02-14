@@ -38,7 +38,7 @@ class Transport_Operator : public TimeDependentOperator{        //Evolution of t
         void SetParameters(const Vector &X);    //Update parameters from previous step
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Standard solver
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);  //Sundials setup
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &RHS, int j_update, int *j_status, double scaled_dt);  //Sundials setup
 	    virtual int SUNImplicitSolve(const Vector &X, Vector &X_new, double tol);   //Sundials solver
 
         virtual ~Transport_Operator();
