@@ -142,7 +142,8 @@ double H_0(const Vector &x){
         return H_s;
     else
         return H_l;*/
-    return H_s + (H_l-H_s)*x(1)/Z;
+    //return H_s + (H_l-H_s)*x(1)/Z;
+    return H_l;
 }
 
 double H(const double T){
