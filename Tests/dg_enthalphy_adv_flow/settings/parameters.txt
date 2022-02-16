@@ -1,0 +1,29 @@
+Mesh Parameters
+settings/square.geo #Mesh_script
+10 #R
+10 #Z
+10 #Rcells
+10 #Zcells
+
+Simulation parameters
+0.001   #Dt
+1       #Final_time
+10      #Visualization_steps
+
+FE parameters
+2          #Refinements
+1          #Order
+0          #abstol(Conduction)
+0.00000001 #reltol(Conduction)
+100        #iter(Conduction)
+0.00001    #abstol(SUNDIALS)
+0.00001    #reltol(SUNDIALS)
+
+Physical parameters
+9          #JumpScale(exp)
+10         #Liquid_heat_diffusion
+100        #Solid_heat_diffusion
+
+Benchmark parameters
+10          #Liquid_temperature
+10         #Solid_temperature(abs)
