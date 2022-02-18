@@ -37,11 +37,6 @@ void Artic_sea::assemble_system(){
 
     //Initialize operators
     transport_oper = new Transport_Operator(config, *fespace_L2, *fespace_ND, dim, pmesh->bdr_attributes.Max(), *X);
-
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << "a\n";
-    MPI_Barrier(MPI_COMM_WORLD);
     flow_oper = new Flow_Operator(config, *fespace_H1, *fespace_L2, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1);
 
     //Solve the initial velocity field

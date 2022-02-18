@@ -4,7 +4,7 @@
 double bdr_vorticity(const Vector &x);
 double bdr_stream(const Vector &x);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_L2, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_true_H1):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_L2, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1):
     config(config),
     fespace_H1(fespace_H1), fespace_L2(fespace_L2), fespace_ND(fespace_ND),
     block_offsets_H1(block_offsets_H1),
