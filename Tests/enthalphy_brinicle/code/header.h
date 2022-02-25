@@ -226,6 +226,7 @@ extern double FusionDiffusivity(const double H, const double S);    //Diffusion 
 extern double InversePermeability(const double H);                  //Inverse of the brinkman penalization permeability
 extern double ExpansivityEnthalphy(const double H, const double S); //Expansivity coefficient for the enthalphy gradient
 extern double ExpansivitySalinity(const double H, const double S);  //Expansivity coefficient for the salinity gradient
+extern double Buoyancy(const double H, const double S);             //Buoyancy coefficient
 
 //Relationship between variables
 extern double TStoHS(const double T, const double S);  //Map from temperature-salinity to enthaphy-salinity

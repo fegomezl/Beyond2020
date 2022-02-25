@@ -16,6 +16,7 @@ double FusionDiffusivity(const double H, const double S);
 double InversePermeability(const double H); 
 double ExpansivityEnthalphy(const double H, const double S);
 double ExpansivitySalinity(const double H, const double S);
+double Buoyancy(const double H, const double S);
 
 //Relationship between variables
 double TStoHS(const double T, const double S);
@@ -170,8 +171,6 @@ double ExpansivityEnthalphy(const double H, const double S){
            a3 = 221.1715;
     return Phase(H)*((a0 + a1*(H-1) + a2*pow(H-1, 2) + a3*pow(H-1, 3))*S 
                    + (b0 + b1*(H-1))*pow(abs(S), 1.5))*Scale;
-    return Phase(H)*(0.)*Scale;
-
 } 
 
 double ExpansivitySalinity(const double H, const double S){
@@ -183,6 +182,18 @@ double ExpansivitySalinity(const double H, const double S){
            a4 = 55.29286;
     return Phase(H)*((a0 + a1*(H-1) + a2*pow(H-1, 2) + a3*pow(H-1, 3) + a4*pow(H-1, 4)) +
            (b0 + b1*(H-1) + b2*pow(H-1, 2))*pow(abs(S), 0.5) + (c0)*S)*Scale;
+}
+
+double Buoyancy(const double H, const double S){
+    double Scale = pow(LenghtScale*TimeScale, -1);
+    double a0 = 2697.0,   b0 = -59.8,    c0 = 16,
+           a1 = -562.4,   b1 = 45.5,
+           a2 = 442.7,    b2 = -32.1,
+           a3 = -199.402,
+           a4 = 55.29286;
+    return Phase(H)*((a0 + a1*(H-1) + a2*pow(H-1, 2) + a3*pow(H-1, 3) + a4*pow(H-1, 4))*S +
+           (b0 + b1*(H-1) + b2*pow(H-1, 2))*pow(abs(S), 1.5) + (c0)*pow(S, 2))*Scale;
+
 }
 
 double TStoHS(const double T, const double S){
