@@ -1,23 +1,38 @@
 Mesh Parameters
-settings/square.geo #Mesh_script
-10 #R
-10 #Z
-10 #Rcells
-10 #Zcells
+settings/tri.geo #Mesh_script
+10  #R
+10  #Z
+2   #Inflow
+5   #Outflow
+10  #Rcells
+10  #Zcells
 
 Simulation parameters
 0.001   #Dt
-1       #Final_time
-10      #Visualization_steps
+0.01    #FinalTime
+10      #VisualizationDteps
+1       #LenghtScale
+1       #TimeScale
 
 FE parameters
 2          #Refinements
 1          #Order
-0          #abstol(Conduction)
-0.00000001 #reltol(Conduction)
-100        #iter(Conduction)
-0.00001    #abstol(SUNDIALS)
-0.00001    #reltol(SUNDIALS)
+0          #Abstol(Conduction)
+0.00000001 #Reltol(Conduction)
+100        #Iter(Conduction)
+0.00001    #Abstol(SUNDIALS)
+0.00001    #Reltol(SUNDIALS)
+
+Computational parameters
+9          #Epsilon(Exp)
 
 Physical parameters
-9          #JumpScale(exp)
+175     #VelocityInflow
+-2      #InitialTemperature
+-20     #InflowTemperature
+3.5     #InitialSalinity
+20      #InflowSalinity
+0       #NucleationLength
+4       #NucleationHeight
+-10     #NucleationTemperature
+22.5    #NucleationSalinity

@@ -192,10 +192,22 @@ class Artic_sea{
 
 //Simulation parameters
 extern double R, Z;         //Dimensions of the domain
+extern double R_in, Z_out;  //Dimensions of the flow entrance and exit
 extern double LenghtScale;  //Scaling for the lenght dimensions
 extern double TimeScale;    //Scaling for the time dimensions
 extern double JumpScale;    //Size of the indetermination window in heaviside functions (inverse)
 extern double Epsilon;      //Size of the indetermination window in heaviside functions
+
+extern double InflowVelocity;           //Velocity of the inflow
+extern double InflowFlux;               //Flux of the given inflow velocity field
+extern double InitialTemperature;       //Initial temperature of the domain
+extern double InflowTemperature;        //Temperature of the inflow
+extern double InitialSalinity;          //Initial salinity of the domain
+extern double InflowSalinity;           //Salinity of the inflow
+extern double NucleationLength;         //Lenght of the nucleation point
+extern double NucleationHeight;         //Height of the nucleation point
+extern double NucleationTemperature;    //Temperature of the nucleation point
+extern double NucleationSalinity;       //Salinity of the nucleation point
 
 //Rotational functions
 extern double r_f(const Vector &x);                     //Function for r

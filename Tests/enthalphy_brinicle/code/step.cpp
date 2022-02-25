@@ -175,8 +175,8 @@ void Flow_Operator::SetParameters(const BlockVector &X){
 
     //Define the non-constant RHS
     ParLinearForm b1(&fespace_H1);
-    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_enthalphy));
-    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_salinity));
+    //b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_enthalphy));
+    //b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_salinity));
     b1.Assemble();
     b1.ParallelAssemble(B1);
     A10_e->Mult(Vorticity, B1, -1., 1.);

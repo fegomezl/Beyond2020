@@ -2,11 +2,24 @@
 
 double R;
 double Z;
+double R_in;
+double Z_out;
 
-double LenghtScale = 1;  
-double TimeScale = 1;    
+double LenghtScale;  
+double TimeScale;    
 double JumpScale;
 double Epsilon;
+
+double InflowVelocity;
+double InflowFlux;
+double InitialTemperature;       
+double InflowTemperature;        
+double InitialSalinity;          
+double InflowSalinity;           
+double NucleationLength;         
+double NucleationHeight;         
+double NucleationTemperature;    
+double NucleationSalinity;       
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -18,7 +31,7 @@ int main(int argc, char *argv[]){
     //Define program paramenters
     const char *mesh_file;
     Config config((pid == 0), nproc);
-    int nJumpScale = 0;
+    int nEpsilon = 0;
 
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
@@ -27,6 +40,10 @@ int main(int argc, char *argv[]){
                    "Radius of the cilinder.");
     args.AddOption(&Z, "-Z", "--Height",
                    "Height of the cilinder.");
+    args.AddOption(&R_in, "-Ri", "--Radius_in",
+                   "Radius of inflow.");
+    args.AddOption(&Z_out, "-Zo", "--Height_out",
+                   "Height of outflow.");
 
     args.AddOption(&config.dt_init, "-dt", "--time_step",
                    "Initial time step.");
@@ -34,6 +51,10 @@ int main(int argc, char *argv[]){
                    "Final time.");
     args.AddOption(&config.vis_steps_max, "-v_s", "--visualization_steps",
                    "Visualize every n-th timestep.");
+    args.AddOption(&LenghtScale, "-LS", "--lenght_scale",
+                   "Scaling of the lenght dimension (currently in mm).");
+    args.AddOption(&TimeScale, "-TS", "--time_scale",
+                   "Scaling of the time dimension (currently in min).");
 
     args.AddOption(&config.refinements, "-r", "--refinements",
                    "Number of total uniform refinements.");
@@ -50,8 +71,27 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.reltol_sundials, "-reltol_s", "--tolrelativeSUNDIALS",
                    "Relative tolerance of SUNDIALS.");
 
-    args.AddOption(&nJumpScale, "-nJ", "--nJumpScale",
-                   "Inverse of the lenght of state indetermination in jump functions (10^(-n)).");
+    args.AddOption(&nEpsilon, "-nE", "--nEpsilon",
+                   "Lenght of state indetermination in heaviside functions (10^(-n)).");
+
+    args.AddOption(&InflowVelocity, "-V", "--velocity",
+                   "Velocity of the inflow.");
+    args.AddOption(&InitialTemperature, "-To", "--initial_temperature",
+                   "Initial temperature of the domain.");
+    args.AddOption(&InflowTemperature, "-Ti", "--inflow_temperature",
+                   "Temperature of the inflow.");
+    args.AddOption(&InitialSalinity, "-So", "--initial_salinity",
+                   "Initial salinity of the domain.");
+    args.AddOption(&InflowSalinity, "-Si", "--inflow_salinity",
+                   "Salinity of the inflow.");
+    args.AddOption(&NucleationLength, "-Nl", "--nucleation_lenght",
+                   "Lenght of the nucleation point.");
+    args.AddOption(&NucleationHeight, "-Nh", "--nucleation_height",
+                   "Height of the nucleation point.");
+    args.AddOption(&NucleationTemperature, "-Nt", "--nucleation_temperature",
+                   "Temperature of the nucleation point.");
+    args.AddOption(&NucleationSalinity, "-Ns", "--nucleation_salinity",
+                   "Salinity of the nucleation point.");
 
     //Check if parameters were read correctly
     args.Parse();
@@ -65,13 +105,14 @@ int main(int argc, char *argv[]){
     //Run the program
     {
         tic();
-        JumpScale = pow(10, nJumpScale);
-        Epsilon = pow(10, -nJumpScale);
+        InflowFlux = 0.25*InflowVelocity*pow(R_in, -2);
+        Epsilon = pow(10, -nEpsilon);
+        JumpScale = pow(10, nEpsilon);
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
     }
 
     MPI_Finalize();
 
-    return 0;
+return 0;
 }

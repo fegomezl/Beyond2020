@@ -1,6 +1,9 @@
 #include "header.h"
 
 //Initial condition
+double enthalphy_0_f(const Vector &x);
+
+double salinity_0_f(const Vector &x);
 
 Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
     config(config),
@@ -55,12 +58,12 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 
     //Define initial condition
     ParGridFunction enthalphy(&fespace_H1);
-    ConstantCoefficient coeff_enthalphy_0(1.1);
+    FunctionCoefficient coeff_enthalphy_0(enthalphy_0_f);
     enthalphy.ProjectCoefficient(coeff_enthalphy_0);
     enthalphy.GetTrueDofs(X.GetBlock(0));
 
     ParGridFunction salinity(&fespace_H1);
-    ConstantCoefficient coeff_salinity_0(0.);
+    FunctionCoefficient coeff_salinity_0(salinity_0_f);
     salinity.ProjectCoefficient(coeff_salinity_0);
     salinity.GetTrueDofs(X.GetBlock(1));
 
@@ -114,4 +117,18 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     T1_solver.SetMaxIter(config.iter_conduction);
     T1_solver.SetPrintLevel(0);
     T1_solver.SetPreconditioner(T1_prec);
+}
+
+double enthalphy_0_f(const Vector &x){
+    if ((x(0) > R_in && x(1) > Z - NucleationHeight) || pow(x(0)-(R_in + NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2))
+        return NucleationTemperature;
+    else
+        return InitialTemperature;
+}
+
+double salinity_0_f(const Vector &x){
+    if ((x(0) > R_in && x(1) > Z - NucleationHeight) || pow(x(0)-(R_in + NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2))
+        return NucleationSalinity;
+    else
+        return InitialSalinity;
 }

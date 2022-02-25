@@ -49,7 +49,7 @@ Transport_Operator::~Transport_Operator(){
     delete T0;
     delete T1;
     delete T0_e;
-    delete T0_e;
+    delete T1_e;
     delete B0;
     delete B1;
     delete B0_dt;

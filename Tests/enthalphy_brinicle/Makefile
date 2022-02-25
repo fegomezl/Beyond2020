@@ -4,23 +4,38 @@ include ../../local_config.mk
 SCRIPT=$(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
 R=$(shell sed -n 3p settings/parameters.txt | tr -d -c 0-9.)
 Z=$(shell sed -n 4p settings/parameters.txt | tr -d -c 0-9.)
+IN=$(shell sed -n 5p settings/parameters.txt | tr -d -c 0-9.)
+OUT=$(shell sed -n 6p settings/parameters.txt | tr -d -c 0-9.)
 
 #Simulation parameters
-DT=$(shell sed -n 9p settings/parameters.txt | tr -d -c 0-9.)
-T_FI=$(shell sed -n 10p settings/parameters.txt | tr -d -c 0-9.)
-VIS=$(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.)
+DT=$(shell sed -n 11p settings/parameters.txt | tr -d -c 0-9.)
+T_FI=$(shell sed -n 12p settings/parameters.txt | tr -d -c 0-9.)
+VIS=$(shell sed -n 13p settings/parameters.txt | tr -d -c 0-9.)
+LS=$(shell sed -n 14p settings/parameters.txt | tr -d -c 0-9.)
+TS=$(shell sed -n 15p settings/parameters.txt | tr -d -c 0-9.)
 
 #FE parameters
-REF=$(shell sed -n 14p settings/parameters.txt | tr -d -c 0-9.)
-ORDER=$(shell sed -n 15p settings/parameters.txt | tr -d -c 0-9.)
-ABST_C=$(shell sed -n 16p settings/parameters.txt | tr -d -c 0-9.)
-RELT_C=$(shell sed -n 17p settings/parameters.txt | tr -d -c 0-9.)
-ITER_C=$(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.)
-ABST_S=$(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
-RELT_S=$(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
+REF=$(shell sed -n 18p settings/parameters.txt | tr -d -c 0-9.)
+ORDER=$(shell sed -n 19p settings/parameters.txt | tr -d -c 0-9.)
+ABST_C=$(shell sed -n 20p settings/parameters.txt | tr -d -c 0-9.)
+RELT_C=$(shell sed -n 21p settings/parameters.txt | tr -d -c 0-9.)
+ITER_C=$(shell sed -n 22p settings/parameters.txt | tr -d -c 0-9.)
+ABST_S=$(shell sed -n 23p settings/parameters.txt | tr -d -c 0-9.)
+RELT_S=$(shell sed -n 24p settings/parameters.txt | tr -d -c 0-9.)
+
+#Computational parameters
+EPSILON=$(shell sed -n 27p settings/parameters.txt | tr -d -c 0-9.)
 
 #Physical parameters
-JUMPSCALE=$(shell sed -n 23p settings/parameters.txt | tr -d -c 0-9.)
+V=$(shell sed -n 30p settings/parameters.txt | tr -d -c 0-9.)
+TO=$(shell sed -n 31p settings/parameters.txt | tr -d -c 0-9.-)
+TI=$(shell sed -n 32p settings/parameters.txt | tr -d -c 0-9.-)
+SO=$(shell sed -n 33p settings/parameters.txt | tr -d -c 0-9.)
+SI=$(shell sed -n 34p settings/parameters.txt | tr -d -c 0-9.)
+NL=$(shell sed -n 35p settings/parameters.txt | tr -d -c 0-9.) 
+NH=$(shell sed -n 36p settings/parameters.txt | tr -d -c 0-9.) 
+NT=$(shell sed -n 37p settings/parameters.txt | tr -d -c 0-9.-)  
+NS=$(shell sed -n 38p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
@@ -34,11 +49,14 @@ DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
 all: main.x results/mesh.msh
 	@echo -e 'Running program ... \n'
 	@$(RUN)$< --mesh results/mesh.msh -R $(R) -Z $(Z) \
+			  -Ri $(IN) -Zo $(OUT) \
 			  -dt $(DT) -t_f $(T_FI) -v_s $(VIS) \
 			  -r $(REF) -o $(ORDER) \
 			  -abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 			  -abstol_s $(ABST_S) -reltol_s $(RELT_S) \
-			  -nJ $(JUMPSCALE) 
+			  -nE $(EPSILON) -V $(V) \
+			  -To $(TO) -Ti $(TI) -So $(SO) -Si $(SI) \
+			  -Nl $(NL) -Nh $(NH) -Nt $(NT) -Ns $(NS) 
 	@echo -e '\nDone!\n'
 
 main: main.x
