@@ -11,7 +11,7 @@ Artic_sea::Artic_sea(Config config):
     fec_H1(NULL),   fec_L2(NULL),     fec_ND(NULL),
     fespace_H1(NULL), fespace_L2(NULL), fespace_ND(NULL),
     block_offsets_H1(3),    block_offsets_L2(3),
-    temperature(NULL), salinity(NULL), 
+    temperature(NULL), salinity(NULL),  phase(NULL), 
     vorticity(NULL), stream(NULL), 
     velocity(NULL), r_velocity(NULL), 
     Velocity(NULL), r_Velocity(NULL),
@@ -54,9 +54,9 @@ Flow_Operator::~Flow_Operator(){
     delete A00;
     delete A00_e;
     delete A10;
-    delete A01_e;
-    delete A01;
     delete A10_e;
+    delete A01;
+    delete A01_e;
     delete A11;
     delete A11_e;
 }

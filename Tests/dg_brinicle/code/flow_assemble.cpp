@@ -8,7 +8,7 @@ double boundary_stream_out_f(const Vector &x);
 
 Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_L2, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1):
     config(config),
-    fespace_H1(fespace_H1), fespace_ND(fespace_ND), fespace_L2(fespace_L2),
+    fespace_H1(fespace_H1), fespace_L2(fespace_L2), fespace_ND(fespace_ND),
     block_offsets_H1(block_offsets_H1),
     vorticity(&fespace_H1), stream(&fespace_H1),
     Vorticity(&fespace_H1), Stream(&fespace_H1),

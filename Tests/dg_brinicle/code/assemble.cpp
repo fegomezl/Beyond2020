@@ -43,7 +43,7 @@ void Artic_sea::assemble_system(){
         irs[ii] = &(IntRules.Get(ii, order_quad));
 
     //Initialize operators
-    transport_oper = new Transport_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
+    transport_oper = new Transport_Operator(config, *fespace_L2, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_L2, X);
     flow_oper = new Flow_Operator(config, *fespace_H1, *fespace_L2, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1);
 
     //Solve the initial velocity field
@@ -77,6 +77,7 @@ void Artic_sea::assemble_system(){
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", temperature);
     paraview_out->RegisterField("Salinity", salinity);
+    paraview_out->RegisterField("Phase", phase);
     paraview_out->RegisterField("Vorticity", vorticity);
     paraview_out->RegisterField("Stream", stream);
     paraview_out->RegisterField("Velocity", velocity);

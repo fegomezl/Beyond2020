@@ -227,7 +227,7 @@ extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
 extern double FusionPoint(const double S);                              //Fusion temperature at a given salinity
 extern double Phase(const double T, const double S);                    //Phase indicator (1 for liquid and 0 for solid)
 extern double HeatInertia(const double T, const double S);              //Heat capacity over latent heat
-extern double HeatDiffusivity(const double T, const double S);         //Heat conduction over latent heat
+extern double HeatDiffusivity(const double T, const double S);          //Heat conduction over latent heat
 extern double SaltDiffusivity(const double T, const double S);          //Diffusion coefficient for the mass equation
 extern double InversePermeability(const double T, const double S);      //Inverse of the brinkman penalization permeability
 extern double ExpansivityTemperature(const double T, const double S);   //Expansivity coefficient for the temperature gradient

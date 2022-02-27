@@ -9,7 +9,7 @@ settings/tri.geo #Mesh_script
 
 Simulation parameters
 0.001   #Dt
-0.01    #FinalTime
+0.1     #FinalTime
 10      #VisualizationDteps
 1       #LenghtScale
 1       #TimeScale

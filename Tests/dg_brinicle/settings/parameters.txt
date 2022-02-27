@@ -9,7 +9,7 @@ settings/tri.geo #Mesh_script
 
 Simulation parameters
 0.001   #Dt
-0.01    #FinalTime
+0.05     #FinalTime
 10      #VisualizationDteps
 1       #LenghtScale
 1       #TimeScale
@@ -31,8 +31,8 @@ Physical parameters
 -2      #InitialTemperature
 -20     #InflowTemperature
 3.5     #InitialSalinity
-20      #InflowSalinity
+22.5    #InflowSalinity
 0       #NucleationLength
 4       #NucleationHeight
--10     #NucleationTemperature
-22.5    #NucleationSalinity
+-20     #NucleationTemperature
+3.5     #NucleationSalinity

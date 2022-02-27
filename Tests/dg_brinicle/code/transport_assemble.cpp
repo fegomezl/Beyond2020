@@ -56,14 +56,12 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     FunctionCoefficient coeff_temperature_0(temperature_0_f);
     ConstantCoefficient coeff_temperature_in(InflowTemperature);
     temperature.ProjectCoefficient(coeff_temperature_0);
-    temperature.ProjectBdrCoefficient(coeff_temperature_0, ess_bdr_0);
     temperature.GetTrueDofs(X.GetBlock(0));
 
     ParGridFunction salinity(&fespace_L2);
     FunctionCoefficient coeff_salinity_0(salinity_0_f);
     ConstantCoefficient coeff_salinity_in(InflowSalinity);
     salinity.ProjectCoefficient(coeff_salinity_0);
-    salinity.ProjectBdrCoefficient(coeff_salinity_0, ess_bdr_1);
     salinity.GetTrueDofs(X.GetBlock(1));
 
     //Create mass matrix (Mass equation)

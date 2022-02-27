@@ -3,10 +3,6 @@
 void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //From  M(dX_dt) + K(X) = B
     //Solve M(dX_dt) + K(X) = B for dX_dt
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << "a\n";
-    MPI_Barrier(MPI_COMM_WORLD);
     
     //Initialize the corresponding vectors
     HypreParVector dX0_dt(&fespace_L2), dX1_dt(&fespace_L2);
