@@ -1,27 +1,24 @@
 #include "header.h"
 
 //Initial condition
-double enthalphy_0_f(const Vector &x);
-
+double temperature_0_f(const Vector &x);
 double salinity_0_f(const Vector &x);
 
-Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
+Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_L2, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_L2, BlockVector &X):
     config(config),
-    TimeDependentOperator(2*fespace_H1.GetTrueVSize(), 0.),
-    fespace_H1(fespace_H1), fespace_ND(fespace_ND),
-    block_offsets_H1(block_offsets_H1),
+    TimeDependentOperator(2*fespace_L2.GetTrueVSize(), 0.),
+    fespace_L2(fespace_L2), fespace_ND(fespace_ND),
+    block_offsets_L2(block_offsets_L2),
+    ess_bdr_0(attributes), ess_bdr_1(attributes),
     m0(NULL), m1(NULL), 
     k0(NULL), k1(NULL), 
     b0(NULL), b1(NULL), 
     M0(NULL), M1(NULL), 
-    M0_o(NULL), M1_o(NULL), 
-    M0_e(NULL), M1_e(NULL), 
     K0(NULL), K1(NULL), 
     T0(NULL), T1(NULL),
-    T0_e(NULL), T1_e(NULL),
     B0(NULL), B1(NULL), 
     B0_dt(NULL), B1_dt(NULL),
-    Z0(&fespace_H1), Z1(&fespace_H1),
+    Z0(&fespace_L2), Z1(&fespace_L2),
     coeff_r(r_f), 
     coeff_zero(dim, zero_f),
     M0_solver(MPI_COMM_WORLD), M1_solver(MPI_COMM_WORLD), 
@@ -42,59 +39,47 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     //            |                               |
     //            \-------------------------------/
     //
-    Array<int> ess_bdr_0(attributes);
     ess_bdr_0 = 0;
     ess_bdr_0[0] = 0;  ess_bdr_0[1] = 0;
     ess_bdr_0[2] = 0;  ess_bdr_0[3] = 0;
     ess_bdr_0[4] = 1;  ess_bdr_0[5] = 0;
-    fespace_H1.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
+    fespace_L2.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
 
-    Array<int> ess_bdr_1(attributes);
     ess_bdr_1 = 0;
     ess_bdr_1[0] = 0;  ess_bdr_1[1] = 0;
     ess_bdr_1[2] = 0;  ess_bdr_1[3] = 0;
     ess_bdr_1[4] = 1;  ess_bdr_1[5] = 0;
-    fespace_H1.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
+    fespace_L2.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
 
     //Define initial condition
-    ParGridFunction enthalphy(&fespace_H1);
-    FunctionCoefficient coeff_enthalphy_0(enthalphy_0_f);
-    ConstantCoefficient coeff_enthalphy_in(TStoHS(InflowTemperature, InflowSalinity));
-    enthalphy.ProjectCoefficient(coeff_enthalphy_0);
-    enthalphy.ProjectBdrCoefficient(coeff_enthalphy_0, ess_bdr_0);
-    enthalphy.GetTrueDofs(X.GetBlock(0));
+    ParGridFunction temperature(&fespace_L2);
+    FunctionCoefficient coeff_temperature_0(temperature_0_f);
+    ConstantCoefficient coeff_temperature_in(InflowTemperature);
+    temperature.ProjectCoefficient(coeff_temperature_0);
+    temperature.ProjectBdrCoefficient(coeff_temperature_0, ess_bdr_0);
+    temperature.GetTrueDofs(X.GetBlock(0));
 
-    ParGridFunction salinity(&fespace_H1);
+    ParGridFunction salinity(&fespace_L2);
     FunctionCoefficient coeff_salinity_0(salinity_0_f);
+    ConstantCoefficient coeff_salinity_in(InflowSalinity);
     salinity.ProjectCoefficient(coeff_salinity_0);
+    salinity.ProjectBdrCoefficient(coeff_salinity_0, ess_bdr_1);
     salinity.GetTrueDofs(X.GetBlock(1));
 
-    //Create mass matrix
-    m0 = new ParBilinearForm(&fespace_H1);
-    m0->AddDomainIntegrator(new MassIntegrator(coeff_r));
-    m0->Assemble();
-    m0->Finalize();
-    M0 = m0->ParallelAssemble();
-    M0_e = M0->EliminateRowsCols(ess_tdof_0);
-    M0_o = m0->ParallelAssemble();
-
-    m1 = new ParBilinearForm(&fespace_H1);
+    //Create mass matrix (Mass equation)
+    m1 = new ParBilinearForm(&fespace_L2);
     m1->AddDomainIntegrator(new MassIntegrator(coeff_r));
     m1->Assemble();
     m1->Finalize();
     M1 = m1->ParallelAssemble();
-    M1_e = M1->EliminateRowsCols(ess_tdof_1);
-    M1_o = m1->ParallelAssemble();
 
     //Configure M solver
     M0_prec.SetPrintLevel(0);
-    M0_prec.SetOperator(*M0);
     M0_solver.SetTol(config.reltol_conduction);
     M0_solver.SetAbsTol(config.abstol_conduction);
     M0_solver.SetMaxIter(config.iter_conduction);
     M0_solver.SetPrintLevel(0);
     M0_solver.SetPreconditioner(M0_prec);
-    M0_solver.SetOperator(*M0);
 
     M1_prec.SetPrintLevel(0);
     M1_prec.SetOperator(*M1);
@@ -121,25 +106,15 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     T1_solver.SetPreconditioner(T1_prec);
 }
 
-double enthalphy_0_f(const Vector &x){
-    bool NucleationZone;
-    
-    //Plano con saliente circular
-    NucleationZone = (x(0) > R_in && x(1) > Z - NucleationHeight) || pow(x(0)-(R_in + NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2);
-
-    if (NucleationZone)
-        return TStoHS(NucleationTemperature, NucleationSalinity);
+double temperature_0_f(const Vector &x){
+    if ((x(0) > R_in && x(1) > Z - NucleationHeight) || pow(x(0)-(R_in + NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2))
+        return NucleationTemperature;
     else
-        return TStoHS(InitialTemperature, InitialSalinity);
+        return InitialTemperature;
 }
 
 double salinity_0_f(const Vector &x){
-    bool NucleationZone;
-
-    //Plano con saliente circular
-    NucleationZone = (x(0) > R_in && x(1) > Z - NucleationHeight) || pow(x(0)-(R_in + NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2);
-
-    if (NucleationZone)
+    if ((x(0) > R_in && x(1) > Z - NucleationHeight) || pow(x(0)-(R_in + NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2))
         return NucleationSalinity;
     else
         return InitialSalinity;
