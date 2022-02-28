@@ -1,0 +1,53 @@
+Mesh Parameters
+settings/tri.geo #Mesh_script
+0       #Rmin
+10      #Rmax
+0       #Zmin
+20      #Zmax
+2       #Inflow_window_size
+5       #Outflow_window_size
+10      #Rcells
+10      #Zcells
+
+Simulation parameters
+0.001   #Dt
+0.05    #Final_time
+10      #Visualization_steps
+0       #Rescale_stream?
+
+FE parameters
+2          #Refinements
+1          #Order
+0          #abstol(Conduction)
+0.00000001 #reltol(Conduction)
+100        #iter(Conduction)
+0.00001    #abstol(SUNDIALS)
+0.00001    #reltol(SUNDIALS)
+
+Physical parameters
+9       #nDeltaT
+9       #nEpsilonT
+9       #nEpsilonEta
+3.9     #Liquid_volumetric_heat_capacity
+1.9     #Solid_volumetric_heat_capacity
+32.6    #Liquid_thermal_conductivity
+109.5   #Solid_thermal_conductivity
+0.1     #Liquid_diffusion_constant
+0       #Solid_diffusion_constant
+344.9   #Liquid_volumetric_latent_heat
+307.1   #Solid_volumetric_latent_heat
+
+Brinicle conditions
+175     #Velocity_inflow
+-2      #Initial_temperature
+-20     #Inflow_temperature
+3.5     #Initial_salinity
+20      #Inflow_salinity
+0       #Nucleation_length
+4       #Nucleation_height
+-10     #Nucleation_temperature
+22.5    #Nucleation_salinity
+
+Restart conditions
+0          #Restart?
+0          #Initial_time
