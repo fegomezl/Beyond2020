@@ -7,9 +7,9 @@ double boundary_psi(const Vector &x);
 double boundary_psi_in(const Vector &x);
 double boundary_psi_out(const Vector &x);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_dg, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets):
     config(config),
-    fespace(fespace), fespace_v(fespace_v),
+    fespace(fespace), fespace_dg(fespace_dg), fespace_v(fespace_v),
     block_true_offsets(block_true_offsets),
     W(&fespace), Psi(&fespace),
     B_w(&fespace), B_psi(&fespace),

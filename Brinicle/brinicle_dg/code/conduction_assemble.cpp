@@ -4,17 +4,20 @@
 double initial_theta_f(const Vector &x);
 double initial_phi_f(const Vector &x);
 
-Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
+Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace_dg, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets_dg, BlockVector &X):
     config(config),
-    TimeDependentOperator(2*fespace.GetTrueVSize(), config.t_init),
-    fespace(fespace), fespace_v(fespace_v),
-    block_true_offsets(block_true_offsets),
-    M_theta(NULL), M_e_theta(NULL), M_0_theta(NULL), M_phi(NULL), M_e_phi(NULL), M_0_phi(NULL),
-    K_0_theta(NULL),                                 K_0_phi(NULL),
-    T_theta(NULL), T_e_theta(NULL),                  T_phi(NULL), T_e_phi(NULL),
-    Z_theta(&fespace), Z_phi(&fespace),
-    M_theta_solver(fespace.GetComm()), M_phi_solver(fespace.GetComm()),
-    T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
+    TimeDependentOperator(2*fespace_dg.GetTrueVSize(), config.t_init),
+    fespace_dg(fespace_dg), fespace_v(fespace_v),
+    ess_bdr_theta(attributes), ess_bdr_phi(attributes),
+    block_true_offsets_dg(block_true_offsets_dg),
+    M_theta(NULL),  M_phi(NULL),
+    K_theta(NULL),  K_phi(NULL),
+    T_theta(NULL),  T_phi(NULL),
+    B_theta(NULL),  B_phi(NULL),
+    B_dt_theta(NULL),  B_dt_phi(NULL),
+    Z_theta(&fespace_dg), Z_phi(&fespace_dg),
+    M_theta_solver(fespace_dg.GetComm()), M_phi_solver(fespace_dg.GetComm()),
+    T_theta_solver(fespace_dg.GetComm()), T_phi_solver(fespace_dg.GetComm()),
     coeff_r(r_f), zero(dim, zero_f) 
 {
     //Define essential boundary conditions
@@ -33,33 +36,30 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     //            \-------------------------------/
     //                            0
 
-    Array<int> ess_bdr_theta(attributes); ess_bdr_theta = 0;
+    ess_bdr_theta = 0;
     ess_bdr_theta  [0] = 0;   ess_bdr_theta  [1] = 0;   ess_bdr_theta  [3] = 0;
     ess_bdr_theta  [4] = 1;   ess_bdr_theta  [5] = 0;   
-    fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_theta);
+    fespace_dg.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_theta);
 
-    Array<int> ess_bdr_phi(attributes); ess_bdr_phi = 0;
+    ess_bdr_phi = 0;
     ess_bdr_phi  [0] = 0;     ess_bdr_phi  [1] = 0;     ess_bdr_phi  [3] = 0; 
     ess_bdr_phi  [4] = 1;     ess_bdr_phi  [5] = 0;      
-    fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_phi);
+    fespace_dg.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_phi);
 
     //Check that the internal boundaries is always zero.
     ess_bdr_theta  [2] = 0;   ess_bdr_phi  [2] = 0; 
 
     //Apply initial conditions
     if (!config.restart){
-        ParGridFunction theta(&fespace);
+        ParGridFunction theta(&fespace_dg);
         FunctionCoefficient initial_theta(initial_theta_f);
-        ConstantCoefficient theta_nu(theta_n);
         theta.ProjectCoefficient(initial_theta);
-        theta.ProjectBdrCoefficient(theta_nu, ess_bdr_theta);
         theta.ParallelProject(X.GetBlock(0));
         
-        ParGridFunction phi(&fespace);
+        ParGridFunction phi(&fespace_dg);
         FunctionCoefficient initial_phi(initial_phi_f);
         ConstantCoefficient phi_nu(phi_n);
         phi.ProjectCoefficient(initial_phi);
-        phi.ProjectBdrCoefficient(phi_nu, ess_bdr_phi);
         phi.ParallelProject(X.GetBlock(1));
     }
 
@@ -98,13 +98,11 @@ Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &f
     T_phi_solver.SetPreconditioner(T_phi_prec);
 
     //Set constant bilinear forms
-    ParBilinearForm m_phi(&fespace);
+    ParBilinearForm m_phi(&fespace_dg);
     m_phi.AddDomainIntegrator(new MassIntegrator(coeff_r));
     m_phi.Assemble();
     m_phi.Finalize();
     M_phi = m_phi.ParallelAssemble();
-    M_e_phi = M_phi->EliminateRowsCols(ess_tdof_phi);
-    M_0_phi = m_phi.ParallelAssemble();
 
     M_phi_prec.SetOperator(*M_phi);
     M_phi_solver.SetOperator(*M_phi);

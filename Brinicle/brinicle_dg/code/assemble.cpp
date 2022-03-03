@@ -17,8 +17,8 @@ double delta_rho_p_fun(const double &temperature, const double &salinity);
 void Artic_sea::assemble_system(){
     //Define solution x
     if (!config.restart){
-        theta = new ParGridFunction(fespace);
-        phi = new ParGridFunction(fespace);
+        theta = new ParGridFunction(fespace_dg);
+        phi = new ParGridFunction(fespace_dg);
     } else {
         std::ifstream in;
         std::ostringstream oss;
@@ -52,8 +52,8 @@ void Artic_sea::assemble_system(){
         irs[ii] = &(IntRules.Get(ii, order_quad));
 
     //Initialize operators
-    cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets);
+    cond_oper = new Conduction_Operator(config, *fespace_dg, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets_dg, X);
+    flow_oper = new Flow_Operator(config, *fespace, *fespace_dg, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets);
 
     //Solve initial velocity field
     flow_oper->SetParameters(X);

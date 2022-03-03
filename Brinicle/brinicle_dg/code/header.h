@@ -29,6 +29,10 @@ struct Config{
     double reltol_sundials;
     double abstol_sundials;
 
+    double sigma;
+    double kappa;
+    double eta;
+
     double invDeltaT;
     double EpsilonT;
     double EpsilonEta;
@@ -43,7 +47,7 @@ struct Config{
 
 class Conduction_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
+        Conduction_Operator(Config config, ParFiniteElementSpace &fespace_dg, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets_dg, BlockVector &X);
 
         void SetParameters(const BlockVector &X, const Vector &rV);
 
@@ -56,14 +60,18 @@ class Conduction_Operator : public TimeDependentOperator{
         //Global parameters
         Config config;
 
-        ParFiniteElementSpace &fespace, &fespace_v;
-        Array<int> block_true_offsets;
+        ParFiniteElementSpace &fespace_dg, &fespace_v;
+        Array<int> block_true_offsets_dg;
+        Array<int> ess_bdr_theta, ess_bdr_phi;
         Array<int> ess_tdof_theta, ess_tdof_phi;
 
         //System objects
-        HypreParMatrix *M_theta, *M_e_theta, *M_0_theta,    *M_phi, *M_e_phi, *M_0_phi;
-        HypreParMatrix *K_0_theta,                          *K_0_phi;
-        HypreParMatrix *T_theta, *T_e_theta,                *T_phi, *T_e_phi;
+        HypreParMatrix *M_theta,    *M_phi;
+        HypreParMatrix *K_theta,    *K_phi;
+        HypreParMatrix *T_theta,    *T_phi;
+
+        HypreParVector *B_theta, *B_phi;
+        HypreParVector *B_dt_theta, *B_dt_phi;
 
         mutable HypreParVector Z_theta, Z_phi;
 
@@ -80,7 +88,7 @@ class Conduction_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
     public:
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets);
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_dg, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets);
 
         void SetParameters(const BlockVector &X);
 
@@ -92,7 +100,7 @@ class Flow_Operator{
         Config config;
 
         //Mesh objects
-        ParFiniteElementSpace &fespace, &fespace_v;
+        ParFiniteElementSpace &fespace, &fespace_dg, &fespace_v;
         Array<int> block_true_offsets;
         Array<int> ess_tdof_w, ess_tdof_psi;
 
@@ -149,17 +157,21 @@ class Artic_sea{
         ParMesh *pmesh;
 
         FiniteElementCollection *fec;
+        FiniteElementCollection *fec_dg;
         FiniteElementCollection *fec_v;
 
         ParFiniteElementSpace *fespace;
+        ParFiniteElementSpace *fespace_dg;
         ParFiniteElementSpace *fespace_v;
 
         Array<int> block_true_offsets;
+        Array<int> block_true_offsets_dg;
         
         int dim;
         double h_min;
         int serial_refinements;
         HYPRE_Int size;
+        HYPRE_Int size_dg;
         HYPRE_Int size_v;
 
         //System objects

@@ -51,6 +51,10 @@ void Artic_sea::make_grid(const char *mesh_file){
     fespace = new ParFiniteElementSpace(pmesh, fec);
     size = fespace->GlobalTrueVSize();
 
+    fec_dg = new L2_FECollection(config.order, dim);
+    fespace_dg = new ParFiniteElementSpace(pmesh, fec_dg);
+    size_dg = fespace_dg->GlobalTrueVSize();
+
     fec_v = new ND_FECollection(config.order, dim);
     fespace_v = new ParFiniteElementSpace(pmesh, fec_v);
     size_v = fespace_v->GlobalTrueVSize();
@@ -61,6 +65,11 @@ void Artic_sea::make_grid(const char *mesh_file){
     block_true_offsets[2] = fespace->TrueVSize();
     block_true_offsets.PartialSum();
 
-    X.Update(block_true_offsets);
+    block_true_offsets_dg[0] = 0;
+    block_true_offsets_dg[1] = fespace_dg->TrueVSize();
+    block_true_offsets_dg[2] = fespace_dg->TrueVSize();
+    block_true_offsets_dg.PartialSum();
+
+    X.Update(block_true_offsets_dg);
     Z.Update(block_true_offsets);
 }

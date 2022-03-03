@@ -9,32 +9,6 @@ void Artic_sea::time_step(){
     cond_oper->SetParameters(X, *rV);
     ode_solver->Step(X, t, dt);
 
-    /*//Normalize the salinity
-    double m_in, m_out;
-    ConstantCoefficient low_cap(0.);
-    ParGridFunction phi_aux(*phi);
-    phi_aux.SetFromTrueDofs(X.GetBlock(1));
-    phi_aux -= phi_in;
-
-    m_in = phi_aux.ComputeL1Error(low_cap, irs);
-    for (int ii = 0; ii < phi_aux.Size(); ii++){
-        if (phi_aux(ii) < 0)
-            phi_aux(ii) = 0;
-    }
-    m_out = phi_aux.ComputeL1Error(low_cap, irs);
-    phi_aux *= 2-m_in/m_out; 
-    
-    m_in = phi_aux.ComputeL1Error(low_cap, irs);
-    for (int ii = 0; ii < phi_aux.Size(); ii++){
-        if (phi_aux(ii) > phi_out-phi_in)
-            phi_aux(ii) = phi_out-phi_in;
-    }
-    m_out = phi_aux.ComputeL1Error(low_cap, irs);
-    phi_aux *= m_in/m_out; 
-
-    phi_aux += phi_in;
-    phi_aux.GetTrueDofs(X.GetBlock(1));*/
-
     flow_oper->SetParameters(X);
     flow_oper->Solve(Z, *V, *rV);
 
@@ -100,9 +74,8 @@ void Artic_sea::time_step(){
 }
 
 void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
-
     //Recover actual information
-    ParGridFunction theta(&fespace), phi(&fespace), phase(&fespace), rv(&fespace_v);
+    ParGridFunction theta(&fespace_dg), phi(&fespace_dg), phase(&fespace_dg), rv(&fespace_v);
     theta.Distribute(X.GetBlock(0));
     phi.Distribute(X.GetBlock(1));
     rv.Distribute(rV); 
@@ -120,6 +93,11 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     aux_K *= config.k_l-config.k_s; aux_K += config.k_s;
     aux_D *= config.d_l-config.d_s; aux_D += config.d_s;
     aux_L *= config.L_l-config.L_s; aux_L += config.L_s;
+
+    aux_C.ExchangeFaceNbrData();
+    aux_K.ExchangeFaceNbrData();
+    aux_D.ExchangeFaceNbrData();
+    aux_L.ExchangeFaceNbrData();
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_C(&aux_C);
@@ -149,42 +127,62 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
 
     //Create corresponding bilinear forms
     delete M_theta;
-    delete M_e_theta;
-    delete M_0_theta;
-    ParBilinearForm m_theta(&fespace);
+    ParBilinearForm m_theta(&fespace_dg);
     m_theta.AddDomainIntegrator(new MassIntegrator(coeff_rC));
     m_theta.Assemble();
     m_theta.Finalize();
     M_theta = m_theta.ParallelAssemble();
-    M_e_theta = M_theta->EliminateRowsCols(ess_tdof_theta);
-    M_0_theta = m_theta.ParallelAssemble();
 
     M_theta_prec.SetOperator(*M_theta);
     M_theta_solver.SetOperator(*M_theta);
 
-    delete K_0_theta;
-    ParBilinearForm k_theta(&fespace);
+    delete K_theta;
+    ParBilinearForm k_theta(&fespace_dg);
     k_theta.AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta.AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
+    k_theta.AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rK, config.sigma, config.kappa));
+    k_theta.AddInteriorFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rCV, 1.));
+    k_theta.AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rK, config.sigma, config.kappa), ess_bdr_theta);
+    k_theta.AddBdrFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rCV, 1.), ess_bdr_theta);
     k_theta.Assemble();
     k_theta.Finalize();
-    K_0_theta = k_theta.ParallelAssemble();
+    K_theta = k_theta.ParallelAssemble();
 
-    delete K_0_phi;
-    ParBilinearForm k_phi(&fespace);
+    delete K_phi;
+    ParBilinearForm k_phi(&fespace_dg);
     k_phi.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
     k_phi.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k_phi.AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rD, config.sigma, config.kappa));
+    k_phi.AddInteriorFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rV, 1.));
+    k_phi.AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rD, config.sigma, config.kappa), ess_bdr_phi);
+    k_phi.AddBdrFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rV, 1.), ess_bdr_phi);
     k_phi.Assemble();
     k_phi.Finalize();
-    K_0_phi = k_phi.ParallelAssemble();
+    K_phi = k_phi.ParallelAssemble();
+
+    if (B_theta) delete B_theta;
+    ConstantCoefficient theta_nu(theta_n);
+    ParLinearForm b_theta(&fespace_dg);
+    b_theta.AddBdrFaceIntegrator(new DGDirichletLFIntegrator(theta_nu, coeff_rK, config.sigma, config.kappa), ess_bdr_theta);
+    b_theta.AddBdrFaceIntegrator(new BoundaryFlowIntegrator(theta_nu, coeff_rCV, -1.), ess_bdr_theta);
+    b_theta.Assemble();
+    B_theta = b_theta.ParallelAssemble();
+
+    if (B_phi) delete B_phi;
+    ConstantCoefficient phi_nu(phi_n);
+    ParLinearForm b_phi(&fespace_dg);
+    b_phi.AddBdrFaceIntegrator(new DGDirichletLFIntegrator(phi_nu, coeff_rD, config.sigma, config.kappa), ess_bdr_phi);
+    b_phi.AddBdrFaceIntegrator(new BoundaryFlowIntegrator(phi_nu, coeff_rV, -1.), ess_bdr_phi);
+    b_phi.Assemble();
+    B_phi = b_phi.ParallelAssemble();
 }
 
 void Flow_Operator::SetParameters(const BlockVector &X){
 
     //Recover actual information
-    ParGridFunction theta(&fespace), phi(&fespace);
+    ParGridFunction theta(&fespace_dg), phi(&fespace_dg);
     ParGridFunction theta_dr(&fespace), phi_dr(&fespace);
-    ParGridFunction eta(&fespace);
+    ParGridFunction eta(&fespace_dg);
 
     theta.Distribute(X.GetBlock(0));
     phi.Distribute(X.GetBlock(1));
@@ -203,6 +201,10 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         theta(ii) = delta_rho_t_fun(T, S);
         phi(ii) = delta_rho_p_fun(T, S);
     }
+
+    theta.ExchangeFaceNbrData();
+    phi.ExchangeFaceNbrData();
+    eta.ExchangeFaceNbrData();
 
     //Properties coefficients
     GridFunctionCoefficient Eta(&eta);

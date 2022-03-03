@@ -10,8 +10,8 @@ Artic_sea::Artic_sea(Config config):
     config(config),
     t(config.t_init), dt(config.dt_init), last(false),
     vis_steps(config.vis_steps_max), vis_impressions(0),
-    pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
-    block_true_offsets(3),
+    pmesh(NULL), fec(NULL), fec_dg(NULL), fec_v(NULL), fespace(NULL), fespace_dg(NULL), fespace_v(NULL),
+    block_true_offsets(3),  block_true_offsets_dg(3),
     theta(NULL), phi(NULL), w(NULL), psi(NULL), v(NULL), rv(NULL), phase(NULL), 
     rV(NULL), V(NULL),
     cond_oper(NULL), flow_oper(NULL),
@@ -35,17 +35,15 @@ void Artic_sea::run(const char *mesh_file){
 Conduction_Operator::~Conduction_Operator(){
     //Delete used memory
     delete M_theta; 
-    delete M_e_theta; 
-    delete M_0_theta; 
     delete M_phi; 
-    delete M_e_phi; 
-    delete M_0_phi; 
-    delete K_0_theta; 
-    delete K_0_phi; 
+    delete K_theta; 
+    delete K_phi; 
     delete T_theta; 
-    delete T_e_theta; 
     delete T_phi; 
-    delete T_e_phi; 
+    delete B_theta;
+    delete B_phi;
+    delete B_dt_theta;
+    delete B_dt_phi;
 }
 
 Flow_Operator::~Flow_Operator(){
