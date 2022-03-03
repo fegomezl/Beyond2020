@@ -30,9 +30,6 @@ struct Config{
     double abstol_sundials;
 
     double T_f;
-    double invDeltaT;
-    double EpsilonT;
-    double EpsilonEta;
     double c_l, c_s;
     double k_l, k_s;
     double d_l, d_s;
@@ -60,8 +57,6 @@ class Conduction_Operator : public TimeDependentOperator{
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
         Array<int> ess_tdof_theta, ess_tdof_phi;
-
-        Array<int> robin_bdr_theta, robin_bdr_phi;
 
         //System objects
         ParBilinearForm *m_theta, *m_phi;        //Mass operators
@@ -102,9 +97,6 @@ class Conduction_Operator : public TimeDependentOperator{
 
         InnerProductCoefficient dHdT;
         InnerProductCoefficient dT_2;
-
-        FunctionCoefficient robin_h_theta, robin_h_phi;
-        ProductCoefficient r_robin_h_theta, r_robin_h_phi;
 };
 
 class Flow_Operator{
@@ -249,32 +241,34 @@ class Artic_sea{
 };
 
 //Simulation parameters
-extern double Rmin, Rmax, Zmin, Zmax;
-extern double R_in, Z_out;
+extern double RMin, RMax, ZMin, ZMax;       //Size of the domain
+extern double RIn, ZOut;                    //Size of the inflow and outflow
+extern double Epsilon, EpsilonInv;          //Size of the indetermination window in heaviside functions 
+                                            //(10̣^(-n) and 10^(n) respectively)
 
-//Rotational functions
-extern double r_f(const Vector &x);
-extern double inv_r(const Vector &x);
-extern void zero_f(const Vector &x, Vector &f);
-extern void rot_f(const Vector &x, DenseMatrix &f);
-extern void r_inv_hat_f(const Vector &x, Vector &f);
-
-//Fusion temperature dependent of salinity
+//Usefull position functions
+extern double r_f(const Vector &x);                     //Function for r
+extern double r_inv_f(const Vector &x);                 //Function for 1/r
+extern void zero_f(const Vector &x, Vector &f);         //Function for 0 (vector)
+extern void r_inv_hat_f(const Vector &x, Vector &f);    //Function for (1/r)*r^ (r^ unitary vector)
+extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
+                                                        //             (-1   0 )
+//Physical Properties
 extern double T_fun(const double &salinity);
-
-//Variation of parameters
 extern double delta_c_s_fun(const double &temperature, const double &salinity);
 extern double delta_k_s_fun(const double &temperature, const double &salinity);
 extern double delta_l_s_fun(const double &temperature, const double &salinity);
-
-//Parameters of buoyancy
 extern double delta_rho_t_fun(const double &temperature, const double &salinity);
 extern double delta_rho_p_fun(const double &temperature, const double &salinity);
 
 //Brinicle conditions
-extern double Vel, Q;
-extern double theta_in, theta_out;
-extern double phi_in, phi_out;
-extern double n_l, n_h;
-extern double theta_n, phi_n;
-extern double c_l;
+extern double InflowVelocity;           //Velocity of the inflow
+extern double InflowFlux;               //Flux of the given inflow velocity field
+extern double InitialTemperature;       //Initial temperature of the domain
+extern double InflowTemperature;        //Temperature of the inflow
+extern double InitialSalinity;          //Initial salinity of the domain
+extern double InflowSalinity;           //Salinity of the inflow
+extern double NucleationLength;         //Lenght of the nucleation point
+extern double NucleationHeight;         //Height of the nucleation point
+extern double NucleationTemperature;    //Temperature of the nucleation point
+extern double NucleationSalinity;       //Salinity of the nucleation point

@@ -1,21 +1,15 @@
 #include "header.h"
 
-//Rotational functions
 double r_f(const Vector &x);
-double inv_r(const Vector &x);
+double r_inv_f(const Vector &x);
 void zero_f(const Vector &x, Vector &f);
-void rot_f(const Vector &x, DenseMatrix &f);
 void r_inv_hat_f(const Vector &x, Vector &f);
+void rot_f(const Vector &x, DenseMatrix &f);
 
-//Fusion temperature dependent of salinity
 double T_fun(const double &salinity);
-
-//Variation of parameters
 double delta_c_s_fun(const double &temperature, const double &salinity);
 double delta_k_s_fun(const double &temperature, const double &salinity);
 double delta_l_s_fun(const double &temperature, const double &salinity);
-
-//Parameters of buoyancy
 double delta_rho_t_fun(const double &temperature, const double &salinity);
 double delta_rho_p_fun(const double &temperature, const double &salinity);
 
@@ -75,7 +69,7 @@ void Artic_sea::assemble_system(){
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++){
         double T_f = config.T_f + T_fun((*phi)(ii));
-        (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
+        (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*theta)(ii) - T_f)));
     }
 
     //Normalize stream
@@ -138,13 +132,8 @@ double r_f(const Vector &x){
     return x(0);
 }
 
-double inv_r(const Vector &x){
+double r_inv_f(const Vector &x){
     return pow(x(0), -1);
-}
-
-void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.;  f(0,1) = 1.;
-    f(1,0) = -1.; f(1,1) = 0.;
 }
 
 void zero_f(const Vector &x, Vector &f){
@@ -157,35 +146,15 @@ void r_inv_hat_f(const Vector &x, Vector &f){
     f(1) = 0.;
 }
 
+void rot_f(const Vector &x, DenseMatrix &f){
+    f(0,0) = 0.;  f(0,1) = 1.;
+    f(1,0) = -1.; f(1,1) = 0.;
+}
+
 double T_fun(const double &salinity){
     double a = 0.6037;
     double b = 0.00058123;
     return -(a*salinity + b*pow(salinity, 3));
-}
-
-double delta_c_s_fun(const double &temperature, const double &salinity){
-    double a = 0.00692;
-    double b = -0.00307;
-    double c = 0.0000768;
-    double d = 16.6;
-    return a*temperature +
-           b*salinity +
-           c*temperature*salinity +
-           d*salinity*pow(temperature, -2);
-}
-
-double delta_k_s_fun(const double &temperature, const double &salinity){
-    double a = 36.7;
-    return a*salinity/temperature;
-}
-
-double delta_l_s_fun(const double &temperature, const double &salinity){
-    double a = -1.94;
-    double b = 16.6;
-    double c = -0.0035;
-    return a*temperature +
-           b*salinity +
-           c*salinity/temperature;
 }
 
 double delta_rho_t_fun(const double &temperature, const double &salinity){

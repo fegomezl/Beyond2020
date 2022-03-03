@@ -1,20 +1,25 @@
 #include "header.h"
 
-//Dimensions of the mesh
-double Rmin;
-double Zmin;
-double Rmax;
-double Zmax;
-double R_in;
-double Z_out;
+/*
+ * All the nomeclarure is explained in the header
+ *
+ */
 
-//Brinicle conditions
-double Vel, Q;
-double theta_in, theta_out;
-double phi_in, phi_out;
-double n_l, n_h;
-double theta_n, phi_n;
-double c_l;
+
+double RMin, RMax, ZMin, ZMax;
+double RIn, ZOut;
+double Epsilon, EpsilonInv;
+
+double InflowVelocity;   
+double InflowFlux;
+double InitialTemperature;
+double InflowTemperature;
+double InitialSalinity;
+double InflowSalinity;
+double NucleationLength;
+double NucleationHeight;
+double NucleationTemperature;
+double NucleationSalinity;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -35,17 +40,17 @@ int main(int argc, char *argv[]){
     OptionsParser args(argc, argv);
     args.AddOption(&mesh_file, "-m", "--mesh",
                    "Mesh file to use.");
-    args.AddOption(&Rmin, "-Rmin", "--Rmin",
+    args.AddOption(&RMin, "-Rmin", "--Rmin",
                    "Minimum R border.");
-    args.AddOption(&Rmax, "-Rmax", "--Rmax",
+    args.AddOption(&RMax, "-Rmax", "--Rmax",
                    "Maximum R border.");
-    args.AddOption(&Zmin, "-Zmin", "--Zmin",
+    args.AddOption(&ZMin, "-Zmin", "--Zmin",
                    "Minimum Z border.");
-    args.AddOption(&Zmax, "-Zmax", "--Zmax",
+    args.AddOption(&ZMax, "-Zmax", "--Zmax",
                    "Maximum Z border.");
-    args.AddOption(&R_in, "-Li", "--L_in",
+    args.AddOption(&RIn, "-Li", "--L_in",
                    "Inflow window size.");
-    args.AddOption(&Z_out, "-Lo", "--L_out",
+    args.AddOption(&ZOut, "-Lo", "--L_out",
                    "Outflow window size.");
 
     args.AddOption(&config.dt_init, "-dt", "--time_step",
@@ -97,25 +102,25 @@ int main(int argc, char *argv[]){
     args.AddOption(&config.L_s, "-L_s", "--L_s",
                    "Solid volumetric latent heat.");
 
-    args.AddOption(&Vel, "-v", "--vel",
+    args.AddOption(&InflowVelocity, "-v", "--vel",
                    "Inflow velocity.");
-    args.AddOption(&Q, "-q", "--flux",
+    args.AddOption(&InflowFlux, "-q", "--flux",
                    "Volumetric inflow.");
-    args.AddOption(&theta_in, "-Ti", "--Theta_in",
+    args.AddOption(&InitialTemperature, "-Ti", "--Theta_in",
                    "Initial temperature.");
-    args.AddOption(&theta_out, "-To", "--Theta_out",
+    args.AddOption(&InflowTemperature, "-To", "--Theta_out",
                    "Inflow temperature.");
-    args.AddOption(&phi_in, "-Si", "--Phi_in",
+    args.AddOption(&InitialSalinity, "-Si", "--Phi_in",
                    "Initial salinity.");
-    args.AddOption(&phi_out, "-So", "--Phi_out",
+    args.AddOption(&InflowSalinity, "-So", "--Phi_out",
                    "Inflow salinity.");
-    args.AddOption(&n_l, "-nl", "--n_length",
+    args.AddOption(&NucleationLength, "-nl", "--n_length",
                    "Nucleation length.");
-    args.AddOption(&n_h, "-nh", "--n_heigth",
+    args.AddOption(&NucleationHeight, "-nh", "--n_heigth",
                    "Nucleation height.");
-    args.AddOption(&theta_n, "-Tn", "--Theta_n",
+    args.AddOption(&NucleationTemperature, "-Tn", "--Theta_n",
                    "Nucleation temperature.");
-    args.AddOption(&phi_n, "-Sn", "--Phi_n",
+    args.AddOption(&NucleationSalinity, "-Sn", "--Phi_n",
                    "Nucleation salinity.");
 
     args.AddOption(&restart, "-r", "--restart",
@@ -132,14 +137,11 @@ int main(int argc, char *argv[]){
     }
     if (config.master) args.PrintOptions(cout);
 
-
     {
-        c_l = config.c_l;
-        Q = 0.25*Vel*pow(R_in, -2);
+        InflowFlux = 0.25*InflowVelocity*pow(RIn, -2);
         config.rescale = (rescale == 1);
-        config.invDeltaT = pow(10, nDeltaT);
-        config.EpsilonT = pow(10, -nEpsilonT);
-        config.EpsilonEta = pow(10, -nEpsilonEta);
+        Epsilon = pow(10, -nEpsilonT); 
+        EpsilonInv = pow(10, nEpsilonT); 
         config.restart = (restart == 1);
         config.t_init = config.restart ? config.t_init : 0.;
         config.t_final += config.t_init;

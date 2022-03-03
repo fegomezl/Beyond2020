@@ -31,7 +31,7 @@ void Artic_sea::time_step(){
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++){
             double T_f = config.T_f + T_fun((*phi)(ii));
-            (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
+            (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*theta)(ii) - T_f)));
         }
 
         //Normalize stream
@@ -82,7 +82,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < phase.Size(); ii++){
         double DT = theta(ii) - config.T_f - T_fun(phi(ii));
-        double P = 0.5*(1 + tanh(5*config.invDeltaT*DT));
+        double P = 0.5*(1 + tanh(5*EpsilonInv*DT));
 
         aux_C(ii) = config.c_s + (config.c_l-config.c_s)*P;
         aux_K(ii) = config.k_s + (config.k_l-config.k_s)*P;
@@ -106,7 +106,7 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     dHdT.SetACoef(dH);  dT_2.SetACoef(dT);
     dHdT.SetBCoef(dT);  dT_2.SetBCoef(dT);
 
-    SumCoefficient dT_2e(config.EpsilonT, dT_2);
+    SumCoefficient dT_2e(Epsilon, dT_2);
     
     PowerCoefficient inv_dT_2(dT_2e, -1.);
     ProductCoefficient DeltaT(dHdT, inv_dT_2);
@@ -159,7 +159,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     k_theta = new ParBilinearForm(&fespace);
     k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
     k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
-    k_theta->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_theta), robin_bdr_theta);
     k_theta->Assemble();
     k_theta->Finalize();
     K_0_theta = k_theta->ParallelAssemble();
@@ -169,7 +168,6 @@ void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     k_phi = new ParBilinearForm(&fespace);
     k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
     k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi->AddBoundaryIntegrator(new MassIntegrator(r_robin_h_phi), robin_bdr_phi);
     k_phi->Assemble();
     k_phi->Finalize();
     K_0_phi = k_phi->ParallelAssemble();
@@ -187,9 +185,9 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     for (int ii = 0; ii < phase.Size(); ii++){
         double T = theta(ii);
         double S = phi(ii);
-        double P = 0.5*(1 + tanh(5*config.invDeltaT*(theta(ii) - config.T_f - T_fun(phi(ii))))); 
+        double P = 0.5*(1 + tanh(5*EpsilonInv*(theta(ii) - config.T_f - T_fun(phi(ii))))); 
 
-        eta(ii) = config.EpsilonEta + pow(1-P, 2)/(pow(P, 3) + config.EpsilonEta);
+        eta(ii) = Epsilon + pow(1-P, 2)/(pow(P, 3) + Epsilon);
 
         theta(ii) = delta_rho_t_fun(T, S);
         phi(ii) = delta_rho_p_fun(T, S);

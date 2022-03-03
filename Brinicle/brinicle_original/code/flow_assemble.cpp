@@ -22,10 +22,10 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     theta(&fespace), theta_dr(&fespace), 
     phi(&fespace), phi_dr(&fespace), 
     phase(&fespace), eta(&fespace), psi_grad(&fespace_v), 
-    coeff_r(r_f), inv_R(inv_r), r_inv_hat(dim, r_inv_hat_f),
+    coeff_r(r_f), inv_R(r_inv_f), r_inv_hat(dim, r_inv_hat_f),
     w_coeff(boundary_w), psi_coeff(boundary_psi), 
     psi_in(boundary_psi_in), psi_out(boundary_psi_out),
-    closed_down(0.), closed_up(Q),
+    closed_down(0.), closed_up(InflowFlux),
     grad(&fespace, &fespace_v),
     rot(dim, rot_f), Psi_grad(&psi_grad),
     rot_Psi_grad(rot, Psi_grad)
@@ -122,22 +122,22 @@ double boundary_w(const Vector &x){
 }
 
 double boundary_psi(const Vector &x){
-    double x_rel = x(0)/R_in;
-    double y_rel = x(1)/Z_out;
+    double x_rel = x(0)/RIn;
+    double y_rel = x(1)/ZOut;
     double in = 1., out = 1.;
-    if (x(0) < R_in)
+    if (x(0) < RIn)
         in = pow(x_rel, 2)*(2-pow(x_rel, 2));
-    if (x(1) < Z_out)
+    if (x(1) < ZOut)
         out = pow(y_rel, 2)*(3-2*y_rel);
-    return Q*in*out;
+    return InflowFlux*in*out;
 }
 
 double boundary_psi_in(const Vector &x){
-    double x_rel = x(0)/R_in;
-    return Q*pow(x_rel, 2)*(2-pow(x_rel, 2));
+    double x_rel = x(0)/RIn;
+    return InflowFlux*pow(x_rel, 2)*(2-pow(x_rel, 2));
 }
 
 double boundary_psi_out(const Vector &x){
-    double y_rel = x(1)/Z_out;
-    return Q*pow(y_rel, 2)*(3-2*y_rel);
+    double y_rel = x(1)/ZOut;
+    return InflowFlux*pow(y_rel, 2)*(3-2*y_rel);
 }

@@ -10,8 +10,8 @@ settings/square_6.geo #Mesh_script
 10      #Zcells
 
 Simulation parameters
-0.01   #Dt
-2.0     #Final_time
+0.01    #Dt
+1.0     #Final_time
 20      #Visualization_steps
 0       #Rescale_stream?
 

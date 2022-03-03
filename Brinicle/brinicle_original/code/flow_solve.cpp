@@ -33,7 +33,7 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     grad.Mult(psi, psi_grad);
     Psi_grad.SetGridFunction(&psi_grad);
     rot_Psi_grad.SetBCoef(Psi_grad);
-    FunctionCoefficient inv_R(inv_r);
+    FunctionCoefficient inv_R(r_inv_f);
     ScalarVectorProductCoefficient coeff_V(inv_R, rot_Psi_grad);
     v.ProjectDiscCoefficient(coeff_V, GridFunction::ARITHMETIC);
     rv.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
