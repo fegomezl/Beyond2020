@@ -51,4 +51,4 @@ Brinicle conditions
 
 Restart conditions
 0          #Restart?
-1.00059       #Initial_time
+0          #Initial_time
