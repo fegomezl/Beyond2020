@@ -6,11 +6,11 @@ void Artic_sea::time_step(){
     dt = min(dt, config.t_final - t);
 
     //Perform the time_step
-    transport_oper->SetParameters(X, *rV);
+    transport_oper->SetParameters(X, *rVelocity);
     ode_solver->Step(X, t, dt);
 
     flow_oper->SetParameters(X);
-    flow_oper->Solve(Z, *V, *rV);
+    flow_oper->Solve(Y, *Velocity, *rVelocity);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
@@ -21,27 +21,27 @@ void Artic_sea::time_step(){
         vis_impressions++;
 
         //Update information
-        theta->Distribute(&(X.GetBlock(0)));
-        phi->Distribute(&(X.GetBlock(1)));
-        w->Distribute(&(Z.GetBlock(0)));
-        psi->Distribute(&(Z.GetBlock(1)));
-        v->Distribute(V);
-        rv->Distribute(rV);
+        temperature->Distribute(X.GetBlock(0));
+        salinity->Distribute(X.GetBlock(1));
+        vorticity->Distribute(Y.GetBlock(0));
+        stream->Distribute(Y.GetBlock(1));
+        velocity->Distribute(Velocity);
+        rvelocity->Distribute(rVelocity);
 
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++){
-            double T_f = config.T_f + T_fun((*phi)(ii));
-            (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*theta)(ii) - T_f)));
+            double T_f = config.T_f + T_fun((*salinity)(ii));
+            (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*temperature)(ii) - T_f)));
         }
 
         //Normalize stream
         if (config.rescale){
-            double psi_local_max = psi->Max(), psi_max;
-            double psi_local_min = psi->Min(), psi_min;
+            double psi_local_max = stream->Max(), psi_max;
+            double psi_local_min = stream->Min(), psi_min;
             MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
             MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-            for (int ii = 0; ii < psi->Size(); ii++)
-                    (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+            for (int ii = 0; ii < stream->Size(); ii++)
+                    (*stream)(ii) = ((*stream)(ii)-psi_min)/(psi_max-psi_min);
         }
 
         //Graph
