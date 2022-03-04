@@ -73,7 +73,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
 
     //Apply boundary conditions
     w.ProjectCoefficient(w_coeff);
-    w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
+    w.ProjectBdrCoefficient(w_coeff, ess_bdr_w);
  
     psi.ProjectCoefficient(psi_coeff);
     psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);

@@ -226,8 +226,6 @@ class Artic_sea{
         HypreParVector *rV;
         HypreParVector *V;
 
-        const IntegrationRule *irs[Geometry::NumGeom];
-
         //Operators
         Transport_Operator *transport_oper;
         Flow_Operator *flow_oper;

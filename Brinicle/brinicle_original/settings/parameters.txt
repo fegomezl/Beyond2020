@@ -10,9 +10,9 @@ settings/square_6.geo #Mesh_script
 10      #Zcells
 
 Simulation parameters
-0.01    #Dt
+0.001   #Dt
 1.0     #Final_time
-20      #Visualization_steps
+10      #Visualization_steps
 0       #Rescale_stream?
 
 FE parameters
@@ -41,13 +41,13 @@ Physical parameters
 Brinicle conditions
 175     #Velocity_inflow
 -2      #Initial_temperature
--20     #Inflow_temperature
+-10     #Inflow_temperature
 3.5     #Initial_salinity
-20.0    #Inflow_salinity
+20      #Inflow_salinity
 1       #Nucleation_length
-4.0       #Nucleation_height
+4       #Nucleation_height
 -10     #Nucleation_temperature
-22.5     #Nucleation_salinity
+3.5     #Nucleation_salinity
 
 Restart conditions
 0          #Restart?

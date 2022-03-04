@@ -45,11 +45,6 @@ void Artic_sea::assemble_system(){
     rV = new HypreParVector(fespace_v);
     V = new HypreParVector(fespace_v);
 
-    //Integration setup
-    int order_quad = max(2, 2*config.order+1);
-    for (int ii=0; ii < Geometry::NumGeom; ++ii)
-        irs[ii] = &(IntRules.Get(ii, order_quad));
-
     //Initialize operators
     transport_oper = new Transport_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
     flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);

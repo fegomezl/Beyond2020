@@ -61,16 +61,16 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     if (!config.restart){
         ParGridFunction theta(&fespace);
         FunctionCoefficient initial_theta(initial_theta_f);
-        ConstantCoefficient theta_nu(NucleationTemperature);
+        ConstantCoefficient boundary_theta(InflowTemperature);
         theta.ProjectCoefficient(initial_theta);
-        theta.ProjectBdrCoefficient(theta_nu, ess_bdr_theta);
+        theta.ProjectBdrCoefficient(boundary_theta, ess_bdr_theta);
         theta.GetTrueDofs(X.GetBlock(0));
         
         ParGridFunction phi(&fespace);
         FunctionCoefficient initial_phi(initial_phi_f);
-        ConstantCoefficient phi_nu(NucleationSalinity);
+        ConstantCoefficient boundary_phi(InflowSalinity);
         phi.ProjectCoefficient(initial_phi);
-        phi.ProjectBdrCoefficient(phi_nu, ess_bdr_phi);
+        phi.ProjectBdrCoefficient(boundary_phi, ess_bdr_phi);
         phi.GetTrueDofs(X.GetBlock(1));
     }
 
@@ -124,7 +124,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 
 double initial_theta_f(const Vector &x){
     if ((x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2))
-        return -10;
+        return NucleationTemperature;
     else
         return InitialTemperature;
 }
@@ -134,7 +134,7 @@ double initial_phi_f(const Vector &x){
   // return ((phi_out-phi_in)/n_h)*(x(1)-Zmax+n_h*1.2)+phi_in;
       
     if ((x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2))
-        return InitialSalinity;
+        return NucleationSalinity;
     else
         return InitialSalinity;
 }

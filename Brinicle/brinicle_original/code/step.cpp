@@ -87,7 +87,6 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rV){
         aux_C(ii) = config.c_s + (config.c_l-config.c_s)*P;
         aux_K(ii) = config.k_s + (config.k_l-config.k_s)*P;
         aux_D(ii) = config.d_s + (config.d_l-config.d_s)*P;
-        aux_L(ii) = config.L_s + (config.L_l-config.L_s)*P;
 
         theta(ii) = DT;
         phase(ii) = P;
@@ -97,7 +96,6 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     GridFunctionCoefficient coeff_C(&aux_C);
     GridFunctionCoefficient coeff_K(&aux_K);
     GridFunctionCoefficient coeff_D(&aux_D);
-    GridFunctionCoefficient coeff_L(&aux_L);
 
     //Construct latent heat term
     GradientGridFunctionCoefficient dT(&theta);
@@ -110,7 +108,7 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     
     PowerCoefficient inv_dT_2(dT_2e, -1.);
     ProductCoefficient DeltaT(dHdT, inv_dT_2);
-    ProductCoefficient LDeltaT(coeff_L, DeltaT);
+    ProductCoefficient LDeltaT(0.5*(config.L_s+config.L_l), DeltaT);
 
     SumCoefficient coeff_CL(coeff_C, LDeltaT);
 
