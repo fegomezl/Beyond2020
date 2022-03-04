@@ -14,7 +14,7 @@ Artic_sea::Artic_sea(Config config):
     block_true_offsets(3),
     theta(NULL), phi(NULL), w(NULL), psi(NULL), v(NULL), rv(NULL), phase(NULL), 
     rV(NULL), V(NULL),
-    cond_oper(NULL), flow_oper(NULL),
+    transport_oper(NULL), flow_oper(NULL),
     ode_solver(NULL), arkode(NULL),
     paraview_out(NULL)
 {}
@@ -29,7 +29,7 @@ void Artic_sea::run(const char *mesh_file){
     output_results();
 }
 
-Conduction_Operator::~Conduction_Operator(){
+Transport_Operator::~Transport_Operator(){
     //Delete used memory
     delete m_theta; 
     delete m_phi;
@@ -77,7 +77,7 @@ Artic_sea::~Artic_sea(){
     delete phase;
     delete rV;
     delete V;
-    delete cond_oper;
+    delete transport_oper;
     delete flow_oper;
     delete ode_solver;
     delete paraview_out;

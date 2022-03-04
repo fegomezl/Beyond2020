@@ -51,7 +51,7 @@ void Artic_sea::assemble_system(){
         irs[ii] = &(IntRules.Get(ii, order_quad));
 
     //Initialize operators
-    cond_oper = new Conduction_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
+    transport_oper = new Transport_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
     flow_oper = new Flow_Operator(config, *fespace, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets, X);
 
     //Solve initial velocity field
@@ -84,7 +84,7 @@ void Artic_sea::assemble_system(){
 
     //Set the ODE solver type
     arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT);
-    arkode->Init(*cond_oper);
+    arkode->Init(*transport_oper);
     arkode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
     arkode->SetMaxStep(dt);
     arkode->SetStepMode(ARK_ONE_STEP);

@@ -6,7 +6,7 @@ void Artic_sea::time_step(){
     dt = min(dt, config.t_final - t);
 
     //Perform the time_step
-    cond_oper->SetParameters(X, *rV);
+    transport_oper->SetParameters(X, *rV);
     ode_solver->Step(X, t, dt);
 
     flow_oper->SetParameters(X);
@@ -73,7 +73,7 @@ void Artic_sea::time_step(){
     }
 }
 
-void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
+void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     //Recover actual information
     theta.SetFromTrueDofs(X.GetBlock(0));
     phi.SetFromTrueDofs(X.GetBlock(1));

@@ -1,6 +1,6 @@
 #include "header.h"
 
-void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
+void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     //From  M(dX_dt) + K(X) = F
     //Solve M(dX_dt) + K(X) = F for dX_dt
 
@@ -34,7 +34,7 @@ void Conduction_Operator::Mult(const Vector &X, Vector &dX_dt) const{
         dX_dt(ii) = dPhi_dt(ii - block_true_offsets[1]);
 }
 
-int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
+int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt){
     //Setup the ODE Jacobian T = M + gamma*K
 
     //Create LHS
@@ -59,7 +59,7 @@ int Conduction_Operator::SUNImplicitSetup(const Vector &X, const Vector &B, int 
     return 0;
 }
 
-int Conduction_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double tol){    
+int Transport_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double tol){    
     //From  M(dX_dt) + K(X) = F
     //Solve M(X_new - X) + dt*K(X_new) = dt*F for X_new
 

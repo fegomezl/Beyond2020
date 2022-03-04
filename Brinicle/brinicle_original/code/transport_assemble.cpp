@@ -4,7 +4,7 @@
 double initial_theta_f(const Vector &x);
 double initial_phi_f(const Vector &x);
 
-Conduction_Operator::Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
+Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
     config(config),
     TimeDependentOperator(2*fespace.GetTrueVSize(), config.t_init),
     fespace(fespace),

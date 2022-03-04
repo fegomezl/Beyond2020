@@ -39,9 +39,9 @@ struct Config{
     double t_init;
 };
 
-class Conduction_Operator : public TimeDependentOperator{
+class Transport_Operator : public TimeDependentOperator{
     public:
-        Conduction_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
+        Transport_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
 
         void SetParameters(const BlockVector &X, const Vector &rV);
 
@@ -49,7 +49,7 @@ class Conduction_Operator : public TimeDependentOperator{
         virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
 	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
 
-        virtual ~Conduction_Operator();
+        virtual ~Transport_Operator();
     protected:
         //Global parameters
         Config config;
@@ -229,7 +229,7 @@ class Artic_sea{
         const IntegrationRule *irs[Geometry::NumGeom];
 
         //Operators
-        Conduction_Operator *cond_oper;
+        Transport_Operator *transport_oper;
         Flow_Operator *flow_oper;
 
         //Solver objects
