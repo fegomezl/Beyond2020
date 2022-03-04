@@ -1,30 +1,30 @@
 #include "header.h"
 
 //Initial conditions
-double initial_theta_f(const Vector &x);
-double initial_phi_f(const Vector &x);
+double initial_temperature_f(const Vector &x);
+double initial_salinity_f(const Vector &x);
 
-Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
+Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
     config(config),
-    TimeDependentOperator(2*fespace.GetTrueVSize(), config.t_init),
-    fespace(fespace),
-    block_true_offsets(block_true_offsets),
-    M_theta(NULL), M_e_theta(NULL), M_0_theta(NULL), M_phi(NULL), M_e_phi(NULL), M_0_phi(NULL),
-    K_0_theta(NULL),                                 K_0_phi(NULL),
-    T_theta(NULL), T_e_theta(NULL),                  T_phi(NULL), T_e_phi(NULL),
-    F_theta(&fespace), F_phi(&fespace),
-    dt_F_theta(&fespace), dt_F_phi(&fespace),
-    Z_theta(&fespace), Z_phi(&fespace),
-    M_theta_solver(fespace.GetComm()), M_phi_solver(fespace.GetComm()),
-    T_theta_solver(fespace.GetComm()), T_phi_solver(fespace.GetComm()),
-    theta(&fespace), phi(&fespace), phase(&fespace), rv(&fespace_v), 
-    aux_C(&fespace), aux_K(&fespace), aux_D(&fespace), aux_L(&fespace),
-    coeff_r(r_f), zero(dim, zero_f), 
-    coeff_rC(coeff_r, coeff_r),
-    coeff_rK(coeff_r, coeff_r),
-    coeff_rD(coeff_r, coeff_r),
-    coeff_rV(&rv), coeff_rCV(coeff_r, zero), 
-    dHdT(zero, zero), dT_2(zero, zero)
+    TimeDependentOperator(2*fespace_H1.GetTrueVSize(), config.t_init),
+    fespace_H1(fespace_H1),
+    block_offsets_H1(block_offsets_H1),
+    ess_bdr_0(attributes), ess_bdr_1(attributes),
+    temperature(&fespace_H1), salinity(&fespace_H1), phase(&fespace_H1), rvelocity(&fespace_ND), 
+    aux_C(&fespace_H1), aux_K(&fespace_H1), aux_D(&fespace_H1), 
+    coeff_r(r_f), 
+    coeff_zero(dim, zero_f),
+    M0(NULL), M1(NULL), 
+    M0_e(NULL), M1_e(NULL), 
+    M0_o(NULL), M1_o(NULL), 
+    K0(NULL), K1(NULL), 
+    T0(NULL), T1(NULL),
+    T0_e(NULL), T1_e(NULL),
+    B0(&fespace_H1), B1(&fespace_H1), 
+    B0_dt(&fespace_H1), B1_dt(&fespace_H1),
+    Z0(&fespace_H1), Z1(&fespace_H1),
+    M0_solver(MPI_COMM_WORLD), M1_solver(MPI_COMM_WORLD), 
+    T0_solver(MPI_COMM_WORLD), T1_solver(MPI_COMM_WORLD)
 {
     //Define essential boundary conditions
     //   
@@ -42,85 +42,88 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     //            \-------------------------------/
     //                            0
 
-    Array<int> ess_bdr_theta(attributes); ess_bdr_theta = 0;
-    ess_bdr_theta  [0] = 0;   ess_bdr_theta  [1] = 0;   ess_bdr_theta  [3] = 0;
-    ess_bdr_theta  [4] = 1;   ess_bdr_theta  [5] = 0;   
-    fespace.GetEssentialTrueDofs(ess_bdr_theta, ess_tdof_theta);
+    ess_bdr_0 = 0;
+    ess_bdr_0 [0] = 0;   ess_bdr_0 [1] = 0;   
+    ess_bdr_0 [2] = 0;   ess_bdr_0 [3] = 0;
+    ess_bdr_0 [4] = 1;   ess_bdr_0 [5] = 0;
+    fespace_H1.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
 
-    Array<int> ess_bdr_phi(attributes); ess_bdr_phi = 0;
-    ess_bdr_phi  [0] = 0;     ess_bdr_phi  [1] = 0;     ess_bdr_phi  [3] = 0; 
-    ess_bdr_phi  [4] = 1;     ess_bdr_phi  [5] = 0;      
-    fespace.GetEssentialTrueDofs(ess_bdr_phi, ess_tdof_phi);
-
-    //Check that the internal boundaries is always zero.
-    ess_bdr_theta  [2] = 0;   ess_bdr_phi  [2] = 0; 
+    ess_bdr_1 = 0;
+    ess_bdr_1 [0] = 0;     ess_bdr_1 [1] = 0;
+    ess_bdr_1 [2] = 0;     ess_bdr_1 [3] = 0;
+    ess_bdr_1 [4] = 1;     ess_bdr_1 [5] = 0;
+    fespace_H1.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
 
     //Apply initial conditions
     if (!config.restart){
-        ParGridFunction theta(&fespace);
-        FunctionCoefficient initial_theta(initial_theta_f);
-        ConstantCoefficient boundary_theta(InflowTemperature);
-        theta.ProjectCoefficient(initial_theta);
-        theta.ProjectBdrCoefficient(boundary_theta, ess_bdr_theta);
-        theta.GetTrueDofs(X.GetBlock(0));
+        FunctionCoefficient coeff_initial_temperature(initial_temperature_f);
+        ConstantCoefficient coeff_boundary_temperature(InflowTemperature);
+        temperature.ProjectCoefficient(coeff_initial_temperature);
+        temperature.ProjectBdrCoefficient(coeff_boundary_temperature, ess_bdr_0);
+        temperature.GetTrueDofs(X.GetBlock(0));
         
-        ParGridFunction phi(&fespace);
-        FunctionCoefficient initial_phi(initial_phi_f);
-        ConstantCoefficient boundary_phi(InflowSalinity);
-        phi.ProjectCoefficient(initial_phi);
-        phi.ProjectBdrCoefficient(boundary_phi, ess_bdr_phi);
-        phi.GetTrueDofs(X.GetBlock(1));
+        FunctionCoefficient coeff_initial_salinity(initial_salinity_f);
+        ConstantCoefficient coeff_boundary_salinity(InflowSalinity);
+        salinity.ProjectCoefficient(coeff_initial_salinity);
+        salinity.ProjectBdrCoefficient(coeff_boundary_salinity, ess_bdr_1);
+        salinity.GetTrueDofs(X.GetBlock(1));
     }
 
+    //Create mass matrix                                   
+    ParBilinearForm m1(&fespace_H1);                 
+    m1.AddDomainIntegrator(new MassIntegrator(coeff_r));  
+    m1.Assemble();                                        
+    m1.Finalize();                                        
+    M1 = m1.ParallelAssemble();
+    M1_e = M1->EliminateRowsCols(ess_tdof_1);
+    M1_o = m1.ParallelAssemble();
+
     //Set RHS
-    ParLinearForm f_theta(&fespace);
-    f_theta.Assemble();
-    f_theta.ParallelAssemble(F_theta);
-    F_theta = 0.;
+    ConstantCoefficient Zero(0.);
+    ParLinearForm b0(&fespace_H1);
+    b0.AddDomainIntegrator(new DomainLFIntegrator(Zero));
+    b0.Assemble();
+    b0.ParallelAssemble(B0);
 
-    ParLinearForm f_phi(&fespace);
-    f_phi.Assemble();
-    f_phi.ParallelAssemble(F_phi);
-    F_phi = 0.;
+    ParLinearForm b1(&fespace_H1);
+    b1.AddDomainIntegrator(new DomainLFIntegrator(Zero));
+    b1.Assemble();
+    b1.ParallelAssemble(B1);
 
-    //Configure M solvers
-    M_theta_solver.iterative_mode = false;
-    M_theta_solver.SetTol(config.reltol_conduction);
-    M_theta_solver.SetAbsTol(config.abstol_conduction);
-    M_theta_solver.SetMaxIter(config.iter_conduction);
-    M_theta_solver.SetPrintLevel(0);
-    M_theta_prec.SetPrintLevel(0);
-    M_theta_solver.SetPreconditioner(M_theta_prec);
+    //Configure M solver
+    M0_prec.SetPrintLevel(0);
+    M0_solver.SetTol(config.reltol_conduction);
+    M0_solver.SetAbsTol(config.abstol_conduction);
+    M0_solver.SetMaxIter(config.iter_conduction);
+    M0_solver.SetPrintLevel(0);
 
-    M_phi_solver.iterative_mode = false;
-    M_phi_solver.SetTol(config.reltol_conduction);
-    M_phi_solver.SetAbsTol(config.abstol_conduction);
-    M_phi_solver.SetMaxIter(config.iter_conduction);
-    M_phi_solver.SetPrintLevel(0);
-    M_phi_prec.SetPrintLevel(0);
-    M_phi_solver.SetPreconditioner(M_phi_prec);
+    M1_prec.SetPrintLevel(0);
+    M1_prec.SetOperator(*M1);
+    M1_solver.SetTol(config.reltol_conduction);
+    M1_solver.SetAbsTol(config.abstol_conduction);
+    M1_solver.SetMaxIter(config.iter_conduction);
+    M1_solver.SetPrintLevel(0);
+    M1_solver.SetPreconditioner(M1_prec);
+    M1_solver.SetOperator(*M1);                                                                                     
 
-    //Configure T solvers
-    T_theta_solver.iterative_mode = false;
-    T_theta_solver.SetTol(config.reltol_conduction);
-    T_theta_solver.SetAbsTol(config.abstol_conduction);
-    T_theta_solver.SetMaxIter(config.iter_conduction);
-    T_theta_solver.SetPrintLevel(0);
-    T_theta_prec.SetPrintLevel(0);
-    T_theta_solver.SetPreconditioner(T_theta_prec);
-
-    T_phi_solver.iterative_mode = false;
-    T_phi_solver.SetTol(config.reltol_conduction);
-    T_phi_solver.SetAbsTol(config.abstol_conduction);
-    T_phi_solver.SetMaxIter(config.iter_conduction);
-    T_phi_solver.SetPrintLevel(0);
-    T_phi_prec.SetPrintLevel(0);
-    T_phi_solver.SetPreconditioner(T_phi_prec);
+    //Configure T solver 
+    T0_prec.SetPrintLevel(0);
+    T0_solver.SetTol(config.reltol_conduction);
+    T0_solver.SetAbsTol(config.abstol_conduction);
+    T0_solver.SetMaxIter(config.iter_conduction); 
+    T0_solver.SetPrintLevel(0);                   
+    T0_solver.SetPreconditioner(T0_prec);         
+                                                  
+    T1_prec.SetPrintLevel(0);                     
+    T1_solver.SetTol(config.reltol_conduction);   
+    T1_solver.SetAbsTol(config.abstol_conduction);
+    T1_solver.SetMaxIter(config.iter_conduction); 
+    T1_solver.SetPrintLevel(0);                   
+    T1_solver.SetPreconditioner(T1_prec);
 }
 
 //Initial conditions
-
-double initial_theta_f(const Vector &x){
+double initial_temperature_f(const Vector &x){
     bool NucleationRegion = (x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
     if (NucleationRegion)
         return NucleationTemperature;
@@ -128,7 +131,7 @@ double initial_theta_f(const Vector &x){
         return InitialTemperature;
 }
 
-double initial_phi_f(const Vector &x){
+double initial_salinity_f(const Vector &x){
   // if (x(0) < R_in && x(1) > Zmax - n_h/4)
   // return ((phi_out-phi_in)/n_h)*(x(1)-Zmax+n_h*1.2)+phi_in;
 
