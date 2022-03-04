@@ -20,7 +20,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     K0(NULL), K1(NULL), 
     T0(NULL), T1(NULL),
     T0_e(NULL), T1_e(NULL),
-    B0(&fespace_H1), B1(&fespace_H1), 
+    B0(NULL), B1(NULL), 
     B0_dt(&fespace_H1), B1_dt(&fespace_H1),
     Z0(&fespace_H1), Z1(&fespace_H1),
     M0_solver(MPI_COMM_WORLD), M1_solver(MPI_COMM_WORLD), 
@@ -83,12 +83,12 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     ParLinearForm b0(&fespace_H1);
     b0.AddDomainIntegrator(new DomainLFIntegrator(Zero));
     b0.Assemble();
-    b0.ParallelAssemble(B0);
+    B0 = b0.ParallelAssemble();
 
     ParLinearForm b1(&fespace_H1);
     b1.AddDomainIntegrator(new DomainLFIntegrator(Zero));
     b1.Assemble();
-    b1.ParallelAssemble(B1);
+    B1 = b1.ParallelAssemble();
 
     //Configure M solver
     M0_prec.SetPrintLevel(0);

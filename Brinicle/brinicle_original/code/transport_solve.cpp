@@ -17,11 +17,11 @@ void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
 
     //Set up RHS
     K0->Mult(-1., X0, 1., Z0);
-    Z0.Add(1., B0);
+    Z0.Add(1., *B0);
     EliminateBC(*M0, *M0_e, ess_tdof_0, dX0_dt, Z0);
 
     K1->Mult(-1., X1, 1., Z1);
-    Z1.Add(1., B1);
+    Z1.Add(1., *B1);
     EliminateBC(*M1, *M1_e, ess_tdof_1, dX1_dt, Z1);
 
     //Solve the system  
@@ -52,9 +52,9 @@ int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &RHS, int
     T1_solver.SetOperator(*T1);
 
     //Set dt for RHS
-    B0_dt.Set(scaled_dt, B0);
+    B0_dt.Set(scaled_dt, *B0);
 
-    B1_dt.Set(scaled_dt, B1);
+    B1_dt.Set(scaled_dt, *B1);
 
     *j_status = 1;
     return 0;

@@ -48,6 +48,8 @@ Transport_Operator::~Transport_Operator(){
     delete T1;
     delete T0_e;
     delete T1_e;  
+    delete B0;
+    delete B1;
 }
 
 Flow_Operator::~Flow_Operator(){
@@ -59,6 +61,8 @@ Flow_Operator::~Flow_Operator(){
     delete A10_e;
     delete A11;
     delete A11_e;
+    delete B0;
+    delete B1;
 }
 
 Artic_sea::~Artic_sea(){

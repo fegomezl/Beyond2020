@@ -81,7 +81,7 @@ class Transport_Operator : public TimeDependentOperator{
         HypreParMatrix *T0,   *T1;
         HypreParMatrix *T0_e, *T1_e;
 
-        HypreParVector B0, B1;
+        HypreParVector *B0, *B1;
         HypreParVector B0_dt, B1_dt;
 
         mutable HypreParVector Z0, Z1;
@@ -127,7 +127,7 @@ class Flow_Operator{
         HypreParMatrix *A10,  *A10_e;
         HypreParMatrix *A11,  *A11_e;
 
-        HypreParVector B0, B1;
+        HypreParVector *B0, *B1;
         BlockVector B;
 
         //Additional variables

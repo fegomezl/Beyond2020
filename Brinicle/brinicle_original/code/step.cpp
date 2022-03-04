@@ -202,11 +202,12 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     A11_e = A11->EliminateRowsCols(ess_tdof_1);
 
     //Define the non-constant RHS
+    if (B1) delete B1;
     ParLinearForm b1(&fespace_H1);
     b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_k_r_temperature_dr));
     b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_k_r_salinity_dr));
     b1.Assemble();
-    b1.ParallelAssemble(B1);
-    A10_e->Mult(Vorticity, B1, -1., 1.);
-    EliminateBC(*A11, *A11_e, ess_tdof_1, Stream, B1);
+    B1 = b1.ParallelAssemble();
+    A10_e->Mult(Vorticity, *B1, -1., 1.);
+    EliminateBC(*A11, *A11_e, ess_tdof_1, Stream, *B1);
 }

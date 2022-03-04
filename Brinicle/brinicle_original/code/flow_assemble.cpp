@@ -17,7 +17,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     A01(NULL),  A01_e(NULL), 
     A10(NULL),  A10_e(NULL), 
     A11(NULL),  A11_e(NULL),
-    B0(&fespace_H1), B1(&fespace_H1),
+    B0(NULL), B1(NULL),
     B(block_offsets_H1),
     velocity(&fespace_ND), rvelocity(&fespace_ND),
     temperature(&fespace_H1), temperature_dr(&fespace_H1), 
@@ -121,9 +121,9 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     ConstantCoefficient Zero(0.);
     b0.AddDomainIntegrator(new DomainLFIntegrator(Zero));
     b0.Assemble();
-    b0.ParallelAssemble(B0);
-    A10_e->Mult(Stream, B0, -1., 1.);
-    EliminateBC(*A00, *A00_e, ess_tdof_0, Vorticity, B0);
+    B0 = b0.ParallelAssemble();
+    A10_e->Mult(Stream, *B0, -1., 1.);
+    EliminateBC(*A00, *A00_e, ess_tdof_0, Vorticity, *B0);
 
     //Create gradient interpolator
     gradient.AddDomainIntegrator(new GradientInterpolator);
