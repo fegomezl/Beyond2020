@@ -1,33 +1,32 @@
 #include "header.h"
 
 //Boundary values
-double boundary_w(const Vector &x);
-double boundary_psi(const Vector &x);
+double boundary_vorticity_f(const Vector &x);
 
-double boundary_psi_in(const Vector &x);
-double boundary_psi_out(const Vector &x);
+double boundary_stream_f(const Vector &x);
+double boundary_stream_in_f(const Vector &x);
+double boundary_stream_out_f(const Vector &x);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
     config(config),
-    fespace(fespace),
-    block_true_offsets(block_true_offsets),
-    ess_bdr_psi(attributes), ess_bdr_w(attributes),
-    bdr_psi_in(attributes), bdr_psi_out(attributes),
-    bdr_psi_closed_down(attributes), bdr_psi_closed_up(attributes),
-    W(&fespace), Psi(&fespace),
-    M(NULL), D(NULL), C(NULL), Ct(NULL),
-    F(&fespace), G(&fespace), B(block_true_offsets),
-    M_e(NULL), D_e(NULL), C_e(NULL), Ct_e(NULL),
-    v(&fespace_v), rv(&fespace_v),
-    theta(&fespace), theta_dr(&fespace), 
-    phi(&fespace), phi_dr(&fespace), 
-    phase(&fespace), eta(&fespace), 
-    psi(&fespace),
-    psi_grad(&fespace_v), 
-    coeff_r(r_f), inv_R(r_inv_f), r_inv_hat(dim, r_inv_hat_f),
-    grad(&fespace, &fespace_v),
-    rot(dim, rot_f), Psi_grad(&psi_grad),
-    rot_Psi_grad(rot, Psi_grad)
+    fespace_H1(fespace_H1),
+    block_offsets_H1(block_offsets_H1),
+    ess_bdr_0(attributes), ess_bdr_1(attributes),
+    Vorticity(&fespace_H1), Stream(&fespace_H1),
+    A00(NULL),  A00_e(NULL), 
+    A01(NULL),  A01_e(NULL), 
+    A10(NULL),  A10_e(NULL), 
+    A11(NULL),  A11_e(NULL),
+    B0(&fespace_H1), B1(&fespace_H1),
+    B(block_offsets_H1),
+    velocity(&fespace_ND), rvelocity(&fespace_ND),
+    temperature(&fespace_H1), temperature_dr(&fespace_H1), 
+    salinity(&fespace_H1), salinity_dr(&fespace_H1), 
+    phase(&fespace_H1), impermeability(&fespace_H1), 
+    stream(&fespace_H1), stream_gradient(&fespace_ND), 
+    coeff_r(r_f), coeff_r_inv(r_inv_f), coeff_r_inv_hat(dim, r_inv_hat_f),
+    gradient(&fespace_H1, &fespace_ND),
+    coeff_rot(dim, rot_f)
 { 
     //Define essential boundary conditions
     //   
@@ -46,94 +45,98 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     //                            0
     //
 
-    ess_bdr_w = 0;
-    ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
-    ess_bdr_w[2] = 1; ess_bdr_w[3] = 0;
-    ess_bdr_w[4] = 0; ess_bdr_w[5] = 0;
-    fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_w);
+    ess_bdr_0 = 0;
+    ess_bdr_0[0] = 0; ess_bdr_0[1] = 0;
+    ess_bdr_0[2] = 1; ess_bdr_0[3] = 0;
+    ess_bdr_0[4] = 0; ess_bdr_0[5] = 0;
+    fespace_H1.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
   
-    ess_bdr_psi = 0;
-    ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
-    ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
-    ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 1;
-    fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_psi);
+    ess_bdr_1 = 0;
+    ess_bdr_1[0] = 1; ess_bdr_1[1] = 1;
+    ess_bdr_1[2] = 1; ess_bdr_1[3] = 1;
+    ess_bdr_1[4] = 1; ess_bdr_1[5] = 1;
+    fespace_H1.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
 
-    bdr_psi_in = 0;
-    bdr_psi_in[4] = ess_bdr_psi[4];
+    Array<int> ess_bdr_1_in(attributes);
+    ess_bdr_1_in = 0;
+    ess_bdr_1_in[4] = ess_bdr_1[4];
     
-    bdr_psi_out = 0;
-    bdr_psi_out[5] = ess_bdr_psi[5];
+    Array<int> ess_bdr_1_out(attributes);
+    ess_bdr_1_out = 0;
+    ess_bdr_1_out[5] = ess_bdr_1[5];
     
-    bdr_psi_closed_down = 0;
-    bdr_psi_closed_down[0] = ess_bdr_psi[0];
-    bdr_psi_closed_down[2] = ess_bdr_psi[2];
+    Array<int> ess_bdr_1_closed_down(attributes);
+    ess_bdr_1_closed_down = 0;
+    ess_bdr_1_closed_down[0] = ess_bdr_1[0];
+    ess_bdr_1_closed_down[2] = ess_bdr_1[2];
     
-    bdr_psi_closed_up = 0;
-    bdr_psi_closed_up[1] = ess_bdr_psi[1];
-    bdr_psi_closed_up[3] = ess_bdr_psi[3];
+    Array<int> ess_bdr_1_closed_up(attributes);
+    ess_bdr_1_closed_up = 0;
+    ess_bdr_1_closed_up[1] = ess_bdr_1[1];
+    ess_bdr_1_closed_up[3] = ess_bdr_1[3];
 
     //Apply boundary conditions
-    FunctionCoefficient w_coeff(boundary_w);
-    ParGridFunction w(&fespace);
-    w.ProjectCoefficient(w_coeff);
-    w.ProjectBdrCoefficient(w_coeff, ess_bdr_w);
-    w.ParallelProject(W);
+    FunctionCoefficient coeff_vorticity(boundary_vorticity_f);
+    ParGridFunction vorticity(&fespace_H1);
+    vorticity.ProjectCoefficient(coeff_vorticity);
+    vorticity.ProjectBdrCoefficient(coeff_vorticity, ess_bdr_0);
+    vorticity.ParallelProject(Vorticity);
  
-    FunctionCoefficient psi_coeff(boundary_psi);
-    FunctionCoefficient psi_in(boundary_psi_in);
-    FunctionCoefficient psi_out(boundary_psi_out);
-    ConstantCoefficient closed_down(0.);
-    ConstantCoefficient closed_up(InflowFlux);
-    ParGridFunction psi(&fespace);
-    psi.ProjectCoefficient(psi_coeff);
-    psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
-    psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
-    psi.ProjectBdrCoefficient(closed_down, bdr_psi_closed_down);
-    psi.ProjectBdrCoefficient(closed_up, bdr_psi_closed_up);
-    psi.ParallelProject(Psi);
+    FunctionCoefficient coeff_stream(boundary_stream_f);
+    FunctionCoefficient coeff_stream_in(boundary_stream_in_f);
+    FunctionCoefficient coeff_stream_out(boundary_stream_out_f);
+    ConstantCoefficient coeff_stream_closed_down(0.);
+    ConstantCoefficient coeff_stream_closed_up(InflowFlux);
+    ParGridFunction stream(&fespace_H1);
+    stream.ProjectCoefficient(coeff_stream);
+    stream.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_1_in);
+    stream.ProjectBdrCoefficient(coeff_stream_out, ess_bdr_1_out);
+    stream.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_1_closed_down);
+    stream.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_1_closed_up);
+    stream.ParallelProject(Stream);
 
     //Define constant bilinear forms of the system
-    ParBilinearForm m(&fespace);
-    m.AddDomainIntegrator(new MassIntegrator);
-    m.Assemble();
-    m.Finalize();
-    M = m.ParallelAssemble();
-    M_e = M->EliminateRowsCols(ess_tdof_w);
+    ParBilinearForm a00(&fespace_H1);
+    a00.AddDomainIntegrator(new MassIntegrator);
+    a00.Assemble();
+    a00.Finalize();
+    A00 = a00.ParallelAssemble();
+    A00_e = A00->EliminateRowsCols(ess_tdof_0);
 
-    ParMixedBilinearForm c(&fespace, &fespace);
-    c.AddDomainIntegrator(new MixedGradGradIntegrator);
-    c.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
-    c.Assemble();
-    c.Finalize();
-    C = c.ParallelAssemble();
-    C->EliminateRows(ess_tdof_w);
-    C_e = C->EliminateCols(ess_tdof_psi);
+    ParMixedBilinearForm a01(&fespace_H1, &fespace_H1);
+    a01.AddDomainIntegrator(new MixedGradGradIntegrator);
+    a01.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(coeff_r_inv_hat));
+    a01.Assemble();
+    a01.Finalize();
+    A01 = a01.ParallelAssemble();
+    A01->EliminateRows(ess_tdof_0);
+    A01_e = A01->EliminateCols(ess_tdof_1);
 
-    Ct = C->Transpose();
-    Ct->EliminateRows(ess_tdof_psi);
-    Ct_e = Ct->EliminateCols(ess_tdof_w);
+    A10 = A01->Transpose();
+    A10->EliminateRows(ess_tdof_1);
+    A10_e = A10->EliminateCols(ess_tdof_0);
 
     //Define the constant RHS
-    ParLinearForm g(&fespace);
+    ParLinearForm b0(&fespace_H1);
     ConstantCoefficient Zero(0.);
-    g.AddDomainIntegrator(new DomainLFIntegrator(Zero));
-    g.Assemble();
-    g.ParallelAssemble(B.GetBlock(0));
-    C_e->Mult(Psi, G, -1., 1.);
-    EliminateBC(*M, *M_e, ess_tdof_w, W, G);
+    b0.AddDomainIntegrator(new DomainLFIntegrator(Zero));
+    b0.Assemble();
+    b0.ParallelAssemble(B0);
+    A10_e->Mult(Stream, B0, -1., 1.);
+    EliminateBC(*A00, *A00_e, ess_tdof_0, Vorticity, B0);
 
     //Create gradient interpolator
-    grad.AddDomainIntegrator(new GradientInterpolator);
-    grad.Assemble();
-    grad.Finalize();
+    gradient.AddDomainIntegrator(new GradientInterpolator);
+    gradient.Assemble();
+    gradient.Finalize();
 }
 
 //Boundary values
-double boundary_w(const Vector &x){
+double boundary_vorticity_f(const Vector &x){
     return 0.;
 }
 
-double boundary_psi(const Vector &x){
+double boundary_stream_f(const Vector &x){
     double x_rel = x(0)/RIn;
     double y_rel = x(1)/ZOut;
     double in = 1., out = 1.;
@@ -144,12 +147,12 @@ double boundary_psi(const Vector &x){
     return InflowFlux*in*out;
 }
 
-double boundary_psi_in(const Vector &x){
+double boundary_stream_in_f(const Vector &x){
     double x_rel = x(0)/RIn;
     return InflowFlux*pow(x_rel, 2)*(2-pow(x_rel, 2));
 }
 
-double boundary_psi_out(const Vector &x){
+double boundary_stream_out_f(const Vector &x){
     double y_rel = x(1)/ZOut;
     return InflowFlux*pow(y_rel, 2)*(3-2*y_rel);
 }
