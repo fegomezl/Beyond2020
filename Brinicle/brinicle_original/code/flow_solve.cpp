@@ -11,8 +11,12 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     HBlocks(1, 0) = Ct;
     HBlocks(1, 1) = D;
 
-    HypreParMatrix *H = HypreParMatrixFromBlocks(HBlocks);
-    SuperLURowLocMatrix A(*H);
+    HypreParMatrix H = *HypreParMatrixFromBlocks(HBlocks);
+    SuperLURowLocMatrix A(H);
+
+    //Create the complete RHS
+    B.GetBlock(0) = G;
+    B.GetBlock(1) = F;
 
     SuperLUSolver superlu(MPI_COMM_WORLD);
     superlu.SetOperator(A);
@@ -22,14 +26,12 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
 
     //Solve the linear system Ax=B
-    superlu.Mult(B, Y);
+    Z = 0.;
+    superlu.Mult(B, Z);
     superlu.DismantleGrid();
 
-    //Recover the solution on each proccesor
-    w.Distribute(&(Y.GetBlock(0)));
-    psi.Distribute(&(Y.GetBlock(1)));
-
     //Calculate velocity
+    psi.Distribute(Z.GetBlock(1));
     grad.Mult(psi, psi_grad);
     Psi_grad.SetGridFunction(&psi_grad);
     rot_Psi_grad.SetBCoef(Psi_grad);
@@ -39,10 +41,6 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     rv.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
 
     //Export flow information
-    w.ParallelAverage(Z.GetBlock(0));
-    psi.ParallelAverage(Z.GetBlock(1));
     v.ParallelAverage(V);
     rv.ParallelAverage(rV);
-
-    delete H;
 }

@@ -59,9 +59,6 @@ class Transport_Operator : public TimeDependentOperator{
         Array<int> ess_tdof_theta, ess_tdof_phi;
 
         //System objects
-        ParBilinearForm *m_theta, *m_phi;        //Mass operators
-        ParBilinearForm *k_theta, *k_phi;        //Difussion operators
-
         HypreParMatrix *M_theta, *M_e_theta, *M_0_theta,    *M_phi, *M_e_phi, *M_0_phi;
         HypreParMatrix *K_0_theta,                          *K_0_phi;
         HypreParMatrix *T_theta, *T_e_theta,                *T_phi, *T_e_phi;
@@ -115,31 +112,25 @@ class Flow_Operator{
         //Mesh objects
         ParFiniteElementSpace &fespace;
         Array<int> block_true_offsets;
+        Array<int> ess_tdof_w, ess_tdof_psi;
         Array<int> ess_bdr_w, ess_bdr_psi;
         Array<int> bdr_psi_in, bdr_psi_out;
         Array<int> bdr_psi_closed_down, bdr_psi_closed_up;
 
         //System objects
-        ParGridFunction psi;
-        ParGridFunction w;
         ParGridFunction v;
         ParGridFunction rv;
 
-        ParLinearForm *f;
-        ParLinearForm *g;
-        ParBilinearForm *m;
-        ParBilinearForm *d;
-        ParMixedBilinearForm *c;
-        ParMixedBilinearForm *ct;
-
         //Solver objects
-        BlockVector Y;
-        BlockVector B;
+        HypreParVector W, Psi;
 
-        HypreParMatrix *M;
-        HypreParMatrix *D;
-        HypreParMatrix *C;
-        HypreParMatrix *Ct;
+        HypreParMatrix *M,  *M_e;
+        HypreParMatrix *D,  *D_e;
+        HypreParMatrix *C,  *C_e;
+        HypreParMatrix *Ct, *Ct_e;
+
+        HypreParVector F, G;
+        BlockVector B;
 
         //Additional variables
         ParGridFunction theta;
@@ -148,7 +139,6 @@ class Flow_Operator{
         ParGridFunction phi_dr;
         ParGridFunction phase;
         ParGridFunction eta;
-        ParGridFunction psi_grad;
       
         //Rotational coefficients
         FunctionCoefficient coeff_r;
@@ -156,15 +146,9 @@ class Flow_Operator{
         VectorFunctionCoefficient r_inv_hat;
         MatrixFunctionCoefficient rot;
 
-        //Boundary coefficients
-        FunctionCoefficient w_coeff;
-        FunctionCoefficient psi_coeff;
-        FunctionCoefficient psi_in;
-        FunctionCoefficient psi_out;
-        ConstantCoefficient closed_down;
-        ConstantCoefficient closed_up;
-
         //Construction rV
+        ParGridFunction psi;
+        ParGridFunction psi_grad;
         ParDiscreteLinearOperator grad;
 
         VectorGridFunctionCoefficient Psi_grad;

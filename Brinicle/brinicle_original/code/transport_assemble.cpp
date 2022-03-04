@@ -9,8 +9,6 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     TimeDependentOperator(2*fespace.GetTrueVSize(), config.t_init),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
-    m_theta(NULL), m_phi(NULL),
-    k_theta(NULL), k_phi(NULL),
     M_theta(NULL), M_e_theta(NULL), M_0_theta(NULL), M_phi(NULL), M_e_phi(NULL), M_0_phi(NULL),
     K_0_theta(NULL),                                 K_0_phi(NULL),
     T_theta(NULL), T_e_theta(NULL),                  T_phi(NULL), T_e_phi(NULL),
@@ -123,7 +121,8 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 //Initial conditions
 
 double initial_theta_f(const Vector &x){
-    if ((x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2))
+    bool NucleationRegion = (x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
+    if (NucleationRegion)
         return NucleationTemperature;
     else
         return InitialTemperature;
@@ -132,8 +131,9 @@ double initial_theta_f(const Vector &x){
 double initial_phi_f(const Vector &x){
   // if (x(0) < R_in && x(1) > Zmax - n_h/4)
   // return ((phi_out-phi_in)/n_h)*(x(1)-Zmax+n_h*1.2)+phi_in;
-      
-    if ((x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2))
+
+    bool NucleationRegion = (x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle      
+    if (NucleationRegion)
         return NucleationSalinity;
     else
         return InitialSalinity;

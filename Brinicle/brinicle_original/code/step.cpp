@@ -122,53 +122,49 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rV){
     coeff_rCV.SetBCoef(coeff_rV);
 
     //Create corresponding bilinear forms
-    if (m_theta) delete m_theta;
     if (M_theta) delete M_theta;
     if (M_e_theta) delete M_e_theta;
     if (M_0_theta) delete M_0_theta;
-    m_theta = new ParBilinearForm(&fespace);
-    m_theta->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    m_theta->Assemble();
-    m_theta->Finalize();
-    M_theta = m_theta->ParallelAssemble();
+    ParBilinearForm m_theta(&fespace);
+    m_theta.AddDomainIntegrator(new MassIntegrator(coeff_rC));
+    m_theta.Assemble();
+    m_theta.Finalize();
+    M_theta = m_theta.ParallelAssemble();
     M_e_theta = M_theta->EliminateRowsCols(ess_tdof_theta);
-    M_0_theta = m_theta->ParallelAssemble();
+    M_0_theta = m_theta.ParallelAssemble();
 
     M_theta_prec.SetOperator(*M_theta);
     M_theta_solver.SetOperator(*M_theta);
 
-    if (m_phi) delete m_phi;
     if (M_phi) delete M_phi;
     if (M_e_phi) delete M_e_phi;
     if (M_0_phi) delete M_0_phi;
-    m_phi = new ParBilinearForm(&fespace);
-    m_phi->AddDomainIntegrator(new MassIntegrator(coeff_r));
-    m_phi->Assemble();
-    m_phi->Finalize();
-    M_phi = m_phi->ParallelAssemble();
+    ParBilinearForm m_phi(&fespace);
+    m_phi.AddDomainIntegrator(new MassIntegrator(coeff_r));
+    m_phi.Assemble();
+    m_phi.Finalize();
+    M_phi = m_phi.ParallelAssemble();
     M_e_phi = M_phi->EliminateRowsCols(ess_tdof_phi);
-    M_0_phi = m_phi->ParallelAssemble();
+    M_0_phi = m_phi.ParallelAssemble();
 
     M_phi_prec.SetOperator(*M_phi);
     M_phi_solver.SetOperator(*M_phi);
 
-    if(k_theta) delete k_theta;
     if(K_0_theta) delete K_0_theta;
-    k_theta = new ParBilinearForm(&fespace);
-    k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
-    k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
-    k_theta->Assemble();
-    k_theta->Finalize();
-    K_0_theta = k_theta->ParallelAssemble();
+    ParBilinearForm k_theta(&fespace);
+    k_theta.AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
+    k_theta.AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
+    k_theta.Assemble();
+    k_theta.Finalize();
+    K_0_theta = k_theta.ParallelAssemble();
 
-    if(k_phi) delete k_phi;
     if(K_0_phi) delete K_0_phi;
-    k_phi = new ParBilinearForm(&fespace);
-    k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi->Assemble();
-    k_phi->Finalize();
-    K_0_phi = k_phi->ParallelAssemble();
+    ParBilinearForm k_phi(&fespace);
+    k_phi.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
+    k_phi.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k_phi.Assemble();
+    k_phi.Finalize();
+    K_0_phi = k_phi.ParallelAssemble();
 }
 
 void Flow_Operator::SetParameters(const BlockVector &X){
@@ -193,7 +189,6 @@ void Flow_Operator::SetParameters(const BlockVector &X){
 
     //Properties coefficients
     GridFunctionCoefficient Eta(&eta);
-    ProductCoefficient neg_Eta(-1., Eta);
 
     GridFunctionCoefficient Theta_dr(&theta_dr);
     GridFunctionCoefficient k_t(&theta);
@@ -204,49 +199,28 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     ProductCoefficient k_Phi_dr(k_p, Phi_dr);
 
     //Rotational coupled coefficients
-    ScalarVectorProductCoefficient neg_Eta_r_inv_hat(neg_Eta, r_inv_hat);
+    ScalarVectorProductCoefficient Eta_r_inv_hat(Eta, r_inv_hat);
     ProductCoefficient k_r_Theta_dr(coeff_r, k_Theta_dr);
     ProductCoefficient k_r_Phi_dr(coeff_r, k_Phi_dr);
 
-    //Apply boundary conditions
-    w.ProjectCoefficient(w_coeff);
-    w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
- 
-    psi.ProjectCoefficient(psi_coeff);
-    psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
-    psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
-    psi.ProjectBdrCoefficient(closed_down, bdr_psi_closed_down);
-    psi.ProjectBdrCoefficient(closed_up, bdr_psi_closed_up);
+    //Define non-constant bilinear forms of the system
+    if (D) delete D;
+    if (D_e) delete D_e;
+    ParBilinearForm d(&fespace);
+    d.AddDomainIntegrator(new DiffusionIntegrator(Eta));
+    d.AddDomainIntegrator(new ConvectionIntegrator(Eta_r_inv_hat));
+    d.Assemble();
+    d.Finalize();
+    D = d.ParallelAssemble();
+    *D *= -1;
+    D_e = D->EliminateRowsCols(ess_tdof_psi);
 
     //Define the non-constant RHS
-    if (f) delete f;
-    f = new ParLinearForm(&fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(k_r_Theta_dr));
-    f->AddDomainIntegrator(new DomainLFIntegrator(k_r_Phi_dr));
-    f->Assemble();
-
-    //Define non-constant bilinear forms of the system
-    if (d) delete d;
-    d = new ParBilinearForm (&fespace);
-    d->AddDomainIntegrator(new DiffusionIntegrator(neg_Eta));
-    d->AddDomainIntegrator(new ConvectionIntegrator(neg_Eta_r_inv_hat));
-    d->Assemble();
-    d->EliminateEssentialBC(ess_bdr_psi, psi, *f, Operator::DIAG_KEEP);
-    d->Finalize();
-    if (D) delete D;
-    D = d->ParallelAssemble();
-
-    if (ct) delete ct;
-    ct = new ParMixedBilinearForm(&fespace, &fespace);
-    ct->AddDomainIntegrator(new MixedGradGradIntegrator);
-    ct->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
-    ct->Assemble();
-    ct->EliminateTrialDofs(ess_bdr_w, w, *f);
-    ct->EliminateTestDofs(ess_bdr_psi);
-    ct->Finalize();
-    if (Ct) delete Ct;
-    Ct = ct->ParallelAssemble();
-
-    //Transfer to TrueDofs
-    f->ParallelAssemble(B.GetBlock(1));
+    ParLinearForm f(&fespace);
+    f.AddDomainIntegrator(new DomainLFIntegrator(k_r_Theta_dr));
+    f.AddDomainIntegrator(new DomainLFIntegrator(k_r_Phi_dr));
+    f.Assemble();
+    f.ParallelAssemble(F);
+    Ct_e->Mult(W, F, -1., 1.);
+    EliminateBC(*D, *D_e, ess_tdof_psi, Psi, F);
 }

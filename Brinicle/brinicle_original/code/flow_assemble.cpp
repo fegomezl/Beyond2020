@@ -11,21 +11,20 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     config(config),
     fespace(fespace),
     block_true_offsets(block_true_offsets),
-    Y(block_true_offsets), B(block_true_offsets),
     ess_bdr_psi(attributes), ess_bdr_w(attributes),
     bdr_psi_in(attributes), bdr_psi_out(attributes),
     bdr_psi_closed_down(attributes), bdr_psi_closed_up(attributes),
-    f(NULL), g(NULL),
-    m(NULL), d(NULL), c(NULL), ct(NULL),
+    W(&fespace), Psi(&fespace),
     M(NULL), D(NULL), C(NULL), Ct(NULL),
-    psi(&fespace), w(&fespace), v(&fespace_v), rv(&fespace_v),
+    F(&fespace), G(&fespace), B(block_true_offsets),
+    M_e(NULL), D_e(NULL), C_e(NULL), Ct_e(NULL),
+    v(&fespace_v), rv(&fespace_v),
     theta(&fespace), theta_dr(&fespace), 
     phi(&fespace), phi_dr(&fespace), 
-    phase(&fespace), eta(&fespace), psi_grad(&fespace_v), 
+    phase(&fespace), eta(&fespace), 
+    psi(&fespace),
+    psi_grad(&fespace_v), 
     coeff_r(r_f), inv_R(r_inv_f), r_inv_hat(dim, r_inv_hat_f),
-    w_coeff(boundary_w), psi_coeff(boundary_psi), 
-    psi_in(boundary_psi_in), psi_out(boundary_psi_out),
-    closed_down(0.), closed_up(InflowFlux),
     grad(&fespace, &fespace_v),
     rot(dim, rot_f), Psi_grad(&psi_grad),
     rot_Psi_grad(rot, Psi_grad)
@@ -51,11 +50,13 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     ess_bdr_w[0] = 0; ess_bdr_w[1] = 0;
     ess_bdr_w[2] = 1; ess_bdr_w[3] = 0;
     ess_bdr_w[4] = 0; ess_bdr_w[5] = 0;
+    fespace.GetEssentialTrueDofs(ess_bdr_w, ess_tdof_w);
   
     ess_bdr_psi = 0;
     ess_bdr_psi[0] = 1; ess_bdr_psi[1] = 1;
     ess_bdr_psi[2] = 1; ess_bdr_psi[3] = 1;
     ess_bdr_psi[4] = 1; ess_bdr_psi[5] = 1;
+    fespace.GetEssentialTrueDofs(ess_bdr_psi, ess_tdof_psi);
 
     bdr_psi_in = 0;
     bdr_psi_in[4] = ess_bdr_psi[4];
@@ -72,48 +73,59 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParF
     bdr_psi_closed_up[3] = ess_bdr_psi[3];
 
     //Apply boundary conditions
+    FunctionCoefficient w_coeff(boundary_w);
+    ParGridFunction w(&fespace);
     w.ProjectCoefficient(w_coeff);
     w.ProjectBdrCoefficient(w_coeff, ess_bdr_w);
+    w.ParallelProject(W);
  
+    FunctionCoefficient psi_coeff(boundary_psi);
+    FunctionCoefficient psi_in(boundary_psi_in);
+    FunctionCoefficient psi_out(boundary_psi_out);
+    ConstantCoefficient closed_down(0.);
+    ConstantCoefficient closed_up(InflowFlux);
+    ParGridFunction psi(&fespace);
     psi.ProjectCoefficient(psi_coeff);
     psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
     psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
     psi.ProjectBdrCoefficient(closed_down, bdr_psi_closed_down);
     psi.ProjectBdrCoefficient(closed_up, bdr_psi_closed_up);
-
-    //Define the constant RHS
-    g = new ParLinearForm(&fespace);
-    g->Assemble();
+    psi.ParallelProject(Psi);
 
     //Define constant bilinear forms of the system
-    m = new ParBilinearForm (&fespace);
-    m->AddDomainIntegrator(new MassIntegrator);
-    m->Assemble();
-    m->EliminateEssentialBC(ess_bdr_w, w, *g, Operator::DIAG_ONE);
-    m->Finalize();
-    M = m->ParallelAssemble();
+    ParBilinearForm m(&fespace);
+    m.AddDomainIntegrator(new MassIntegrator);
+    m.Assemble();
+    m.Finalize();
+    M = m.ParallelAssemble();
+    M_e = M->EliminateRowsCols(ess_tdof_w);
 
-    c = new ParMixedBilinearForm (&fespace, &fespace);
-    c->AddDomainIntegrator(new MixedGradGradIntegrator);
-    c->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
-    c->Assemble();
-    c->EliminateTrialDofs(ess_bdr_psi, psi, *g);
-    c->EliminateTestDofs(ess_bdr_w);
-    c->Finalize();
-    C = c->ParallelAssemble();
+    ParMixedBilinearForm c(&fespace, &fespace);
+    c.AddDomainIntegrator(new MixedGradGradIntegrator);
+    c.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
+    c.Assemble();
+    c.Finalize();
+    C = c.ParallelAssemble();
+    C->EliminateRows(ess_tdof_w);
+    C_e = C->EliminateCols(ess_tdof_psi);
 
-    //Transfer to TrueDofs
-    w.ParallelAssemble(Y.GetBlock(0));
-    psi.ParallelAssemble(Y.GetBlock(1));
-    g->ParallelAssemble(B.GetBlock(0));
+    Ct = C->Transpose();
+    Ct->EliminateRows(ess_tdof_psi);
+    Ct_e = Ct->EliminateCols(ess_tdof_w);
+
+    //Define the constant RHS
+    ParLinearForm g(&fespace);
+    ConstantCoefficient Zero(0.);
+    g.AddDomainIntegrator(new DomainLFIntegrator(Zero));
+    g.Assemble();
+    g.ParallelAssemble(B.GetBlock(0));
+    C_e->Mult(Psi, G, -1., 1.);
+    EliminateBC(*M, *M_e, ess_tdof_w, W, G);
 
     //Create gradient interpolator
     grad.AddDomainIntegrator(new GradientInterpolator);
     grad.Assemble();
     grad.Finalize();
-
-    //Set initial system
-    SetParameters(X);
 }
 
 //Boundary values
