@@ -11,8 +11,8 @@ void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
     HBlocks(1, 0) = A10;
     HBlocks(1, 1) = A11;
 
-    HypreParMatrix H = *HypreParMatrixFromBlocks(HBlocks);
-    SuperLURowLocMatrix A(H);
+    HypreParMatrix *H = HypreParMatrixFromBlocks(HBlocks);
+    SuperLURowLocMatrix A(*H);
 
     //Create the complete RHS
     B.GetBlock(0) = B0;
@@ -41,4 +41,6 @@ void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
 
     rvelocity.ProjectDiscCoefficient(coeff_rVelocity, GridFunction::ARITHMETIC);
     rvelocity.ParallelAverage(rVelocity);
+
+    delete H;
 }
