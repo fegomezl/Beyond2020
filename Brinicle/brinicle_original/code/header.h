@@ -224,16 +224,19 @@ extern double RIn, ZOut;                    //Size of the inflow and outflow
 extern double Epsilon, EpsilonInv;          //Size of the indetermination window in heaviside functions 
                                             //(10̣^(-n) and 10^(n) respectively)
 
-extern double InflowVelocity;           //Velocity of the inflow
-extern double InflowFlux;               //Flux of the given inflow velocity field
-extern double InitialTemperature;       //Initial temperature of the domain
-extern double InflowTemperature;        //Temperature of the inflow
-extern double InitialSalinity;          //Initial salinity of the domain
-extern double InflowSalinity;           //Salinity of the inflow
-extern double NucleationLength;         //Lenght of the nucleation point
-extern double NucleationHeight;         //Height of the nucleation point
-extern double NucleationTemperature;    //Temperature of the nucleation point
-extern double NucleationSalinity;       //Salinity of the nucleation point
+extern double InflowVelocity;                    //Velocity of the inflow
+extern double InitialTemperature;                //Initial temperature of the domain
+extern double InflowTemperature;                 //Temperature of the inflow
+extern double InitialSalinity;                   //Initial salinity of the domain
+extern double InflowSalinity;                    //Salinity of the inflow
+extern double NucleationLength;                  //Lenght of the nucleation point
+extern double NucleationHeight;                  //Height of the nucleation point
+extern double NucleationTemperature;             //Temperature of the nucleation point
+extern double NucleationSalinity;                //Salinity of the nucleation point
+                                                 
+extern double InflowFlux;                        //Flux of the given inflow velocity field
+extern double TemperatureMax, TemperatureMin;    //Limits of the temperature scale
+extern double SalinityMax, SalinityMin;          //Limits of the salinity scale
 
 //Usefull position functions
 extern double r_f(const Vector &x);                     //Function for r
