@@ -54,13 +54,9 @@ Transport_Operator::~Transport_Operator(){
 
 Flow_Operator::~Flow_Operator(){
     delete A00;
-    delete A00_e;
     delete A10;
-    delete A01_e;
     delete A01;
-    delete A10_e;
     delete A11;
-    delete A11_e;
     delete B0;
     delete B1;
 }

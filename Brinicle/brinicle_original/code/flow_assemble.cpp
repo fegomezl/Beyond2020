@@ -12,21 +12,22 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     fespace_H1(fespace_H1),
     block_offsets_H1(block_offsets_H1),
     ess_bdr_0(attributes), ess_bdr_1(attributes),
+    vorticity_boundary(&fespace_H1), stream_boundary(&fespace_H1),
+    velocity(&fespace_ND), rvelocity(&fespace_ND),
     Vorticity(&fespace_H1), Stream(&fespace_H1),
-    A00(NULL),  A00_e(NULL), 
-    A01(NULL),  A01_e(NULL), 
-    A10(NULL),  A10_e(NULL), 
-    A11(NULL),  A11_e(NULL),
+    A00(NULL), 
+    A01(NULL), 
+    A10(NULL), 
+    A11(NULL),
     B0(NULL), B1(NULL),
     B(block_offsets_H1),
-    velocity(&fespace_ND), rvelocity(&fespace_ND),
     temperature(&fespace_H1), temperature_dr(&fespace_H1), 
     salinity(&fespace_H1), salinity_dr(&fespace_H1), 
     phase(&fespace_H1), impermeability(&fespace_H1), 
-    stream(&fespace_H1), stream_gradient(&fespace_ND), 
     coeff_r(r_f), coeff_r_inv(r_inv_f), coeff_r_inv_hat(dim, r_inv_hat_f),
-    gradient(&fespace_H1, &fespace_ND),
-    coeff_rot(dim, rot_f)
+    coeff_rot(dim, rot_f),
+    stream(&fespace_H1), stream_gradient(&fespace_ND), 
+    gradient(&fespace_H1, &fespace_ND)
 { 
     //Define essential boundary conditions
     //   
@@ -77,53 +78,44 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
 
     //Apply boundary conditions
     FunctionCoefficient coeff_vorticity(boundary_vorticity_f);
-    ParGridFunction vorticity(&fespace_H1);
-    vorticity.ProjectCoefficient(coeff_vorticity);
-    vorticity.ProjectBdrCoefficient(coeff_vorticity, ess_bdr_0);
-    vorticity.ParallelProject(Vorticity);
+    vorticity_boundary.ProjectCoefficient(coeff_vorticity);
+    vorticity_boundary.ProjectBdrCoefficient(coeff_vorticity, ess_bdr_0);
  
     FunctionCoefficient coeff_stream(boundary_stream_f);
     FunctionCoefficient coeff_stream_in(boundary_stream_in_f);
     FunctionCoefficient coeff_stream_out(boundary_stream_out_f);
     ConstantCoefficient coeff_stream_closed_down(0.);
     ConstantCoefficient coeff_stream_closed_up(InflowFlux);
-    ParGridFunction stream(&fespace_H1);
-    stream.ProjectCoefficient(coeff_stream);
-    stream.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_1_in);
-    stream.ProjectBdrCoefficient(coeff_stream_out, ess_bdr_1_out);
-    stream.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_1_closed_down);
-    stream.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_1_closed_up);
-    stream.ParallelProject(Stream);
-
-    //Define constant bilinear forms of the system
-    ParBilinearForm a00(&fespace_H1);
-    a00.AddDomainIntegrator(new MassIntegrator);
-    a00.Assemble();
-    a00.Finalize();
-    A00 = a00.ParallelAssemble();
-    A00_e = A00->EliminateRowsCols(ess_tdof_0);
-
-    ParMixedBilinearForm a01(&fespace_H1, &fespace_H1);
-    a01.AddDomainIntegrator(new MixedGradGradIntegrator);
-    a01.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(coeff_r_inv_hat));
-    a01.Assemble();
-    a01.Finalize();
-    A01 = a01.ParallelAssemble();
-    A01->EliminateRows(ess_tdof_0);
-    A01_e = A01->EliminateCols(ess_tdof_1);
-
-    A10 = A01->Transpose();
-    A10->EliminateRows(ess_tdof_1);
-    A10_e = A10->EliminateCols(ess_tdof_0);
+    stream_boundary.ProjectCoefficient(coeff_stream);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_1_in);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_out, ess_bdr_1_out);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_1_closed_down);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_1_closed_up);
 
     //Define the constant RHS
     ParLinearForm b0(&fespace_H1);
     ConstantCoefficient Zero(0.);
     b0.AddDomainIntegrator(new DomainLFIntegrator(Zero));
     b0.Assemble();
+
+    //Define constant bilinear forms of the system
+    ParBilinearForm a00(&fespace_H1);
+    a00.AddDomainIntegrator(new MassIntegrator);
+    a00.Assemble();
+    a00.EliminateEssentialBC(ess_bdr_0, vorticity_boundary, b0, Operator::DIAG_ONE);
+    a00.Finalize();
+    A00 = a00.ParallelAssemble();
+
+    ParMixedBilinearForm a01(&fespace_H1, &fespace_H1);
+    a01.AddDomainIntegrator(new MixedGradGradIntegrator);
+    a01.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(coeff_r_inv_hat));
+    a01.Assemble();
+    a01.EliminateTrialDofs(ess_bdr_1, stream_boundary, b0);
+    a01.EliminateTestDofs(ess_bdr_0);    
+    a01.Finalize();
+    A01 = a01.ParallelAssemble();
+
     B0 = b0.ParallelAssemble();
-    A10_e->Mult(Stream, *B0, -1., 1.);
-    EliminateBC(*A00, *A00_e, ess_tdof_0, Vorticity, *B0);
 
     //Create gradient interpolator
     gradient.AddDomainIntegrator(new GradientInterpolator);

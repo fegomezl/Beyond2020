@@ -110,16 +110,18 @@ class Flow_Operator{
         Array<int> ess_bdr_0, ess_bdr_1;
 
         //System objects
+        ParGridFunction vorticity_boundary;
+        ParGridFunction stream_boundary;
         ParGridFunction velocity;
         ParGridFunction rvelocity;
 
         //Solver objects
         HypreParVector Vorticity, Stream;
 
-        HypreParMatrix *A00,  *A00_e;
-        HypreParMatrix *A01,  *A01_e;
-        HypreParMatrix *A10,  *A10_e;
-        HypreParMatrix *A11,  *A11_e;
+        HypreParMatrix *A00;
+        HypreParMatrix *A01;
+        HypreParMatrix *A10;
+        HypreParMatrix *A11;
 
         HypreParVector *B0, *B1;
         BlockVector B;

@@ -185,24 +185,33 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     ScalarVectorProductCoefficient coeff_impermeability_r_inv_hat(coeff_impermeability, coeff_r_inv_hat);
     ProductCoefficient coeff_r_buoyancy(coeff_r, coeff_buoyancy);
 
-    //Define non-constant bilinear forms of the system
-    if (A11) delete A11;
-    if (A11_e) delete A11_e;
-    ParBilinearForm a11(&fespace_H1);
-    a11.AddDomainIntegrator(new DiffusionIntegrator(coeff_impermeability));
-    a11.AddDomainIntegrator(new ConvectionIntegrator(coeff_impermeability_r_inv_hat));
-    a11.Assemble();
-    a11.Finalize();
-    A11 = a11.ParallelAssemble();
-    *A11 *= -1;
-    A11_e = A11->EliminateRowsCols(ess_tdof_1);
+    ProductCoefficient coeff_neg_impermeability(1., coeff_impermeability);
+    ScalarVectorProductCoefficient coeff_neg_impermeability_r_inv_hat(-1., coeff_impermeability_r_inv_hat);
 
     //Define the non-constant RHS
     if (B1) delete B1;
     ParLinearForm b1(&fespace_H1);
     b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_buoyancy));
     b1.Assemble();
+
+    //Define non-constant bilinear forms of the system
+    if (A11) delete A11;
+    ParBilinearForm a11(&fespace_H1);
+    a11.AddDomainIntegrator(new DiffusionIntegrator(coeff_neg_impermeability));
+    a11.AddDomainIntegrator(new ConvectionIntegrator(coeff_neg_impermeability_r_inv_hat));
+    a11.Assemble();
+    a11.EliminateEssentialBC(ess_bdr_1, stream_boundary, b1, Operator::DIAG_KEEP);
+    a11.Finalize();
+    A11 = a11.ParallelAssemble();
+
+    ParMixedBilinearForm a10(&fespace_H1, &fespace_H1);
+    a10.AddDomainIntegrator(new MixedGradGradIntegrator);
+    a10.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(coeff_r_inv_hat));
+    a10.Assemble();
+    a10.EliminateTrialDofs(ess_bdr_0, vorticity_boundary, b1);
+    a10.EliminateTestDofs(ess_bdr_1);    
+    a10.Finalize();
+    A10 = a10.ParallelAssemble();
+
     B1 = b1.ParallelAssemble();
-    A10_e->Mult(Vorticity, *B1, -1., 1.);
-    EliminateBC(*A11, *A11_e, ess_tdof_1, Stream, *B1);
 }
