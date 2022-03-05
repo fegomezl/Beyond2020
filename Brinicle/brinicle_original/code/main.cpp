@@ -7,6 +7,7 @@
 
 
 double RMin, RMax, ZMin, ZMax;
+double LenghtScale = 1., TimeScale = 1.;
 double RIn, ZOut;
 double Epsilon, EpsilonInv;
 

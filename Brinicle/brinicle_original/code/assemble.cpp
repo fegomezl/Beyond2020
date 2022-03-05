@@ -6,12 +6,15 @@ void zero_f(const Vector &x, Vector &f);
 void r_inv_hat_f(const Vector &x, Vector &f);
 void rot_f(const Vector &x, DenseMatrix &f);
 
-double T_fun(const double &salinity);
-double delta_c_s_fun(const double &temperature, const double &salinity);
-double delta_k_s_fun(const double &temperature, const double &salinity);
-double delta_l_s_fun(const double &temperature, const double &salinity);
-double delta_rho_t_fun(const double &temperature, const double &salinity);
-double delta_rho_p_fun(const double &temperature, const double &salinity);
+double FusionPoint(const double S);
+double Phase(const double T, const double S);
+double HeatInertia(const double T, const double S);
+double HeatDiffusivity(const double T, const double S);
+double SaltDiffusivity(const double T, const double S);
+double Impermeability(const double T, const double S);
+double ExpansivityTemperature(const double T, const double S);
+double ExpansivitySalinity(const double T, const double S);
+double Buoyancy(const double T, const double S);
 
 void Artic_sea::assemble_system(){
     //Define solution x
@@ -62,10 +65,8 @@ void Artic_sea::assemble_system(){
     rvelocity->Distribute(rVelocity);
     
     //Calculate phases
-    for (int ii = 0; ii < phase->Size(); ii++){
-        double T_f = config.T_f + T_fun((*salinity)(ii));
-        (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*temperature)(ii) - T_f)));
-    }
+    for (int ii = 0; ii < phase->Size(); ii++)
+        (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
 
     //Normalize stream
     if (config.rescale){
@@ -146,37 +147,69 @@ void rot_f(const Vector &x, DenseMatrix &f){
     f(1,0) = -1.; f(1,1) = 0.;
 }
 
-double T_fun(const double &salinity){
+double FusionPoint(const double S){
     double a = 0.6037;
     double b = 0.00058123;
-    return -(a*salinity + b*pow(salinity, 3));
+    return -(a*S + b*pow(S, 3));
 }
 
-double delta_rho_t_fun(const double &temperature, const double &salinity){
-    //if (temperature < T_fun(salinity))
-    //    return 0.;
+double Phase(const double T, const double S){
+    return 0.5*(1+tanh(5*EpsilonInv*(T-FusionPoint(S))));
+}
 
-    double a0 = -13.0,  b0 = 1.1,
-           a1 = 0.5,    b1 = -0.04,
-           a2 = -0.008,  
+double HeatInertia(const double T, const double S){
+    double liquid = 0.0117;   //c_l/L
+    double solid  = 0.0066;   //c_s/L
+    return (solid + (liquid-solid)*Phase(T, S));
+}
+
+double HeatDiffusivity(const double T, const double S){ 
+    double Scale = pow(LenghtScale, 2)/TimeScale;
+    double liquid = 0.103 ;   //k_l/L
+    double solid  = 0.426;    //k_s/L
+    return (solid + (liquid-solid)*Phase(T, S))*Scale;
+}
+
+double SaltDiffusivity(const double T, const double S){
+    double Scale = pow(LenghtScale, 2)/TimeScale;
+    double liquid = 0.1;    //d_l
+    double solid  = 0.;     //d_s
+    return (solid + (liquid-solid)*Phase(T, S))*Scale;
+}
+
+double Impermeability(const double T, const double S){
+    return Epsilon + pow(1-Phase(T, S), 2)/(pow(Phase(T, S), 3) + Epsilon);
+} 
+
+double ExpansivityTemperature(const double T, const double S){
+    double Scale = pow(LenghtScale*TimeScale, -1);
+    double a0 = -13.4,   b0 = 1.1,
+           a1 = 0.5,     b1 = -0.04,
+           a2 = -0.08,
            a3 = 0.0001;
-    return (a0 + a1*temperature + a2*pow(temperature, 2) + a3*pow(temperature, 3))*salinity +
-           (b0 + b1*temperature)*pow(abs(salinity), 1.5);
-}
+    return Phase(T, S)*((a0 + a1*(T) + a2*pow(T, 2) + a3*pow(T, 3))*S 
+                      + (b0 + b1*(T))*pow(abs(S), 1.5))*Scale;
+} 
 
-double delta_rho_p_fun(const double &temperature, const double &salinity){
-    //if (temperature < T_fun(salinity))
-    //    return 0.;
-
-    double a0 = 2617.9, b0 = -87.0, c0 = 31.0,
-           a1 = -13.0,  b1 = 1.6,
-           a2 = 0.2,    b2 = -0.03,
+double ExpansivitySalinity(const double T, const double S){
+    double Scale = pow(LenghtScale*TimeScale, -1);
+    double a0 = 2697.0,   b0 = -89.7,  c0 = 32.0,
+           a1 = -13.4,    b1 = 1.6,
+           a2 = 0.3,      b2 = -0.03,
            a3 = -0.003,
            a4 = 0.00002;
-    return (a0 + a1*temperature + a2*pow(temperature, 2) + a3*pow(temperature, 3) + a4*pow(temperature, 4)) +
-           (b0 + b1*temperature + b2*pow(temperature, 2))*pow(abs(salinity), 0.5) +
-           (c0)*salinity;
+    return Phase(T, S)*((a0 + a1*(T) + a2*pow(T, 2) + a3*pow(T, 3) + a4*pow(T, 4)) +
+                        (b0 + b1*(T) + b2*pow(T, 2))*pow(abs(S), 0.5) + (c0)*S)*Scale;
 }
 
+double Buoyancy(const double T, const double S){
+    double Scale = pow(LenghtScale*TimeScale, -1);
+    double a0 = 2697.0,   b0 = -59.8,    c0 = 16.0,
+           a1 = -13.4,    b1 = 1.1,
+           a2 = 0.3,      b2 = -0.02,
+           a3 = -0.003,
+           a4 = 0.00002;
+    return Phase(T, S)*((a0 + a1*(T) + a2*pow(T, 2) + a3*pow(T, 3) + a4*pow(T, 4))*S +
+                        (b0 + b1*(T) + b2*pow(T, 2))*pow(abs(S), 1.5) + (c0)*pow(S, 2))*Scale;
 
-
+}

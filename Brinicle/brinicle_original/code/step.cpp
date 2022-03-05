@@ -29,10 +29,8 @@ void Artic_sea::time_step(){
         rvelocity->Distribute(rVelocity);
 
         //Calculate phases
-        for (int ii = 0; ii < phase->Size(); ii++){
-            double T_f = config.T_f + T_fun((*salinity)(ii));
-            (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*temperature)(ii) - T_f)));
-        }
+        for (int ii = 0; ii < phase->Size(); ii++)
+            (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
 
         //Normalize stream
         if (config.rescale){
@@ -81,51 +79,50 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < phase.Size(); ii++){
-        double DT = temperature(ii) - config.T_f - T_fun(salinity(ii));
-        double P = 0.5*(1 + tanh(5*EpsilonInv*DT));
+        double T = temperature(ii);
+        double S = salinity(ii);
 
-        aux_C(ii) = config.c_s + (config.c_l-config.c_s)*P;
-        aux_K(ii) = config.k_s + (config.k_l-config.k_s)*P;
-        aux_D(ii) = config.d_s + (config.d_l-config.d_s)*P;
+        phase(ii) = Phase(T, S);
+        heat_inertia(ii) = HeatInertia(T, S);
+        heat_diffusivity(ii) = HeatDiffusivity(T, S);
+        salt_diffusivity(ii) = SaltDiffusivity(T, S);
 
-        temperature(ii) = DT;
-        phase(ii) = P;
+        temperature(ii) = T - FusionPoint(S);
     }
 
     //Set the associated coefficients
-    GridFunctionCoefficient coeff_C(&aux_C);
-    GridFunctionCoefficient coeff_K(&aux_K);
-    GridFunctionCoefficient coeff_D(&aux_D);
+    GridFunctionCoefficient coeff_I(&heat_inertia);
+    GridFunctionCoefficient coeff_D0(&heat_diffusivity);
+    GridFunctionCoefficient coeff_D1(&salt_diffusivity);
 
     //Construct latent heat term
     GradientGridFunctionCoefficient coeff_dT(&temperature);
-    GradientGridFunctionCoefficient coeff_dH(&phase);
+    GradientGridFunctionCoefficient coeff_dP(&phase);
     
-    InnerProductCoefficient coeff_dHdT(coeff_dH, coeff_dT);
+    InnerProductCoefficient coeff_dPdT(coeff_dP, coeff_dT);
     InnerProductCoefficient coeff_dT_2(coeff_dT, coeff_dT);
 
     SumCoefficient coeff_dT_2e(Epsilon, coeff_dT_2);
     
     PowerCoefficient coeff_inv_dT_2(coeff_dT_2e, -1.);
-    ProductCoefficient coeff_DeltaT(coeff_dHdT, coeff_inv_dT_2);
-    ProductCoefficient coeff_LDeltaT(0.5*(config.L_s+config.L_l), coeff_DeltaT);
+    ProductCoefficient coeff_DeltaT(coeff_dPdT, coeff_inv_dT_2);
 
-    SumCoefficient coeff_CL(coeff_C, coeff_LDeltaT);
+    SumCoefficient coeff_M(coeff_I, coeff_DeltaT);
 
     //Construct final coefficients
-    ProductCoefficient coeff_rCL(coeff_r, coeff_CL);
-    ProductCoefficient coeff_rK(coeff_r, coeff_K);
-    ProductCoefficient coeff_rD(coeff_r, coeff_D);
+    ProductCoefficient coeff_rM(coeff_r, coeff_M);
+    ProductCoefficient coeff_rD0(coeff_r, coeff_D0);
+    ProductCoefficient coeff_rD1(coeff_r, coeff_D1);
 
     VectorGridFunctionCoefficient coeff_rV(&rvelocity);
-    ScalarVectorProductCoefficient coeff_rCLV(coeff_CL, coeff_rV);
+    ScalarVectorProductCoefficient coeff_rMV(coeff_M, coeff_rV);
 
     //Create corresponding bilinear forms
     if (M0) delete M0;
     if (M0_e) delete M0_e;
     if (M0_o) delete M0_o;
     ParBilinearForm m0(&fespace_H1);
-    m0.AddDomainIntegrator(new MassIntegrator(coeff_rCL));
+    m0.AddDomainIntegrator(new MassIntegrator(coeff_rM));
     m0.Assemble();
     m0.Finalize();
     M0 = m0.ParallelAssemble();
@@ -138,15 +135,15 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     //Create transport matrix
     if (K0) delete K0;
     ParBilinearForm k0(&fespace_H1);
-    k0.AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
-    k0.AddDomainIntegrator(new ConvectionIntegrator(coeff_rCLV));
+    k0.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD0));
+    k0.AddDomainIntegrator(new ConvectionIntegrator(coeff_rMV));
     k0.Assemble();
     k0.Finalize();
     K0 = k0.ParallelAssemble();    
 
     if (K1) delete K1;
     ParBilinearForm k1(&fespace_H1);
-    k1.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
+    k1.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD1));
     k1.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
     k1.Assemble();
     k1.Finalize();
@@ -165,29 +162,28 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     for (int ii = 0; ii < phase.Size(); ii++){
         double T = temperature(ii);
         double S = salinity(ii);
-        double P = 0.5*(1 + tanh(5*EpsilonInv*(T - config.T_f - T_fun(S)))); 
 
-        impermeability(ii) = Epsilon + pow(1-P, 2)/(pow(P, 3) + Epsilon);
-
-        temperature(ii) = delta_rho_t_fun(T, S);
-        salinity(ii) = delta_rho_p_fun(T, S);
+        impermeability(ii) = Impermeability(T, S);
+        temperature(ii) = ExpansivityTemperature(T, S);
+        salinity(ii) = ExpansivitySalinity(T, S);
     }
 
     //Properties coefficients
     GridFunctionCoefficient coeff_impermeability(&impermeability);
 
     GridFunctionCoefficient coeff_temperature_dr(&temperature_dr);
-    GridFunctionCoefficient coeff_k_t(&temperature);
-    ProductCoefficient coeff_k_temperature_dr(coeff_k_t, coeff_temperature_dr);
+    GridFunctionCoefficient coeff_expansivity_temperature(&temperature);
+    ProductCoefficient coeff_buoyancy_temperature(coeff_expansivity_temperature, coeff_temperature_dr);
 
     GridFunctionCoefficient coeff_salinity_dr(&salinity_dr);
-    GridFunctionCoefficient coeff_k_p(&salinity);
-    ProductCoefficient coeff_k_salinity_dr(coeff_k_p, coeff_salinity_dr);
+    GridFunctionCoefficient coeff_expansivity_salinity(&salinity);
+    ProductCoefficient coeff_buoyancy_salinity(coeff_expansivity_salinity, coeff_salinity_dr);
+
+    SumCoefficient coeff_buoyancy(coeff_buoyancy_temperature, coeff_buoyancy_salinity);
 
     //Rotational coupled coefficients
     ScalarVectorProductCoefficient coeff_impermeability_r_inv_hat(coeff_impermeability, coeff_r_inv_hat);
-    ProductCoefficient coeff_k_r_temperature_dr(coeff_r, coeff_k_temperature_dr);
-    ProductCoefficient coeff_k_r_salinity_dr(coeff_r, coeff_k_salinity_dr);
+    ProductCoefficient coeff_r_buoyancy(coeff_r, coeff_buoyancy);
 
     //Define non-constant bilinear forms of the system
     if (A11) delete A11;
@@ -204,8 +200,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     //Define the non-constant RHS
     if (B1) delete B1;
     ParLinearForm b1(&fespace_H1);
-    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_k_r_temperature_dr));
-    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_k_r_salinity_dr));
+    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_buoyancy));
     b1.Assemble();
     B1 = b1.ParallelAssemble();
     A10_e->Mult(Vorticity, *B1, -1., 1.);
