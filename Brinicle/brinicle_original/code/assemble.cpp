@@ -16,6 +16,9 @@ double ExpansivityTemperature(const double T, const double S);
 double ExpansivitySalinity(const double T, const double S);
 double Buoyancy(const double T, const double S);
 
+double T_bounded(const double T);
+double S_bounded(const double S);
+
 void Artic_sea::assemble_system(){
     //Define solution x
     if (!config.restart){
@@ -148,95 +151,83 @@ void rot_f(const Vector &x, DenseMatrix &f){
 }
 
 double FusionPoint(const double S){
-    double S_bounded = 0.5*(SalinityMin+SalinityMax)
-                     + 0.5*(S-SalinityMin)*tanh(5*EpsilonInv*(S-SalinityMin))
-                     + 0.5*(SalinityMax-S)*tanh(5*EpsilonInv*(S-SalinityMax));
-
     double a = 0.6037;
     double b = 0.00058123;
-    return -(a*S_bounded + b*pow(S_bounded, 3));
+    return -(a*S + b*pow(S, 3));
 }
 
 double Phase(const double T, const double S){
+    //Dimentionless
     return 0.5*(1+tanh(5*EpsilonInv*(T-FusionPoint(S))));
 }
 
 double HeatInertia(const double T, const double S){
+    //1/°C
     double liquid = 0.0117;   //c_l/L
     double solid  = 0.0066;   //c_s/L
-    return (solid + (liquid-solid)*Phase(T, S));
+    return solid + (liquid-solid)*Phase(T, S);
 }
 
 double HeatDiffusivity(const double T, const double S){ 
-    double Scale = pow(LenghtScale, 2)/TimeScale;
-    
+    //mm^2/min
     double liquid = 0.103 ;   //k_l/L
     double solid  = 0.426;    //k_s/L
-    return (solid + (liquid-solid)*Phase(T, S))*Scale;
+    return solid + (liquid-solid)*Phase(T, S);
 }
 
 double SaltDiffusivity(const double T, const double S){
-    double Scale = pow(LenghtScale, 2)/TimeScale;
-    
+    //mm^2/min
     double liquid = 0.1;    //d_l
     double solid  = 0.;     //d_s
-    return (solid + (liquid-solid)*Phase(T, S))*Scale;
+    return solid + (liquid-solid)*Phase(T, S);
 }
 
 double Impermeability(const double T, const double S){
+    //Dimentionless (Actually has 1/Lenght^2 but its not scale dependent)
     return Epsilon + pow(1-Phase(T, S), 2)/(pow(Phase(T, S), 3) + Epsilon);
 } 
 
 double ExpansivityTemperature(const double T, const double S){
-    double T_bounded = 0.5*(TemperatureMin+TemperatureMax)
-                     + 0.5*(T-TemperatureMin)*tanh(5*EpsilonInv*(T-TemperatureMin))
-                     + 0.5*(TemperatureMax-T)*tanh(5*EpsilonInv*(T-TemperatureMax));
-    double S_bounded = 0.5*(SalinityMin+SalinityMax)
-                     + 0.5*(S-SalinityMin)*tanh(5*EpsilonInv*(S-SalinityMin))
-                     + 0.5*(SalinityMax-S)*tanh(5*EpsilonInv*(S-SalinityMax));
-    double Scale = pow(LenghtScale*TimeScale, -1);
-
+    //1/(mm*min)
     double a0 = -13.4,   b0 = 1.1,
            a1 = 0.5,     b1 = -0.04,
            a2 = -0.08,
            a3 = 0.0001;
     return Phase(T, S)*((a0 + a1*(T) + a2*pow(T, 2) + a3*pow(T, 3))*S 
-                      + (b0 + b1*(T))*pow(abs(S), 1.5))*Scale;
+                      + (b0 + b1*(T))*pow(abs(S), 1.5));
 } 
 
 double ExpansivitySalinity(const double T, const double S){
-    double T_bounded = 0.5*(TemperatureMin+TemperatureMax)
-                     + 0.5*(T-TemperatureMin)*tanh(5*EpsilonInv*(T-TemperatureMin))
-                     + 0.5*(TemperatureMax-T)*tanh(5*EpsilonInv*(T-TemperatureMax));
-    double S_bounded = 0.5*(SalinityMin+SalinityMax)
-                     + 0.5*(S-SalinityMin)*tanh(5*EpsilonInv*(S-SalinityMin))
-                     + 0.5*(SalinityMax-S)*tanh(5*EpsilonInv*(S-SalinityMax));
-    double Scale = pow(LenghtScale*TimeScale, -1);
-
+    //1/(mm*min)
     double a0 = 2697.0,   b0 = -89.7,  c0 = 32.0,
            a1 = -13.4,    b1 = 1.6,
            a2 = 0.3,      b2 = -0.03,
            a3 = -0.003,
            a4 = 0.00002;
     return Phase(T, S)*((a0 + a1*(T) + a2*pow(T, 2) + a3*pow(T, 3) + a4*pow(T, 4)) +
-                        (b0 + b1*(T) + b2*pow(T, 2))*pow(abs(S), 0.5) + (c0)*S)*Scale;
+                        (b0 + b1*(T) + b2*pow(T, 2))*pow(abs(S), 0.5) + (c0)*S);
 }
 
 double Buoyancy(const double T, const double S){
-    double T_bounded = 0.5*(TemperatureMin+TemperatureMax)
-                     + 0.5*(T-TemperatureMin)*tanh(5*EpsilonInv*(T-TemperatureMin))
-                     + 0.5*(TemperatureMax-T)*tanh(5*EpsilonInv*(T-TemperatureMax));
-    double S_bounded = 0.5*(SalinityMin+SalinityMax)
-                     + 0.5*(S-SalinityMin)*tanh(5*EpsilonInv*(S-SalinityMin))
-                     + 0.5*(SalinityMax-S)*tanh(5*EpsilonInv*(S-SalinityMax));
-    double Scale = pow(LenghtScale*TimeScale, -1);
-
+    //1/(mm*min)
     double a0 = 2697.0,   b0 = -59.8,    c0 = 16.0,
            a1 = -13.4,    b1 = 1.1,
            a2 = 0.3,      b2 = -0.02,
            a3 = -0.003,
            a4 = 0.00002;
     return Phase(T, S)*((a0 + a1*(T) + a2*pow(T, 2) + a3*pow(T, 3) + a4*pow(T, 4))*S +
-                        (b0 + b1*(T) + b2*pow(T, 2))*pow(abs(S), 1.5) + (c0)*pow(S, 2))*Scale;
+                        (b0 + b1*(T) + b2*pow(T, 2))*pow(abs(S), 1.5) + (c0)*pow(S, 2));
 
+}
+
+double T_bounded(const double T){
+    return 0.5*(TemperatureMin+TemperatureMax)
+         + 0.5*(T-TemperatureMin)*tanh(5*EpsilonInv*(T-TemperatureMin))
+         + 0.5*(TemperatureMax-T)*tanh(5*EpsilonInv*(T-TemperatureMax));
+}
+
+double S_bounded(const double S){
+    return 0.5*(SalinityMin+SalinityMax)
+           + 0.5*(S-SalinityMin)*tanh(5*EpsilonInv*(S-SalinityMin))
+           + 0.5*(SalinityMax-S)*tanh(5*EpsilonInv*(S-SalinityMax));
 }

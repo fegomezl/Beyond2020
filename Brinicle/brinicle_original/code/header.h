@@ -29,12 +29,6 @@ struct Config{
     double reltol_sundials;
     double abstol_sundials;
 
-    double T_f;
-    double c_l, c_s;
-    double k_l, k_s;
-    double d_l, d_s;
-    double L_l, L_s;
-
     bool restart;
     double t_init;
 };
@@ -219,7 +213,6 @@ class Artic_sea{
 
 //Simulation parameters
 extern double RMin, RMax, ZMin, ZMax;       //Size of the domain
-extern double LenghtScale, TimeScale;       //Scaling for the corresponding dimension
 extern double RIn, ZOut;                    //Size of the inflow and outflow
 extern double Epsilon, EpsilonInv;          //Size of the indetermination window in heaviside functions 
                                             //(10̣^(-n) and 10^(n) respectively)
@@ -234,7 +227,7 @@ extern double NucleationHeight;                  //Height of the nucleation poin
 extern double NucleationTemperature;             //Temperature of the nucleation point
 extern double NucleationSalinity;                //Salinity of the nucleation point
                                                  
-extern double InflowFlux;                        //Flux of the given inflow velocity field
+extern double InflowFlux;                        //Flux at the inflow boundary divided by 2PI
 extern double TemperatureMax, TemperatureMin;    //Limits of the temperature scale
 extern double SalinityMax, SalinityMin;          //Limits of the salinity scale
 
@@ -252,6 +245,10 @@ extern double Phase(const double T, const double S);                    //Phase 
 extern double HeatInertia(const double T, const double S);              //Heat capacity over latent heat
 extern double HeatDiffusivity(const double T, const double S);          //Heat conduction over latent heat
 extern double SaltDiffusivity(const double T, const double S);          //Diffusion coefficient for the mass equation
-extern double Impermeability(const double T, const double S);      //Inverse of the brinkman penalization permeability
+extern double Impermeability(const double T, const double S);           //Inverse of the brinkman penalization permeability
 extern double ExpansivityTemperature(const double T, const double S);   //Expansivity coefficient for the temperature gradient
 extern double ExpansivitySalinity(const double T, const double S);      //Expansivity coefficient for the salinity gradient
+
+//Bounding variables
+extern double T_bounded(const double T);        //Bounding of temperature according to expectations
+extern double S_bounded(const double S);        //Bounding of salinity according to expectations
