@@ -47,20 +47,20 @@ void Artic_sea::make_grid(const char *mesh_file){
     pmesh->GetCharacteristics(h_min, null, null, null);
 
     //Create the FEM space associated with the mesh
-    fec = new H1_FECollection(config.order, dim);
-    fespace = new ParFiniteElementSpace(pmesh, fec);
-    size = fespace->GlobalTrueVSize();
+    fec_H1 = new H1_FECollection(config.order, dim);
+    fespace_H1 = new ParFiniteElementSpace(pmesh, fec_H1);
+    size_H1 = fespace_H1->GlobalTrueVSize();
 
-    fec_v = new ND_FECollection(config.order, dim);
-    fespace_v = new ParFiniteElementSpace(pmesh, fec_v);
-    size_v = fespace_v->GlobalTrueVSize();
+    fec_ND = new ND_FECollection(config.order, dim);
+    fespace_ND = new ParFiniteElementSpace(pmesh, fec_ND);
+    size_ND = fespace_ND->GlobalTrueVSize();
 
     //Create the block offsets
-    block_true_offsets[0] = 0;
-    block_true_offsets[1] = fespace->TrueVSize();
-    block_true_offsets[2] = fespace->TrueVSize();
-    block_true_offsets.PartialSum();
+    block_offsets_H1[0] = 0;
+    block_offsets_H1[1] = fespace_H1->TrueVSize();
+    block_offsets_H1[2] = fespace_H1->TrueVSize();
+    block_offsets_H1.PartialSum();
 
-    X.Update(block_true_offsets);
-    Z.Update(block_true_offsets);
+    X.Update(block_offsets_H1); X = 0.;
+    Y.Update(block_offsets_H1); Y = 0.;
 }

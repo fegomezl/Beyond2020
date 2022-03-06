@@ -192,39 +192,39 @@ class Artic_sea{
         bool last;
         int vis_iteration;
         int vis_steps;
-        int vis_impressions;
+        int vis_print;
         double total_time;
 
         //Mesh objects
         ParMesh *pmesh;
 
-        FiniteElementCollection *fec;
-        FiniteElementCollection *fec_v;
+        FiniteElementCollection *fec_H1;
+        FiniteElementCollection *fec_ND;
 
-        ParFiniteElementSpace *fespace;
-        ParFiniteElementSpace *fespace_v;
+        ParFiniteElementSpace *fespace_H1;
+        ParFiniteElementSpace *fespace_ND;
 
-        Array<int> block_true_offsets;
+        Array<int> block_offsets_H1;
         
         int dim;
         double h_min;
         int serial_refinements;
-        HYPRE_Int size;
-        HYPRE_Int size_v;
+        HYPRE_Int size_H1;
+        HYPRE_Int size_ND;
 
         //System objects
-        ParGridFunction *theta;
-        ParGridFunction *phi;
-        ParGridFunction *w;
-        ParGridFunction *psi;
-        ParGridFunction *v;
-        ParGridFunction *rv;
+        ParGridFunction *temperature;
+        ParGridFunction *salinity;
         ParGridFunction *phase;
+        ParGridFunction *vorticity;
+        ParGridFunction *stream;
+        ParGridFunction *velocity;
+        ParGridFunction *rvelocity;
 
-        BlockVector X;              //theta and phi
-        BlockVector Z;              //w and psi
-        HypreParVector *rV;
-        HypreParVector *V;
+        BlockVector X;
+        BlockVector Y;
+        HypreParVector *Velocity;
+        HypreParVector *rVelocity;
 
         //Operators
         Transport_Operator *transport_oper;

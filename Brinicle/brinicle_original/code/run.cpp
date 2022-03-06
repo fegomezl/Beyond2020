@@ -9,11 +9,15 @@ Config::Config(int pid, int nproc):
 Artic_sea::Artic_sea(Config config):
     config(config),
     t(config.t_init), dt(config.dt_init), last(false),
-    vis_steps(config.vis_steps_max), vis_impressions(0),
-    pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
-    block_true_offsets(3),
-    theta(NULL), phi(NULL), w(NULL), psi(NULL), v(NULL), rv(NULL), phase(NULL), 
-    rV(NULL), V(NULL),
+    vis_steps(config.vis_steps_max), vis_print(0),
+    pmesh(NULL), 
+    fec_H1(NULL), fec_ND(NULL), 
+    fespace_H1(NULL), fespace_ND(NULL),
+    block_offsets_H1(3),
+    temperature(NULL), salinity(NULL), phase(NULL), 
+    vorticity(NULL), stream(NULL), 
+    velocity(NULL), rvelocity(NULL), 
+    Velocity(NULL), rVelocity(NULL),
     transport_oper(NULL), flow_oper(NULL),
     ode_solver(NULL), arkode(NULL),
     paraview_out(NULL)
@@ -64,19 +68,19 @@ Flow_Operator::~Flow_Operator(){
 
 Artic_sea::~Artic_sea(){
     delete pmesh;
-    delete fec;
-    delete fec_v;
-    delete fespace;
-    delete fespace_v;
-    delete theta;
-    delete phi;
-    delete w;
-    delete psi;
-    delete v;
-    delete rv;
+    delete fec_H1;
+    delete fec_ND;
+    delete fespace_H1;
+    delete fespace_ND;
+    delete temperature;
+    delete salinity;
     delete phase;
-    delete rV;
-    delete V;
+    delete vorticity;
+    delete stream;
+    delete velocity;
+    delete rvelocity;
+    delete Velocity;
+    delete rVelocity;
     delete transport_oper;
     delete flow_oper;
     delete ode_solver;
