@@ -14,11 +14,11 @@ void Artic_sea::output_results(){
     out.close();
 
     out.open(n_theta.c_str(),std::ios::out);
-    temperature->Save(out);
+    theta->Save(out);
     out.close();
 
     out.open(n_phi.c_str(),std::ios::out);
-    salinity->Save(out);
+    phi->Save(out);
     out.close();
 
     if (config.master){
@@ -29,8 +29,8 @@ void Artic_sea::output_results(){
 
     //Print general information of the program
     if (config.master){
-        cout << "\n\nSize (H1): " << size_H1 << "\n"
-             << "Size (ND): " << size_ND << "\n"
+        cout << "\n\nSize: " << 2*size << "\n"
+             << "Vectorial size: " << size_v << "\n"
              << "Mesh Size: " << h_min << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
@@ -41,8 +41,8 @@ void Artic_sea::output_results(){
 
         std::ofstream out;
         out.open("results/state.txt", std::ios::trunc);
-        out << "Size (H1): " << size_H1 << "\n"
-            << "Size (ND): " << size_ND << "\n"
+        out << "Size: " << 2*size << "\n"
+            << "Vectorial size: " << size_v << "\n"
             << "Mesh Size: " << h_min << "\n"
             << "Serial refinements: " << serial_refinements << "\n"
             << "Parallel refinements: " << config.refinements - serial_refinements << "\n"

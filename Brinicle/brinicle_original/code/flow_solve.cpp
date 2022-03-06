@@ -1,22 +1,18 @@
 #include "header.h"
 
-void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
+void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     //Create the complete bilinear operator:
     //
     //   H = [ M    C ]
     //       [ C^t  D ]
     Array2D<HypreParMatrix*> HBlocks(2,2);
-    HBlocks(0, 0) = A00;
-    HBlocks(0, 1) = A01;
-    HBlocks(1, 0) = A10;
-    HBlocks(1, 1) = A11;
+    HBlocks(0, 0) = M;
+    HBlocks(0, 1) = C;
+    HBlocks(1, 0) = Ct;
+    HBlocks(1, 1) = D;
 
     HypreParMatrix *H = HypreParMatrixFromBlocks(HBlocks);
     SuperLURowLocMatrix A(*H);
-
-    //Create the complete RHS
-    B.GetBlock(0) = *B0;
-    B.GetBlock(1) = *B1;
 
     SuperLUSolver superlu(MPI_COMM_WORLD);
     superlu.SetOperator(A);
@@ -29,18 +25,24 @@ void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
     superlu.Mult(B, Y);
     superlu.DismantleGrid();
 
+    //Recover the solution on each proccesor
+    w.Distribute(&(Y.GetBlock(0)));
+    psi.Distribute(&(Y.GetBlock(1)));
+
     //Calculate velocity
-    stream.Distribute(Y.GetBlock(1));
-    gradient.Mult(stream, stream_gradient);
-    VectorGridFunctionCoefficient coeff_stream_gradient(&stream_gradient);
-    MatrixVectorProductCoefficient coeff_rVelocity(coeff_rot, coeff_stream_gradient);
-    ScalarVectorProductCoefficient coeff_Velocity(coeff_r_inv, coeff_rVelocity);
+    grad.Mult(psi, psi_grad);
+    Psi_grad.SetGridFunction(&psi_grad);
+    rot_Psi_grad.SetBCoef(Psi_grad);
+    FunctionCoefficient inv_R(r_inv_f);
+    ScalarVectorProductCoefficient coeff_V(inv_R, rot_Psi_grad);
+    v.ProjectDiscCoefficient(coeff_V, GridFunction::ARITHMETIC);
+    rv.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
 
-    velocity.ProjectDiscCoefficient(coeff_Velocity, GridFunction::ARITHMETIC);
-    velocity.ParallelAverage(Velocity);
-
-    rvelocity.ProjectDiscCoefficient(coeff_rVelocity, GridFunction::ARITHMETIC);
-    rvelocity.ParallelAverage(rVelocity);
+    //Export flow information
+    w.ParallelAverage(Z.GetBlock(0));
+    psi.ParallelAverage(Z.GetBlock(1));
+    v.ParallelAverage(V);
+    rv.ParallelAverage(rV);
 
     delete H;
 }

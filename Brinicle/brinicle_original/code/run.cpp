@@ -10,15 +10,10 @@ Artic_sea::Artic_sea(Config config):
     config(config),
     t(config.t_init), dt(config.dt_init), last(false),
     vis_steps(config.vis_steps_max), vis_impressions(0),
-    pmesh(NULL), 
-    fec_H1(NULL), fec_ND(NULL), 
-    fespace_H1(NULL), fespace_ND(NULL),
-    block_offsets_H1(3),
-    temperature(NULL), salinity(NULL), 
-    phase(NULL), 
-    vorticity(NULL), stream(NULL), 
-    velocity(NULL), rvelocity(NULL), 
-    rVelocity(NULL), Velocity(NULL),
+    pmesh(NULL), fec(NULL), fec_v(NULL), fespace(NULL), fespace_v(NULL),
+    block_true_offsets(3),
+    theta(NULL), phi(NULL), w(NULL), psi(NULL), v(NULL), rv(NULL), phase(NULL), 
+    rV(NULL), V(NULL),
     transport_oper(NULL), flow_oper(NULL),
     ode_solver(NULL), arkode(NULL),
     paraview_out(NULL)
@@ -36,46 +31,52 @@ void Artic_sea::run(const char *mesh_file){
 
 Transport_Operator::~Transport_Operator(){
     //Delete used memory
-    delete M0;
-    delete M1;
-    delete M0_o;
-    delete M1_o; 
-    delete M0_e;  
-    delete M1_e;  
-    delete K0;
-    delete K1;
-    delete T0;
-    delete T1;
-    delete T0_e;
-    delete T1_e;  
-    delete B0;
-    delete B1;
+    delete m_theta; 
+    delete m_phi;
+    delete k_theta;
+    delete k_phi;
+    delete M_theta; 
+    delete M_e_theta; 
+    delete M_0_theta; 
+    delete M_phi; 
+    delete M_e_phi; 
+    delete M_0_phi; 
+    delete K_0_theta; 
+    delete K_0_phi; 
+    delete T_theta; 
+    delete T_e_theta; 
+    delete T_phi; 
+    delete T_e_phi; 
 }
 
 Flow_Operator::~Flow_Operator(){
-    delete A00;
-    delete A10;
-    delete A01;
-    delete A11;
-    delete B0;
-    delete B1;
+    delete f;
+    delete g;
+    delete m;
+    delete d;
+    delete c;
+    delete ct;
+    delete M;
+    delete D;
+    delete C;
+    delete Ct;
 }
 
 Artic_sea::~Artic_sea(){
     delete pmesh;
-    delete fec_H1;
-    delete fec_ND;
-    delete fespace_H1;
-    delete fespace_ND;
-    delete temperature;
-    delete salinity;
+    delete fec;
+    delete fec_v;
+    delete fespace;
+    delete fespace_v;
+    delete theta;
+    delete phi;
+    delete w;
+    delete psi;
+    delete v;
+    delete rv;
     delete phase;
-    delete vorticity;
-    delete stream;
-    delete velocity;
-    delete rvelocity;
-    delete rVelocity;
-    delete Velocity;
+    delete rV;
+    delete V;
     delete transport_oper;
     delete flow_oper;
     delete ode_solver;
