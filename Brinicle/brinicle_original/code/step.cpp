@@ -30,7 +30,7 @@ void Artic_sea::time_step(){
 
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++){
-            double T_f = config.T_f + T_fun((*phi)(ii));
+            double T_f = FusionPoint((*phi)(ii));
             (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*theta)(ii) - T_f)));
         }
 
@@ -81,7 +81,7 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rV){
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < phase.Size(); ii++){
-        double DT = theta(ii) - config.T_f - T_fun(phi(ii));
+        double DT = theta(ii) - FusionPoint(phi(ii));
         double P = 0.5*(1 + tanh(5*EpsilonInv*DT));
 
         aux_C(ii) = config.c_s + (config.c_l-config.c_s)*P;
@@ -183,12 +183,12 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     for (int ii = 0; ii < phase.Size(); ii++){
         double T = theta(ii);
         double S = phi(ii);
-        double P = 0.5*(1 + tanh(5*EpsilonInv*(theta(ii) - config.T_f - T_fun(phi(ii))))); 
+        double P = 0.5*(1 + tanh(5*EpsilonInv*(theta(ii) - FusionPoint(phi(ii))))); 
 
         eta(ii) = Epsilon + pow(1-P, 2)/(pow(P, 3) + Epsilon);
 
-        theta(ii) = delta_rho_t_fun(T, S);
-        phi(ii) = delta_rho_p_fun(T, S);
+        theta(ii) = ExpansivityTemperature(T, S);
+        phi(ii) = ExpansivitySalinity(T, S);
     }
 
     //Properties coefficients

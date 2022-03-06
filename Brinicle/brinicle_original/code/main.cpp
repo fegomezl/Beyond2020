@@ -11,7 +11,6 @@ double RIn, ZOut;
 double Epsilon, EpsilonInv;
 
 double InflowVelocity;   
-double InflowFlux;
 double InitialTemperature;
 double InflowTemperature;
 double InitialSalinity;
@@ -20,6 +19,10 @@ double NucleationLength;
 double NucleationHeight;
 double NucleationTemperature;
 double NucleationSalinity;
+
+double InflowFlux;                    
+double TemperatureMax, TemperatureMin;
+double SalinityMax, SalinityMin;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -138,7 +141,11 @@ int main(int argc, char *argv[]){
     if (config.master) args.PrintOptions(cout);
 
     {
-        InflowFlux = 0.25*InflowVelocity*pow(RIn, -2);
+        TemperatureMax = max(InitialTemperature, max(InflowTemperature, NucleationTemperature));
+        TemperatureMin = min(InitialTemperature, min(InflowTemperature, NucleationTemperature));
+        SalinityMax = max(InitialSalinity, max(InflowSalinity, NucleationSalinity));
+        SalinityMin = min(InitialSalinity, min(InflowSalinity, NucleationSalinity));
+        InflowFlux = 0.25*InflowVelocity*pow(RIn, 2);
         config.rescale = (rescale == 1);
         Epsilon = pow(10, -nEpsilonT); 
         EpsilonInv = pow(10, nEpsilonT); 

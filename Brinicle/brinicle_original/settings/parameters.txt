@@ -39,7 +39,7 @@ Physical parameters
 307.1   #Solid_volumetric_latent_heat
 
 Brinicle conditions
-175     #Velocity_inflow
+10      #Velocity_inflow
 -2      #Initial_temperature
 -10     #Inflow_temperature
 3.5     #Initial_salinity

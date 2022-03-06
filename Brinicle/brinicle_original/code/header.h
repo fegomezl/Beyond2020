@@ -244,24 +244,8 @@ extern double RIn, ZOut;                    //Size of the inflow and outflow
 extern double Epsilon, EpsilonInv;          //Size of the indetermination window in heaviside functions 
                                             //(10̣^(-n) and 10^(n) respectively)
 
-//Usefull position functions
-extern double r_f(const Vector &x);                     //Function for r
-extern double r_inv_f(const Vector &x);                 //Function for 1/r
-extern void zero_f(const Vector &x, Vector &f);         //Function for 0 (vector)
-extern void r_inv_hat_f(const Vector &x, Vector &f);    //Function for (1/r)*r^ (r^ unitary vector)
-extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
-                                                        //             (-1   0 )
-//Physical Properties
-extern double T_fun(const double &salinity);
-extern double delta_c_s_fun(const double &temperature, const double &salinity);
-extern double delta_k_s_fun(const double &temperature, const double &salinity);
-extern double delta_l_s_fun(const double &temperature, const double &salinity);
-extern double delta_rho_t_fun(const double &temperature, const double &salinity);
-extern double delta_rho_p_fun(const double &temperature, const double &salinity);
-
 //Brinicle conditions
 extern double InflowVelocity;           //Velocity of the inflow
-extern double InflowFlux;               //Flux of the given inflow velocity field
 extern double InitialTemperature;       //Initial temperature of the domain
 extern double InflowTemperature;        //Temperature of the inflow
 extern double InitialSalinity;          //Initial salinity of the domain
@@ -270,3 +254,29 @@ extern double NucleationLength;         //Lenght of the nucleation point
 extern double NucleationHeight;         //Height of the nucleation point
 extern double NucleationTemperature;    //Temperature of the nucleation point
 extern double NucleationSalinity;       //Salinity of the nucleation point
+                                            
+extern double InflowFlux;                        //Flux at the inflow boundary divided by 2PI
+extern double TemperatureMax, TemperatureMin;    //Limits of the temperature scale
+extern double SalinityMax, SalinityMin;          //Limits of the salinity scale
+
+//Usefull position functions
+extern double r_f(const Vector &x);                     //Function for r
+extern double r_inv_f(const Vector &x);                 //Function for 1/r
+extern void zero_f(const Vector &x, Vector &f);         //Function for 0 (vector)
+extern void r_inv_hat_f(const Vector &x, Vector &f);    //Function for (1/r)*r^ (r^ unitary vector)
+extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
+                                                        //             (-1   0 )
+
+//Physical properties (in T,S)
+extern double FusionPoint(const double S);                              //Fusion temperature at a given salinity
+extern double Phase(const double T, const double S);                    //Phase indicator (1 for liquid and 0 for solid)
+extern double HeatInertia(const double T, const double S);              //Heat capacity over latent heat
+extern double HeatDiffusivity(const double T, const double S);          //Heat conduction over latent heat
+extern double SaltDiffusivity(const double T, const double S);          //Diffusion coefficient for the mass equation
+extern double Impermeability(const double T, const double S);           //Inverse of the brinkman penalization permeability
+extern double ExpansivityTemperature(const double T, const double S);   //Expansivity coefficient for the temperature gradient
+extern double ExpansivitySalinity(const double T, const double S);      //Expansivity coefficient for the salinity gradient
+
+//Bounding variables
+extern double T_bounded(const double T);        //Bounding of temperature according to expectations
+extern double S_bounded(const double S);        //Bounding of salinity according to expectations
