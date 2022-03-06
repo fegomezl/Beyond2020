@@ -35,22 +35,20 @@ void Artic_sea::run(const char *mesh_file){
 
 Transport_Operator::~Transport_Operator(){
     //Delete used memory
-    delete m_theta; 
-    delete m_phi;
-    delete k_theta;
-    delete k_phi;
-    delete M_theta; 
-    delete M_e_theta; 
-    delete M_0_theta; 
-    delete M_phi; 
-    delete M_e_phi; 
-    delete M_0_phi; 
-    delete K_0_theta; 
-    delete K_0_phi; 
-    delete T_theta; 
-    delete T_e_theta; 
-    delete T_phi; 
-    delete T_e_phi; 
+    delete M0; 
+    delete M1; 
+    delete M0_e; 
+    delete M1_e; 
+    delete M0_o; 
+    delete M1_o; 
+    delete K0; 
+    delete K1; 
+    delete T0; 
+    delete T1; 
+    delete T0_e; 
+    delete T1_e; 
+    delete B0;
+    delete B1;
 }
 
 Flow_Operator::~Flow_Operator(){

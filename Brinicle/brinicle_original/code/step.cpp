@@ -29,10 +29,8 @@ void Artic_sea::time_step(){
         rvelocity->Distribute(rVelocity);
         
         //Calculate phases
-        for (int ii = 0; ii < phase->Size(); ii++){
-            double T_f = FusionPoint((*salinity)(ii));
-            (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*temperature)(ii) - T_f)));
-        }
+        for (int ii = 0; ii < phase->Size(); ii++)
+            (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
     
         //Normalize stream
         if (config.rescale){
@@ -73,102 +71,81 @@ void Artic_sea::time_step(){
     }
 }
 
-void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rV){
+void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelocity){
     //Recover actual information
-    theta.SetFromTrueDofs(X.GetBlock(0));
-    phi.SetFromTrueDofs(X.GetBlock(1));
-    rv.SetFromTrueDofs(rV); 
+    temperature.SetFromTrueDofs(X.GetBlock(0));
+    salinity.SetFromTrueDofs(X.GetBlock(1));
+    rvelocity.SetFromTrueDofs(rVelocity); 
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < phase.Size(); ii++){
-        double DT = theta(ii) - FusionPoint(phi(ii));
-        double P = 0.5*(1 + tanh(5*EpsilonInv*DT));
+        heat_inertia(ii) = HeatInertia(temperature(ii), salinity(ii));
+        heat_diffusivity(ii) = HeatDiffusivity(temperature(ii), salinity(ii));
+        salt_diffusivity(ii) = SaltDiffusivity(temperature(ii), salinity(ii));;
 
-        aux_C(ii) = config.c_s + (config.c_l-config.c_s)*P;
-        aux_K(ii) = config.k_s + (config.k_l-config.k_s)*P;
-        aux_D(ii) = config.d_s + (config.d_l-config.d_s)*P;
-
-        theta(ii) = DT;
-        phase(ii) = P;
+        phase(ii) = Phase(temperature(ii), salinity(ii));
+        temperature(ii) = temperature(ii) - FusionPoint(salinity(ii));
     }
 
     //Set the associated coefficients
-    GridFunctionCoefficient coeff_C(&aux_C);
-    GridFunctionCoefficient coeff_K(&aux_K);
-    GridFunctionCoefficient coeff_D(&aux_D);
+    GridFunctionCoefficient coeff_I(&heat_inertia);
+    GridFunctionCoefficient coeff_D0(&heat_diffusivity);
+    GridFunctionCoefficient coeff_D1(&salt_diffusivity);
 
     //Construct latent heat term
-    GradientGridFunctionCoefficient dT(&theta);
-    GradientGridFunctionCoefficient dH(&phase);
+    GradientGridFunctionCoefficient coeff_dT(&temperature);
+    GradientGridFunctionCoefficient coeff_dP(&phase);
     
-    dHdT.SetACoef(dH);  dT_2.SetACoef(dT);
-    dHdT.SetBCoef(dT);  dT_2.SetBCoef(dT);
+    coeff_dPdT.SetACoef(coeff_dP);  coeff_dT_2.SetACoef(coeff_dT);
+    coeff_dPdT.SetBCoef(coeff_dT);  coeff_dT_2.SetBCoef(coeff_dT);
 
-    SumCoefficient dT_2e(Epsilon, dT_2);
+    SumCoefficient coeff_dT_2e(Epsilon, coeff_dT_2);
     
-    PowerCoefficient inv_dT_2(dT_2e, -1.);
-    ProductCoefficient DeltaT(dHdT, inv_dT_2);
-    ProductCoefficient LDeltaT(0.5*(config.L_s+config.L_l), DeltaT);
+    PowerCoefficient coeff_inv_dT_2(coeff_dT_2e, -1.);
+    ProductCoefficient DeltaT(coeff_dPdT, coeff_inv_dT_2);
 
-    SumCoefficient coeff_CL(coeff_C, LDeltaT);
+    SumCoefficient coeff_M(coeff_I, DeltaT);
 
     //Construct final coefficients
-    coeff_rC.SetBCoef(coeff_CL);
-    coeff_rK.SetBCoef(coeff_K); 
-    coeff_rD.SetBCoef(coeff_D); 
+    coeff_rM.SetBCoef(coeff_M);
+    coeff_rD0.SetBCoef(coeff_D0); 
+    coeff_rD1.SetBCoef(coeff_D1); 
 
-    coeff_rV.SetGridFunction(&rv);
-    coeff_rCV.SetACoef(coeff_CL);
-    coeff_rCV.SetBCoef(coeff_rV);
+    coeff_rV.SetGridFunction(&rvelocity);
+    coeff_rMV.SetACoef(coeff_M);
+    coeff_rMV.SetBCoef(coeff_rV);
 
     //Create corresponding bilinear forms
-    if (m_theta) delete m_theta;
-    if (M_theta) delete M_theta;
-    if (M_e_theta) delete M_e_theta;
-    if (M_0_theta) delete M_0_theta;
-    m_theta = new ParBilinearForm(&fespace);
-    m_theta->AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    m_theta->Assemble();
-    m_theta->Finalize();
-    M_theta = m_theta->ParallelAssemble();
-    M_e_theta = M_theta->EliminateRowsCols(ess_tdof_theta);
-    M_0_theta = m_theta->ParallelAssemble();
+    if (M0) delete M0;
+    if (M0_e) delete M0_e;
+    if (M0_o) delete M0_o;
+    ParBilinearForm m0(&fespace_H1);
+    m0.AddDomainIntegrator(new MassIntegrator(coeff_rM));
+    m0.Assemble();
+    m0.Finalize();
+    M0 = m0.ParallelAssemble();
+    M0_e = M0->EliminateRowsCols(ess_tdof_0);
+    M0_o = m0.ParallelAssemble();
 
-    M_theta_prec.SetOperator(*M_theta);
-    M_theta_solver.SetOperator(*M_theta);
+    M0_prec.SetOperator(*M0);
+    M0_solver.SetOperator(*M0);
 
-    if (m_phi) delete m_phi;
-    if (M_phi) delete M_phi;
-    if (M_e_phi) delete M_e_phi;
-    if (M_0_phi) delete M_0_phi;
-    m_phi = new ParBilinearForm(&fespace);
-    m_phi->AddDomainIntegrator(new MassIntegrator(coeff_r));
-    m_phi->Assemble();
-    m_phi->Finalize();
-    M_phi = m_phi->ParallelAssemble();
-    M_e_phi = M_phi->EliminateRowsCols(ess_tdof_phi);
-    M_0_phi = m_phi->ParallelAssemble();
+    //Create transport matrix
+    if (K0) delete K0;
+    ParBilinearForm k0(&fespace_H1);
+    k0.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD0));
+    k0.AddDomainIntegrator(new ConvectionIntegrator(coeff_rMV));
+    k0.Assemble();
+    k0.Finalize();
+    K0 = k0.ParallelAssemble();    
 
-    M_phi_prec.SetOperator(*M_phi);
-    M_phi_solver.SetOperator(*M_phi);
-
-    if(k_theta) delete k_theta;
-    if(K_0_theta) delete K_0_theta;
-    k_theta = new ParBilinearForm(&fespace);
-    k_theta->AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
-    k_theta->AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
-    k_theta->Assemble();
-    k_theta->Finalize();
-    K_0_theta = k_theta->ParallelAssemble();
-
-    if(k_phi) delete k_phi;
-    if(K_0_phi) delete K_0_phi;
-    k_phi = new ParBilinearForm(&fespace);
-    k_phi->AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi->AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi->Assemble();
-    k_phi->Finalize();
-    K_0_phi = k_phi->ParallelAssemble();
+    if (K1) delete K1;
+    ParBilinearForm k1(&fespace_H1);
+    k1.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD1));
+    k1.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k1.Assemble();
+    k1.Finalize();
+    K1 = k1.ParallelAssemble();
 }
 
 void Flow_Operator::SetParameters(const BlockVector &X){

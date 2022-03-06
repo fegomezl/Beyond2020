@@ -68,10 +68,8 @@ void Artic_sea::assemble_system(){
     rvelocity->Distribute(rVelocity);
     
     //Calculate phases
-    for (int ii = 0; ii < phase->Size(); ii++){
-        double T_f = FusionPoint((*salinity)(ii));
-        (*phase)(ii) = 0.5*(1 + tanh(5*EpsilonInv*((*temperature)(ii) - T_f)));
-    }
+    for (int ii = 0; ii < phase->Size(); ii++)
+        (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
 
     //Normalize stream
     if (config.rescale){

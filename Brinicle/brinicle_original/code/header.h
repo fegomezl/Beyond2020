@@ -41,62 +41,65 @@ struct Config{
 
 class Transport_Operator : public TimeDependentOperator{
     public:
-        Transport_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
+        Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
 
-        void SetParameters(const BlockVector &X, const Vector &rV);
+        void SetParameters(const BlockVector &X, const Vector &rVelocity);
 
         virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
-        virtual int SUNImplicitSetup(const Vector &X, const Vector &B, int j_update, int *j_status, double scaled_dt);
-	    virtual int SUNImplicitSolve(const Vector &B, Vector &X, double tol);
+        virtual int SUNImplicitSetup(const Vector &X, const Vector &RHS, int j_update, int *j_status, double scaled_dt);
+	    virtual int SUNImplicitSolve(const Vector &X, Vector &X_new, double tol);
 
         virtual ~Transport_Operator();
     protected:
+        //All 0-variables are related to temperature
+        //All 1-variables are related to salinity
+
         //Global parameters
         Config config;
 
-        ParFiniteElementSpace &fespace;
-        Array<int> block_true_offsets;
-        Array<int> ess_tdof_theta, ess_tdof_phi;
-
-        //System objects
-        ParBilinearForm *m_theta, *m_phi;        //Mass operators
-        ParBilinearForm *k_theta, *k_phi;        //Difussion operators
-
-        HypreParMatrix *M_theta, *M_e_theta, *M_0_theta,    *M_phi, *M_e_phi, *M_0_phi;
-        HypreParMatrix *K_0_theta,                          *K_0_phi;
-        HypreParMatrix *T_theta, *T_e_theta,                *T_phi, *T_e_phi;
-
-        HypreParVector F_theta, F_phi;
-        HypreParVector dt_F_theta, dt_F_phi;
-        mutable HypreParVector Z_theta, Z_phi;
-
-        //Solver objects
-        HyprePCG M_theta_solver, M_phi_solver;
-        HyprePCG T_theta_solver, T_phi_solver;
-        HypreBoomerAMG M_theta_prec, M_phi_prec;
-        HypreBoomerAMG T_theta_prec, T_phi_prec;
+        ParFiniteElementSpace &fespace_H1;
+        Array<int> block_offsets_H1;
+        Array<int> ess_tdof_0, ess_tdof_1;
+        Array<int> ess_bdr_0, ess_bdr_1;
 
         //Auxiliar grid functions
-        ParGridFunction phi, theta, phase;
-        ParGridFunction aux_C;
-        ParGridFunction aux_K;
-        ParGridFunction aux_D;
-        ParGridFunction aux_L;
-        ParGridFunction rv;
+        ParGridFunction temperature, salinity, phase;
+        ParGridFunction rvelocity;
+        ParGridFunction heat_inertia;
+        ParGridFunction heat_diffusivity;
+        ParGridFunction salt_diffusivity;
 
         //Coefficients
         FunctionCoefficient coeff_r;
-        VectorFunctionCoefficient zero;
+        VectorFunctionCoefficient coeff_zero;
 
-        ProductCoefficient coeff_rC;
-        ProductCoefficient coeff_rK; 
-        ProductCoefficient coeff_rD;
+        ProductCoefficient coeff_rM;
+        ProductCoefficient coeff_rD0; 
+        ProductCoefficient coeff_rD1;
 
         VectorGridFunctionCoefficient coeff_rV;
-        ScalarVectorProductCoefficient coeff_rCV;
+        ScalarVectorProductCoefficient coeff_rMV;
 
-        InnerProductCoefficient dHdT;
-        InnerProductCoefficient dT_2;
+        InnerProductCoefficient coeff_dPdT;
+        InnerProductCoefficient coeff_dT_2;
+
+        //System objects
+        HypreParMatrix *M0, *M1;
+        HypreParMatrix *M0_e, *M1_e; 
+        HypreParMatrix *M0_o, *M1_o;
+        HypreParMatrix *K0, *K1;
+        HypreParMatrix *T0, *T1;
+        HypreParMatrix *T0_e, *T1_e;
+
+        HypreParVector *B0, *B1;
+        HypreParVector B0_dt, B1_dt;
+        mutable HypreParVector Z0, Z1;
+
+        //Solver objects
+        HyprePCG M0_solver, M1_solver;
+        HyprePCG T0_solver, T1_solver;
+        HypreBoomerAMG M0_prec, M1_prec;
+        HypreBoomerAMG T0_prec, T1_prec;
 };
 
 class Flow_Operator{
