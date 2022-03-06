@@ -160,10 +160,8 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     for (int ii = 0; ii < phase.Size(); ii++){
         double T = temperature(ii);
         double S = salinity(ii);
-        double P = Phase(temperature(ii), salinity(ii)); 
 
-        impermeability(ii) = Epsilon + pow(1-P, 2)/(pow(P, 3) + Epsilon);
-
+        impermeability(ii) = Impermeability(T, S);
         temperature(ii) = ExpansivityTemperature(T, S);
         salinity(ii) = ExpansivitySalinity(T, S);
     }

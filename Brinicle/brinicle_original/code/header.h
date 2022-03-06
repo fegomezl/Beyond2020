@@ -29,12 +29,6 @@ struct Config{
     double reltol_sundials;
     double abstol_sundials;
 
-    double T_f;
-    double c_l, c_s;
-    double k_l, k_s;
-    double d_l, d_s;
-    double L_l, L_s;
-
     bool restart;
     double t_init;
 };

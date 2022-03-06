@@ -35,9 +35,7 @@ int main(int argc, char *argv[]){
     const char *mesh_file;
     Config config(pid, nproc);
     int rescale = 0;
-    int nDeltaT = 0;
-    int nEpsilonT = 0;
-    int nEpsilonEta = 0;
+    int nEpsilon = 0;
     int restart = 0;
 
     OptionsParser args(argc, argv);
@@ -79,36 +77,11 @@ int main(int argc, char *argv[]){
                    "Absolute tolerance of SUNDIALS.");
     args.AddOption(&config.reltol_sundials, "-reltol_s", "--tolrelativeSUNDIALS",
                    "Relative tolerance of SUNDIALS.");
-
-    args.AddOption(&config.T_f, "-T_f", "--temperature_fusion",
-                   "Fusion temperature of the material.");
-    args.AddOption(&nDeltaT, "-DT", "--DeltaT",
-                   "Temperature interface interval (10^(-n)).");
-    args.AddOption(&nEpsilonT, "-ET", "--EpsilonT",
-                   "Epsilon constant for temperature (1/(x+e)) (10^(-n)).");
-    args.AddOption(&nEpsilonEta, "-EEta", "--EpsilonEta",
-                   "Epsilon constant for eta (1-phi)^2/(phi^3 + e) (10^(-n)).");
-    args.AddOption(&config.c_l, "-c_l", "--c_l",
-                   "Liquid volumetric heat capacity.");
-    args.AddOption(&config.c_s, "-c_s", "--c_s",
-                   "Solid volumetric heat capacity.");
-    args.AddOption(&config.k_l, "-k_l", "--k_l",
-                   "Liquid thermal conductivity.");
-    args.AddOption(&config.k_s, "-k_s", "--k_s",
-                   "Solid thermal conductivity.");
-    args.AddOption(&config.d_l, "-d_l", "--d_l",
-                   "Liquid diffusion constant.");
-    args.AddOption(&config.d_s, "-d_s", "--d_s",
-                   "Solid diffusion constant.");
-    args.AddOption(&config.L_l, "-L_l", "--L_l",
-                   "Liquid volumetric latent heat.");
-    args.AddOption(&config.L_s, "-L_s", "--L_s",
-                   "Solid volumetric latent heat.");
+    args.AddOption(&nEpsilon, "-eps", "--epsilon",
+                   "Epsilon constant for heaviside functions (10^(-n)).");
 
     args.AddOption(&InflowVelocity, "-v", "--vel",
                    "Inflow velocity.");
-    args.AddOption(&InflowFlux, "-q", "--flux",
-                   "Volumetric inflow.");
     args.AddOption(&InitialTemperature, "-Ti", "--Theta_in",
                    "Initial temperature.");
     args.AddOption(&InflowTemperature, "-To", "--Theta_out",
@@ -145,13 +118,18 @@ int main(int argc, char *argv[]){
         TemperatureMin = min(InitialTemperature, min(InflowTemperature, NucleationTemperature));
         SalinityMax = max(InitialSalinity, max(InflowSalinity, NucleationSalinity));
         SalinityMin = min(InitialSalinity, min(InflowSalinity, NucleationSalinity));
+
         InflowFlux = 0.25*InflowVelocity*pow(RIn, 2);
+
         config.rescale = (rescale == 1);
-        Epsilon = pow(10, -nEpsilonT); 
-        EpsilonInv = pow(10, nEpsilonT); 
+
+        Epsilon = pow(10, -nEpsilon); 
+        EpsilonInv = pow(10, nEpsilon); 
+
         config.restart = (restart == 1);
         config.t_init = config.restart ? config.t_init : 0.;
         config.t_final += config.t_init;
+
         tic();
         Artic_sea artic_sea(config);
         artic_sea.run(mesh_file);
