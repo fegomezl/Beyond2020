@@ -9,6 +9,54 @@
 using namespace std;
 using namespace mfem;
 
+struct Constants{
+    //Explicacion 
+
+    //Forces properties
+    double v = 408;             //Kinematic viscosity \nu (mm^2/min)
+    double g = 35280000;        //Gravity (mm/min^2)
+
+    //Densities (kg/m3)
+    double rho_0 = 999.8;       //Density of pure water 
+    double rho_l = 1028.3;      //Density of sea water
+    double rho_s = 934.4;       //Density of sea ice 
+
+    //Energy properties
+    double c_l = 3.77;              //Specific heat capacity of sea water (kJ/(kg*°C))
+    double c_s = 2.12;              //Specific heat capacity of sea ice (kJ/(kg*°C))
+    double k_l = 0.5433;            //Thermal diffusivity of sea water (W/(m*°C))
+    double k_s = 2.2467;            //Thermal diffusivity of sea ice (W/(m*°C))
+    double L = 322.7;               //Latent Heat (kJ/kg)
+
+    //Fusion point coeficients (°C)
+    double FusionPoint_a = 0.6037;       
+    double FusionPoint_b = 0.00058123;   
+
+    //Heat inertia (Specific heat capacity over latent heat c/L) (Dimentionless)
+    double m_l = c_l/L;    //Liquid
+    double m_s = c_s/L;    //Solid
+
+    //Thermal diffusivity (Thermal conductivity over volumetric latent heat k/(rho*L)) (mm^2/min)
+    double d_temperature_l = k_l/(rho_l*L);      //Liquid
+    double d_temperature_s = k_s/(rho_s/L);    //Solid
+
+    //Salt diffusivity (mm^2/min)
+    double d_salinity_l = 0.1;       //Liquid
+    double d_salinity_s = 0;         //Solid
+
+    //Density coeficients (\Delta\rho)
+    double Buoyancy_k = g/(v*rho_0); 
+    double Buoyancy_a0 = 8.246121;              //T^(0)*S^(1)
+    double Buoyancy_a1 = -0.04109344;           //T^(1)*S^(1)
+    double Buoyancy_a2 = 0.0007731839;          //T^(2)*S^(1)
+    double Buoyancy_a3 = -0.000008323176;       //T^(3)*S^(1)
+    double Buoyancy_a4 = 0.00000005516023;      //T^(4)*S^(1)
+    double Buoyancy_b0 = -0.182739;             //T^(0)*S^(1.5)
+    double Buoyancy_b1 = 0.003327135;           //T^(1)*S^(1.5)
+    double Buoyancy_b2 = -0.00005600674;        //T^(2)*S^(1.5)
+    double Buoyancy_c0 = 0.04886169;            //T^(0)*S^(2)
+};
+
 struct Config{
     Config(int pid, int nproc);
 
@@ -229,6 +277,9 @@ class Artic_sea{
         //Print parameters
         ParaViewDataCollection *paraview_out;
 };
+
+//Constants associated with physical properties
+const static Constants constants;
 
 //Simulation parameters
 extern double RMin, RMax, ZMin, ZMax;       //Size of the domain
