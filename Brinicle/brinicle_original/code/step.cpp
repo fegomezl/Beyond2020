@@ -150,80 +150,78 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
 
 void Flow_Operator::SetParameters(const BlockVector &X){
     //Update information
-    theta.SetFromTrueDofs(X.GetBlock(0));
-    phi.SetFromTrueDofs(X.GetBlock(1));
+    temperature.SetFromTrueDofs(X.GetBlock(0));
+    salinity.SetFromTrueDofs(X.GetBlock(1));
 
-    theta.GetDerivative(1, 0, theta_dr);
-    phi.GetDerivative(1, 0, phi_dr);
+    temperature.GetDerivative(1, 0, temperature_dr);
+    salinity.GetDerivative(1, 0, salinity_dr);
 
     //Calculate eta and buoyancy coefficients
     for (int ii = 0; ii < phase.Size(); ii++){
-        double T = theta(ii);
-        double S = phi(ii);
-        double P = 0.5*(1 + tanh(5*EpsilonInv*(theta(ii) - FusionPoint(phi(ii))))); 
+        double T = temperature(ii);
+        double S = salinity(ii);
+        double P = Phase(temperature(ii), salinity(ii)); 
 
-        eta(ii) = Epsilon + pow(1-P, 2)/(pow(P, 3) + Epsilon);
+        impermeability(ii) = Epsilon + pow(1-P, 2)/(pow(P, 3) + Epsilon);
 
-        theta(ii) = ExpansivityTemperature(T, S);
-        phi(ii) = ExpansivitySalinity(T, S);
+        temperature(ii) = ExpansivityTemperature(T, S);
+        salinity(ii) = ExpansivitySalinity(T, S);
     }
 
     //Properties coefficients
-    GridFunctionCoefficient Eta(&eta);
-    ProductCoefficient neg_Eta(-1., Eta);
+    GridFunctionCoefficient coeff_impermeability(&impermeability);
+    ProductCoefficient coeff_neg_impermeability(-1., coeff_impermeability);
 
-    GridFunctionCoefficient Theta_dr(&theta_dr);
-    GridFunctionCoefficient k_t(&theta);
-    ProductCoefficient k_Theta_dr(k_t, Theta_dr);
+    GridFunctionCoefficient coeff_temperature_dr(&temperature_dr);
+    GridFunctionCoefficient coeff_expansivity_temperature(&temperature);
+    ProductCoefficient coeff_buoyancy_temperature(coeff_expansivity_temperature, coeff_temperature_dr);
 
-    GridFunctionCoefficient Phi_dr(&phi_dr);
-    GridFunctionCoefficient k_p(&phi);
-    ProductCoefficient k_Phi_dr(k_p, Phi_dr);
+    GridFunctionCoefficient coeff_salinity_dr(&salinity_dr);
+    GridFunctionCoefficient coeff_expansivity_salinity(&salinity);
+    ProductCoefficient coeff_buoyancy_salinity(coeff_expansivity_salinity, coeff_salinity_dr);
 
     //Rotational coupled coefficients
-    ScalarVectorProductCoefficient neg_Eta_r_inv_hat(neg_Eta, r_inv_hat);
-    ProductCoefficient k_r_Theta_dr(coeff_r, k_Theta_dr);
-    ProductCoefficient k_r_Phi_dr(coeff_r, k_Phi_dr);
-
+    ScalarVectorProductCoefficient coeff_neg_impermeability_r_inv_hat(coeff_neg_impermeability, coeff_r_inv_hat);
+    ProductCoefficient coeff_r_buoyancy_temperature(coeff_r, coeff_buoyancy_temperature);
+    ProductCoefficient coeff_r_buoyancy_salinity(coeff_r, coeff_buoyancy_salinity);
+    
     //Apply boundary conditions
-    w.ProjectCoefficient(w_coeff);
-    w.ProjectBdrCoefficient(closed_down, ess_bdr_w);
- 
-    psi.ProjectCoefficient(psi_coeff);
-    psi.ProjectBdrCoefficient(psi_in, bdr_psi_in);
-    psi.ProjectBdrCoefficient(psi_out, bdr_psi_out);
-    psi.ProjectBdrCoefficient(closed_down, bdr_psi_closed_down);
-    psi.ProjectBdrCoefficient(closed_up, bdr_psi_closed_up);
+    vorticity_boundary.ProjectCoefficient(coeff_vorticity);
+    vorticity_boundary.ProjectBdrCoefficient(coeff_vorticity, ess_bdr_0);
+
+    stream_boundary.ProjectCoefficient(coeff_stream);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_in);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_out, ess_bdr_out);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_closed_down);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
 
     //Define the non-constant RHS
-    if (f) delete f;
-    f = new ParLinearForm(&fespace);
-    f->AddDomainIntegrator(new DomainLFIntegrator(k_r_Theta_dr));
-    f->AddDomainIntegrator(new DomainLFIntegrator(k_r_Phi_dr));
-    f->Assemble();
+    if (B1) delete B1;
+    ParLinearForm b1(&fespace_H1);
+    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_temperature));
+    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_salinity));
+    b1.Assemble();
 
     //Define non-constant bilinear forms of the system
-    if (d) delete d;
-    d = new ParBilinearForm (&fespace);
-    d->AddDomainIntegrator(new DiffusionIntegrator(neg_Eta));
-    d->AddDomainIntegrator(new ConvectionIntegrator(neg_Eta_r_inv_hat));
-    d->Assemble();
-    d->EliminateEssentialBC(ess_bdr_psi, psi, *f, Operator::DIAG_KEEP);
-    d->Finalize();
-    if (D) delete D;
-    D = d->ParallelAssemble();
+    if (A11) delete A11;
+    ParBilinearForm a11(&fespace_H1);
+    a11.AddDomainIntegrator(new DiffusionIntegrator(coeff_neg_impermeability));
+    a11.AddDomainIntegrator(new ConvectionIntegrator(coeff_neg_impermeability_r_inv_hat));
+    a11.Assemble();
+    a11.EliminateEssentialBC(ess_bdr_1, stream_boundary, b1, Operator::DIAG_KEEP);
+    a11.Finalize();
+    A11 = a11.ParallelAssemble();
 
-    if (ct) delete ct;
-    ct = new ParMixedBilinearForm(&fespace, &fespace);
-    ct->AddDomainIntegrator(new MixedGradGradIntegrator);
-    ct->AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(r_inv_hat));
-    ct->Assemble();
-    ct->EliminateTrialDofs(ess_bdr_w, w, *f);
-    ct->EliminateTestDofs(ess_bdr_psi);
-    ct->Finalize();
-    if (Ct) delete Ct;
-    Ct = ct->ParallelAssemble();
+    if (A10) delete A10;
+    ParMixedBilinearForm a10(&fespace_H1, &fespace_H1);
+    a10.AddDomainIntegrator(new MixedGradGradIntegrator);
+    a10.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(coeff_r_inv_hat));
+    a10.Assemble();
+    a10.EliminateTrialDofs(ess_bdr_0, vorticity_boundary, b1);
+    a10.EliminateTestDofs(ess_bdr_1);    
+    a10.Finalize();
+    A10 = a10.ParallelAssemble();
 
     //Transfer to TrueDofs
-    f->ParallelAssemble(B.GetBlock(1));
+    B1 = b1.ParallelAssemble();
 }

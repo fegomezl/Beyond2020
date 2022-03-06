@@ -55,6 +55,7 @@ void Artic_sea::assemble_system(){
     transport_oper = new Transport_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
     flow_oper = new Flow_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
 
+
     //Solve initial velocity field
     flow_oper->SetParameters(X);
     flow_oper->Solve(Y, *Velocity, *rVelocity);

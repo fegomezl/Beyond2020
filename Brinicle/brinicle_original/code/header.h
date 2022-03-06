@@ -104,74 +104,69 @@ class Transport_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
     public:
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace, ParFiniteElementSpace &fespace_v, int dim, int attributes, Array<int> block_true_offsets, BlockVector &X);
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
 
         void SetParameters(const BlockVector &X);
 
-        void Solve(BlockVector &Z, Vector &V, Vector &rV);
+        void Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity);
 
         ~Flow_Operator();
     protected:
+        //All 0-variables are related to vorticity
+        //All 1-variables are related to stream
+
         //Global parameters
         Config config;
 
         //Mesh objects
-        ParFiniteElementSpace &fespace;
-        Array<int> block_true_offsets;
-        Array<int> ess_bdr_w, ess_bdr_psi;
-        Array<int> bdr_psi_in, bdr_psi_out;
-        Array<int> bdr_psi_closed_down, bdr_psi_closed_up;
+        ParFiniteElementSpace &fespace_H1;
+        Array<int> block_offsets_H1;
+        Array<int> ess_tdof_0, ess_tdof_1;
+        Array<int> ess_bdr_0, ess_bdr_1;
+        Array<int> ess_bdr_in, ess_bdr_out;
+        Array<int> ess_bdr_closed_down, ess_bdr_closed_up;
 
         //System objects
-        ParGridFunction psi;
-        ParGridFunction w;
-        ParGridFunction v;
-        ParGridFunction rv;
-
-        ParLinearForm *f;
-        ParLinearForm *g;
-        ParBilinearForm *m;
-        ParBilinearForm *d;
-        ParMixedBilinearForm *c;
-        ParMixedBilinearForm *ct;
+        ParGridFunction vorticity_boundary;
+        ParGridFunction stream_boundary;
+        ParGridFunction velocity;
+        ParGridFunction rvelocity;
 
         //Solver objects
-        BlockVector Y;
         BlockVector B;
+        HypreParVector *B0, *B1;
 
-        HypreParMatrix *M;
-        HypreParMatrix *D;
-        HypreParMatrix *C;
-        HypreParMatrix *Ct;
+        HypreParMatrix *A00;
+        HypreParMatrix *A01;
+        HypreParMatrix *A10;
+        HypreParMatrix *A11;
 
         //Additional variables
-        ParGridFunction theta;
-        ParGridFunction theta_dr;
-        ParGridFunction phi;
-        ParGridFunction phi_dr;
+        ParGridFunction temperature;
+        ParGridFunction temperature_dr;
+        ParGridFunction salinity;
+        ParGridFunction salinity_dr;
         ParGridFunction phase;
-        ParGridFunction eta;
-        ParGridFunction psi_grad;
+        ParGridFunction impermeability;
+        ParGridFunction stream;
+        ParGridFunction stream_gradient;
       
         //Rotational coefficients
         FunctionCoefficient coeff_r;
-        FunctionCoefficient inv_R;
-        VectorFunctionCoefficient r_inv_hat;
-        MatrixFunctionCoefficient rot;
+        FunctionCoefficient coeff_r_inv;
+        VectorFunctionCoefficient coeff_r_inv_hat;
+        MatrixFunctionCoefficient coeff_rot;
 
         //Boundary coefficients
-        FunctionCoefficient w_coeff;
-        FunctionCoefficient psi_coeff;
-        FunctionCoefficient psi_in;
-        FunctionCoefficient psi_out;
-        ConstantCoefficient closed_down;
-        ConstantCoefficient closed_up;
+        FunctionCoefficient coeff_vorticity;
+        FunctionCoefficient coeff_stream;
+        FunctionCoefficient coeff_stream_in;
+        FunctionCoefficient coeff_stream_out;
+        ConstantCoefficient coeff_stream_closed_down;
+        ConstantCoefficient coeff_stream_closed_up;
 
         //Construction rV
-        ParDiscreteLinearOperator grad;
-
-        VectorGridFunctionCoefficient Psi_grad;
-        MatrixVectorProductCoefficient rot_Psi_grad;
+        ParDiscreteLinearOperator gradient;
 };
 
 class Artic_sea{

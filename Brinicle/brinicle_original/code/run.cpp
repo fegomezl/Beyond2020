@@ -52,16 +52,12 @@ Transport_Operator::~Transport_Operator(){
 }
 
 Flow_Operator::~Flow_Operator(){
-    delete f;
-    delete g;
-    delete m;
-    delete d;
-    delete c;
-    delete ct;
-    delete M;
-    delete D;
-    delete C;
-    delete Ct;
+    delete B0;
+    delete B1;
+    delete A00;
+    delete A01;
+    delete A10;
+    delete A11;
 }
 
 Artic_sea::~Artic_sea(){
