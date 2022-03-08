@@ -1,25 +1,24 @@
 #include "header.h"
 
-void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
-    //Create the complete bilinear operator
+void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
+
+    //Create the complete bilinear operator:
     //
     //   H = [ M    C ]
     //       [ C^t  D ]
     Array2D<HypreParMatrix*> HBlocks(2,2);
-    HBlocks(0, 0) = M;
-    HBlocks(0, 1) = C;
-    HBlocks(1, 0) = Ct;
-    HBlocks(1, 1) = D;
+    HBlocks(0, 0) = A00;
+    HBlocks(0, 1) = A01;
+    HBlocks(1, 0) = A10;
+    HBlocks(1, 1) = A11;
 
-    HypreParMatrix H = *HypreParMatrixFromBlocks(HBlocks);
-    SuperLURowLocMatrix A(H);
+    HypreParMatrix *H = HypreParMatrixFromBlocks(HBlocks);
+    SuperLURowLocMatrix A(*H);
 
     //Create the complete RHS
-    BlockVector B(block_true_offsets);
-    B.GetBlock(0) = B_w;
-    B.GetBlock(1) = B_psi;
+    B.GetBlock(0) = *B0;
+    B.GetBlock(1) = *B1;
 
-    //Set solver
     SuperLUSolver superlu(MPI_COMM_WORLD);
     superlu.SetOperator(A);
     superlu.SetPrintStatistics(false);
@@ -28,26 +27,21 @@ void Flow_Operator::Solve(BlockVector &Z, Vector &V, Vector &rV){
     superlu.SetIterativeRefine(superlu::SLU_DOUBLE);
 
     //Solve the linear system Ax=B
-    superlu.Mult(B, Z);
+    superlu.Mult(B, Y);
     superlu.DismantleGrid();
 
-    //Recover the solution on each proccesor
-    w.Distribute(Z.GetBlock(0));
-    psi.Distribute(Z.GetBlock(1));
-
     //Calculate velocity
-    ParGridFunction psi_grad(&fespace_v);
-    grad.Mult(psi, psi_grad);
+    stream.Distribute(Y.GetBlock(1)); 
+    gradient.Mult(stream, stream_gradient);
+    VectorGridFunctionCoefficient coeff_stream_gradient(&stream_gradient);
+    MatrixVectorProductCoefficient coeff_rV(coeff_rot, coeff_stream_gradient);
+    ScalarVectorProductCoefficient coeff_V(coeff_r_inv, coeff_rV);
+    velocity.ProjectDiscCoefficient(coeff_V, GridFunction::ARITHMETIC);
+    rvelocity.ProjectDiscCoefficient(coeff_rV, GridFunction::ARITHMETIC);
 
-    ParGridFunction rv(&fespace_v);
-    VectorGridFunctionCoefficient Psi_grad(&psi_grad);
-    MatrixVectorProductCoefficient rot_Psi_grad(rot, Psi_grad);
-    rv.ProjectDiscCoefficient(rot_Psi_grad, GridFunction::ARITHMETIC);
-    rv.ParallelProject(rV);
+    //Export flow information
+    velocity.ParallelAverage(Velocity);
+    rvelocity.ParallelAverage(rVelocity);
 
-    ParGridFunction v(&fespace_v);
-    FunctionCoefficient inv_R(inv_r);
-    ScalarVectorProductCoefficient coeff_V(inv_R, rot_Psi_grad);
-    v.ProjectDiscCoefficient(coeff_V, GridFunction::ARITHMETIC);
-    v.ParallelProject(V);
+    delete H;
 }

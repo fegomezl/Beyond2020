@@ -6,11 +6,11 @@ void Artic_sea::time_step(){
     dt = min(dt, config.t_final - t);
 
     //Perform the time_step
-    cond_oper->SetParameters(X, *rV);
+    transport_oper->SetParameters(X, *rVelocity);
     ode_solver->Step(X, t, dt);
 
     flow_oper->SetParameters(X);
-    flow_oper->Solve(Z, *V, *rV);
+    flow_oper->Solve(Y, *Velocity, *rVelocity);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
@@ -18,34 +18,32 @@ void Artic_sea::time_step(){
     if (last || vis_steps <= vis_iteration){
         //Update parameters
         vis_iteration = 0;
-        vis_impressions++;
+        vis_print++;
 
         //Update information
-        theta->Distribute(X.GetBlock(0));
-        phi->Distribute(X.GetBlock(1));
-        w->Distribute(Z.GetBlock(0));
-        psi->Distribute(Z.GetBlock(1));
-        v->Distribute(V);
-        rv->Distribute(rV);
-
+        temperature->Distribute(X.GetBlock(0));
+        salinity->Distribute(X.GetBlock(1));
+        vorticity->Distribute(Y.GetBlock(0));
+        stream->Distribute(Y.GetBlock(1));
+        velocity->Distribute(Velocity);
+        rvelocity->Distribute(rVelocity);
+        
         //Calculate phases
-        for (int ii = 0; ii < phase->Size(); ii++){
-            double T_f = T_fun((*phi)(ii));
-            (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
-        }
-
+        for (int ii = 0; ii < phase->Size(); ii++)
+            (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
+    
         //Normalize stream
         if (config.rescale){
-            double psi_local_max = psi->Max(), psi_max;
-            double psi_local_min = psi->Min(), psi_min;
-            MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-            MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-            for (int ii = 0; ii < psi->Size(); ii++)
-                    (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+            double stream_local_max = stream->Max(), stream_max;
+            double stream_local_min = stream->Min(), stream_min;
+            MPI_Allreduce(&stream_local_max, &stream_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+            MPI_Allreduce(&stream_local_min, &stream_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+            for (int ii = 0; ii < stream->Size(); ii++)
+                    (*stream)(ii) = ((*stream)(ii)-stream_min)/(stream_max-stream_min);
         }
 
         //Graph
-        paraview_out->SetCycle(vis_impressions);
+        paraview_out->SetCycle(vis_print);
         paraview_out->SetTime(t);
         paraview_out->Save();
     }
@@ -73,172 +71,155 @@ void Artic_sea::time_step(){
     }
 }
 
-void Conduction_Operator::SetParameters(const BlockVector &X, const Vector &rV){
+void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelocity){
     //Recover actual information
-    ParGridFunction theta(&fespace_dg), phi(&fespace_dg), phase(&fespace_dg), rv(&fespace_v);
-    theta.Distribute(X.GetBlock(0));
-    phi.Distribute(X.GetBlock(1));
-    rv.Distribute(rV); 
+    temperature.SetFromTrueDofs(X.GetBlock(0));
+    salinity.SetFromTrueDofs(X.GetBlock(1));
+    rvelocity.SetFromTrueDofs(rVelocity); 
 
     //Associate the values of each auxiliar function
-    double DT = 0.;
     for (int ii = 0; ii < phase.Size(); ii++){
-        DT = theta(ii) - T_fun(phi(ii));
-        theta(ii) = DT;
-        phase(ii) = 0.5*(1 + tanh(5*config.invDeltaT*DT));
+        heat_inertia(ii) = HeatInertia(temperature(ii), salinity(ii));
+        heat_diffusivity(ii) = HeatDiffusivity(temperature(ii), salinity(ii));
+        salt_diffusivity(ii) = SaltDiffusivity(temperature(ii), salinity(ii));;
+
+        phase(ii) = Phase(temperature(ii), salinity(ii));
+        temperature(ii) = temperature(ii) - FusionPoint(salinity(ii));
     }
 
-    ParGridFunction aux_C(phase), aux_K(phase), aux_D(phase), aux_L(phase);
-    aux_C *= config.c_l-config.c_s; aux_C += config.c_s;
-    aux_K *= config.k_l-config.k_s; aux_K += config.k_s;
-    aux_D *= config.d_l-config.d_s; aux_D += config.d_s;
-    aux_L *= config.L_l-config.L_s; aux_L += config.L_s;
-
-    aux_C.ExchangeFaceNbrData();
-    aux_K.ExchangeFaceNbrData();
-    aux_D.ExchangeFaceNbrData();
-    aux_L.ExchangeFaceNbrData();
-
     //Set the associated coefficients
-    GridFunctionCoefficient coeff_C(&aux_C);
-    GridFunctionCoefficient coeff_K(&aux_K);
-    GridFunctionCoefficient coeff_D(&aux_D);
-    GridFunctionCoefficient coeff_L(&aux_L);
+    GridFunctionCoefficient coeff_I(&heat_inertia);
+    GridFunctionCoefficient coeff_D0(&heat_diffusivity);
+    GridFunctionCoefficient coeff_D1(&salt_diffusivity);
 
     //Construct latent heat term
-    GradientGridFunctionCoefficient dT(&theta), dH(&phase);
-    InnerProductCoefficient dHdT(dH, dT), dT_2(dT, dT);
-
-    SumCoefficient dT_2e(config.EpsilonT, dT_2);
+    GradientGridFunctionCoefficient coeff_dT(&temperature);
+    GradientGridFunctionCoefficient coeff_dP(&phase);
     
-    PowerCoefficient inv_dT_2(dT_2e, -1.);
-    ProductCoefficient DeltaT(dHdT, inv_dT_2);
-    ProductCoefficient LDeltaT(coeff_L, DeltaT);
+    coeff_dPdT.SetACoef(coeff_dP);  coeff_dT_2.SetACoef(coeff_dT);
+    coeff_dPdT.SetBCoef(coeff_dT);  coeff_dT_2.SetBCoef(coeff_dT);
 
-    SumCoefficient coeff_CL(coeff_C, LDeltaT);
+    SumCoefficient coeff_dT_2e(Epsilon, coeff_dT_2);
+    
+    PowerCoefficient coeff_inv_dT_2(coeff_dT_2e, -1.);
+    ProductCoefficient DeltaT(coeff_dPdT, coeff_inv_dT_2);
+
+    SumCoefficient coeff_M(coeff_I, DeltaT);
 
     //Construct final coefficients
-    ProductCoefficient coeff_rC(coeff_r, coeff_CL);
-    ProductCoefficient coeff_rK(coeff_r, coeff_K);
-    ProductCoefficient coeff_rD(coeff_r, coeff_D);
+    coeff_rM.SetBCoef(coeff_M);
+    coeff_rD0.SetBCoef(coeff_D0); 
+    coeff_rD1.SetBCoef(coeff_D1); 
 
-    VectorGridFunctionCoefficient coeff_rV(&rv);
-    ScalarVectorProductCoefficient coeff_rCV(coeff_CL, coeff_rV);
+    coeff_rV.SetGridFunction(&rvelocity);
+    coeff_rMV.SetACoef(coeff_M);
+    coeff_rMV.SetBCoef(coeff_rV);
 
     //Create corresponding bilinear forms
-    delete M_theta;
-    ParBilinearForm m_theta(&fespace_dg);
-    m_theta.AddDomainIntegrator(new MassIntegrator(coeff_rC));
-    m_theta.Assemble();
-    m_theta.Finalize();
-    M_theta = m_theta.ParallelAssemble();
+    if (M0) delete M0;
+    if (M0_e) delete M0_e;
+    if (M0_o) delete M0_o;
+    ParBilinearForm m0(&fespace_H1);
+    m0.AddDomainIntegrator(new MassIntegrator(coeff_rM));
+    m0.Assemble();
+    m0.Finalize();
+    M0 = m0.ParallelAssemble();
+    M0_e = M0->EliminateRowsCols(ess_tdof_0);
+    M0_o = m0.ParallelAssemble();
 
-    M_theta_prec.SetOperator(*M_theta);
-    M_theta_solver.SetOperator(*M_theta);
+    M0_prec.SetOperator(*M0);
+    M0_solver.SetOperator(*M0);
 
-    delete K_theta;
-    ParBilinearForm k_theta(&fespace_dg);
-    k_theta.AddDomainIntegrator(new DiffusionIntegrator(coeff_rK));
-    k_theta.AddDomainIntegrator(new ConvectionIntegrator(coeff_rCV));
-    k_theta.AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rK, config.sigma, config.kappa));
-    k_theta.AddInteriorFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rCV, 1.));
-    k_theta.AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rK, config.sigma, config.kappa), ess_bdr_theta);
-    k_theta.AddBdrFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rCV, 1.), ess_bdr_theta);
-    k_theta.Assemble();
-    k_theta.Finalize();
-    K_theta = k_theta.ParallelAssemble();
+    //Create transport matrix
+    if (K0) delete K0;
+    ParBilinearForm k0(&fespace_H1);
+    k0.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD0));
+    k0.AddDomainIntegrator(new ConvectionIntegrator(coeff_rMV));
+    k0.Assemble();
+    k0.Finalize();
+    K0 = k0.ParallelAssemble();    
 
-    delete K_phi;
-    ParBilinearForm k_phi(&fespace_dg);
-    k_phi.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD));
-    k_phi.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
-    k_phi.AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rD, config.sigma, config.kappa));
-    k_phi.AddInteriorFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rV, 1.));
-    k_phi.AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rD, config.sigma, config.kappa), ess_bdr_phi);
-    k_phi.AddBdrFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rV, 1.), ess_bdr_phi);
-    k_phi.Assemble();
-    k_phi.Finalize();
-    K_phi = k_phi.ParallelAssemble();
-
-    if (B_theta) delete B_theta;
-    ConstantCoefficient theta_nu(theta_n);
-    ParLinearForm b_theta(&fespace_dg);
-    b_theta.AddBdrFaceIntegrator(new DGDirichletLFIntegrator(theta_nu, coeff_rK, config.sigma, config.kappa), ess_bdr_theta);
-    b_theta.AddBdrFaceIntegrator(new BoundaryFlowIntegrator(theta_nu, coeff_rCV, -1.), ess_bdr_theta);
-    b_theta.Assemble();
-    B_theta = b_theta.ParallelAssemble();
-
-    if (B_phi) delete B_phi;
-    ConstantCoefficient phi_nu(phi_n);
-    ParLinearForm b_phi(&fespace_dg);
-    b_phi.AddBdrFaceIntegrator(new DGDirichletLFIntegrator(phi_nu, coeff_rD, config.sigma, config.kappa), ess_bdr_phi);
-    b_phi.AddBdrFaceIntegrator(new BoundaryFlowIntegrator(phi_nu, coeff_rV, -1.), ess_bdr_phi);
-    b_phi.Assemble();
-    B_phi = b_phi.ParallelAssemble();
+    if (K1) delete K1;
+    ParBilinearForm k1(&fespace_H1);
+    k1.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD1));
+    k1.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k1.Assemble();
+    k1.Finalize();
+    K1 = k1.ParallelAssemble();
 }
 
 void Flow_Operator::SetParameters(const BlockVector &X){
+    //Update information
+    temperature.SetFromTrueDofs(X.GetBlock(0));
+    salinity.SetFromTrueDofs(X.GetBlock(1));
 
-    //Recover actual information
-    ParGridFunction theta(&fespace_dg), phi(&fespace_dg);
-    ParGridFunction theta_dr(&fespace), phi_dr(&fespace);
-    ParGridFunction eta(&fespace_dg);
-
-    theta.Distribute(X.GetBlock(0));
-    phi.Distribute(X.GetBlock(1));
-
-    theta.GetDerivative(1, 0, theta_dr);
-    phi.GetDerivative(1, 0, phi_dr);
+    temperature.GetDerivative(1, 0, temperature_dr);
+    salinity.GetDerivative(1, 0, salinity_dr);
 
     //Calculate eta and buoyancy coefficients
-    for (int ii = 0; ii < eta.Size(); ii++){
-        double T = theta(ii);
-        double S = phi(ii);
-        double P = 0.5*(1 + tanh(5*config.invDeltaT*(theta(ii) - T_fun(phi(ii))))); 
+    for (int ii = 0; ii < phase.Size(); ii++){
+        double T = temperature(ii);
+        double S = salinity(ii);
 
-        eta(ii) = config.EpsilonEta + pow(1-P, 2)/(pow(P, 3) + config.EpsilonEta);
-
-        theta(ii) = delta_rho_t_fun(T, S);
-        phi(ii) = delta_rho_p_fun(T, S);
+        impermeability(ii) = Impermeability(T, S);
+        temperature(ii) = ExpansivityTemperature(T, S);
+        salinity(ii) = ExpansivitySalinity(T, S);
     }
 
-    theta.ExchangeFaceNbrData();
-    phi.ExchangeFaceNbrData();
-    eta.ExchangeFaceNbrData();
-
     //Properties coefficients
-    GridFunctionCoefficient Eta(&eta);
-    ProductCoefficient neg_Eta(-1., Eta);
+    GridFunctionCoefficient coeff_impermeability(&impermeability);
+    ProductCoefficient coeff_neg_impermeability(-1., coeff_impermeability);
 
-    GridFunctionCoefficient Theta_dr(&theta_dr);
-    GridFunctionCoefficient k_t(&theta);
-    ProductCoefficient k_Theta_dr(k_t, Theta_dr);
+    GridFunctionCoefficient coeff_temperature_dr(&temperature_dr);
+    GridFunctionCoefficient coeff_expansivity_temperature(&temperature);
+    ProductCoefficient coeff_buoyancy_temperature(coeff_expansivity_temperature, coeff_temperature_dr);
 
-    GridFunctionCoefficient Phi_dr(&phi_dr);
-    GridFunctionCoefficient k_p(&phi);
-    ProductCoefficient k_Phi_dr(k_p, Phi_dr);
+    GridFunctionCoefficient coeff_salinity_dr(&salinity_dr);
+    GridFunctionCoefficient coeff_expansivity_salinity(&salinity);
+    ProductCoefficient coeff_buoyancy_salinity(coeff_expansivity_salinity, coeff_salinity_dr);
 
     //Rotational coupled coefficients
-    ScalarVectorProductCoefficient neg_Eta_r_inv_hat(neg_Eta, r_inv_hat);
-    ProductCoefficient k_r_Theta_dr(coeff_r, k_Theta_dr);
-    ProductCoefficient k_r_Phi_dr(coeff_r, k_Phi_dr);
+    ScalarVectorProductCoefficient coeff_neg_impermeability_r_inv_hat(coeff_neg_impermeability, coeff_r_inv_hat);
+    ProductCoefficient coeff_r_buoyancy_temperature(coeff_r, coeff_buoyancy_temperature);
+    ProductCoefficient coeff_r_buoyancy_salinity(coeff_r, coeff_buoyancy_salinity);
+    
+    //Apply boundary conditions
+    vorticity_boundary.ProjectCoefficient(coeff_vorticity);
+    vorticity_boundary.ProjectBdrCoefficient(coeff_vorticity, ess_bdr_0);
 
-    //Define non-constant bilinear forms of the system
-    delete D;
-    ParBilinearForm d(&fespace);
-    d.AddDomainIntegrator(new DiffusionIntegrator(neg_Eta));
-    d.AddDomainIntegrator(new ConvectionIntegrator(neg_Eta_r_inv_hat));
-    d.Assemble();
-    d.Finalize();
-    D = d.ParallelAssemble();
-    D_e = D->EliminateRowsCols(ess_tdof_psi);
+    stream_boundary.ProjectCoefficient(coeff_stream);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_in);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_out, ess_bdr_out);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_closed_down);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
 
     //Define the non-constant RHS
-    ParLinearForm f(&fespace);
-    f.AddDomainIntegrator(new DomainLFIntegrator(k_r_Theta_dr));
-    f.AddDomainIntegrator(new DomainLFIntegrator(k_r_Phi_dr));
-    f.Assemble();
-    f.ParallelAssemble(B_psi);
-    Ct_e->Mult(W, B_psi, -1., 1.);
-    EliminateBC(*D, *D_e, ess_tdof_psi, Psi, B_psi);
+    if (B1) delete B1;
+    ParLinearForm b1(&fespace_H1);
+    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_temperature));
+    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_salinity));
+    b1.Assemble();
+
+    //Define non-constant bilinear forms of the system
+    if (A11) delete A11;
+    ParBilinearForm a11(&fespace_H1);
+    a11.AddDomainIntegrator(new DiffusionIntegrator(coeff_neg_impermeability));
+    a11.AddDomainIntegrator(new ConvectionIntegrator(coeff_neg_impermeability_r_inv_hat));
+    a11.Assemble();
+    a11.EliminateEssentialBC(ess_bdr_1, stream_boundary, b1, Operator::DIAG_KEEP);
+    a11.Finalize();
+    A11 = a11.ParallelAssemble();
+
+    if (A10) delete A10;
+    ParMixedBilinearForm a10(&fespace_H1, &fespace_H1);
+    a10.AddDomainIntegrator(new MixedGradGradIntegrator);
+    a10.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(coeff_r_inv_hat));
+    a10.Assemble();
+    a10.EliminateTrialDofs(ess_bdr_0, vorticity_boundary, b1);
+    a10.EliminateTestDofs(ess_bdr_1);    
+    a10.Finalize();
+    A10 = a10.ParallelAssemble();
+
+    //Transfer to TrueDofs
+    B1 = b1.ParallelAssemble();
 }

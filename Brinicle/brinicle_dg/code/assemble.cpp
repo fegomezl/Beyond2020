@@ -1,91 +1,89 @@
 #include "header.h"
 
-//Rotational functions
 double r_f(const Vector &x);
-double inv_r(const Vector &x);
+double r_inv_f(const Vector &x);
 void zero_f(const Vector &x, Vector &f);
-void rot_f(const Vector &x, DenseMatrix &f);
 void r_inv_hat_f(const Vector &x, Vector &f);
+void rot_f(const Vector &x, DenseMatrix &f);
 
-//Fusion temperature dependent of salinity
-double T_fun(const double &salinity);
+double FusionPoint(const double S);
+double Phase(const double T, const double S);
+double HeatInertia(const double T, const double S);
+double HeatDiffusivity(const double T, const double S);
+double SaltDiffusivity(const double T, const double S);
+double Impermeability(const double T, const double S);
+double ExpansivityTemperature(const double T, const double S);
+double ExpansivitySalinity(const double T, const double S);
+double Buoyancy(const double T, const double S);
 
-//Parameters of buoyancy
-double delta_rho_t_fun(const double &temperature, const double &salinity);
-double delta_rho_p_fun(const double &temperature, const double &salinity);
+double T_bounded(const double T);
+double S_bounded(const double S);
 
 void Artic_sea::assemble_system(){
     //Define solution x
     if (!config.restart){
-        theta = new ParGridFunction(fespace_dg);
-        phi = new ParGridFunction(fespace_dg);
+        temperature = new ParGridFunction(fespace_H1);
+        salinity = new ParGridFunction(fespace_H1);
     } else {
         std::ifstream in;
         std::ostringstream oss;
         oss << std::setw(10) << std::setfill('0') << config.pid;
-        std::string n_theta = "results/restart/theta_"+oss.str()+".gf";
-        std::string n_phi = "results/restart/phi_"+oss.str()+".gf";
+        std::string n_temperature = "results/restart/temperature_"+oss.str()+".gf";
+        std::string n_salinity = "results/restart/salinity_"+oss.str()+".gf";
 
-        in.open(n_theta.c_str(),std::ios::in);
-        theta = new ParGridFunction(pmesh, in);
+        in.open(n_temperature.c_str(),std::ios::in);
+        temperature = new ParGridFunction(pmesh, in);
         in.close();
-        theta->ParallelProject(X.GetBlock(0));
+        temperature->GetTrueDofs(X.GetBlock(0));
 
-        in.open(n_phi.c_str(),std::ios::in);
-        phi = new ParGridFunction(pmesh, in);
+        in.open(n_salinity.c_str(),std::ios::in);
+        salinity = new ParGridFunction(pmesh, in);
         in.close();
-        phi->ParallelProject(X.GetBlock(1));
+        salinity->GetTrueDofs(X.GetBlock(1));
     }
 
-    w = new ParGridFunction(fespace);
-    psi = new ParGridFunction(fespace);
-    v = new ParGridFunction(fespace_v);
-    rv = new ParGridFunction(fespace_v);
-    phase = new ParGridFunction(fespace);
+    phase = new ParGridFunction(fespace_H1);
+    vorticity = new ParGridFunction(fespace_H1);
+    stream = new ParGridFunction(fespace_H1);
+    velocity = new ParGridFunction(fespace_ND);
+    rvelocity = new ParGridFunction(fespace_ND);
 
-    rV = new HypreParVector(fespace_v);
-    V = new HypreParVector(fespace_v);
-
-    //Integration setup
-    int order_quad = max(2, 2*config.order+1);
-    for (int ii=0; ii < Geometry::NumGeom; ++ii)
-        irs[ii] = &(IntRules.Get(ii, order_quad));
+    rVelocity = new HypreParVector(fespace_ND);
+    Velocity = new HypreParVector(fespace_ND);
 
     //Initialize operators
-    cond_oper = new Conduction_Operator(config, *fespace_dg, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets_dg, X);
-    flow_oper = new Flow_Operator(config, *fespace, *fespace_dg, *fespace_v, dim, pmesh->bdr_attributes.Max(), block_true_offsets);
+    transport_oper = new Transport_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
+    flow_oper = new Flow_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
 
     //Solve initial velocity field
     flow_oper->SetParameters(X);
-    flow_oper->Solve(Z, *V, *rV);
+    flow_oper->Solve(Y, *Velocity, *rVelocity);
 
     //Set initial state
-    theta->Distribute(X.GetBlock(0));
-    phi->Distribute(X.GetBlock(1));
-    w->Distribute(Z.GetBlock(0));
-    psi->Distribute(Z.GetBlock(1));
-    v->Distribute(V);
-    rv->Distribute(rV);
+    temperature->Distribute(X.GetBlock(0));
+    salinity->Distribute(X.GetBlock(1));
+    vorticity->Distribute(Y.GetBlock(0));
+    stream->Distribute(Y.GetBlock(1));
+    velocity->Distribute(Velocity);
+    rvelocity->Distribute(rVelocity);
     
     //Calculate phases
-    for (int ii = 0; ii < phase->Size(); ii++){
-        double T_f = T_fun((*phi)(ii));
-        (*phase)(ii) = 0.5*(1 + tanh(5*config.invDeltaT*((*theta)(ii) - T_f)));
-    }
+    for (int ii = 0; ii < phase->Size(); ii++)
+        (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
 
     //Normalize stream
     if (config.rescale){
-        double psi_local_max = psi->Max(), psi_max;
-        double psi_local_min = psi->Min(), psi_min;
-        MPI_Allreduce(&psi_local_max, &psi_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(&psi_local_min, &psi_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-        for (int ii = 0; ii < psi->Size(); ii++)
-                (*psi)(ii) = ((*psi)(ii)-psi_min)/(psi_max-psi_min);
+        double stream_local_max = stream->Max(), stream_max;
+        double stream_local_min = stream->Min(), stream_min;
+        MPI_Allreduce(&stream_local_max, &stream_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&stream_local_min, &stream_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        for (int ii = 0; ii < stream->Size(); ii++)
+                (*stream)(ii) = ((*stream)(ii)-stream_min)/(stream_max-stream_min);
     }
 
     //Set the ODE solver type
     arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT);
-    arkode->Init(*cond_oper);
+    arkode->Init(*transport_oper);
     arkode->SetSStolerances(config.reltol_sundials, config.abstol_sundials);
     arkode->SetMaxStep(dt);
     arkode->SetStepMode(ARK_ONE_STEP);
@@ -96,14 +94,14 @@ void Artic_sea::assemble_system(){
     paraview_out = new ParaViewDataCollection(folder, pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
-    paraview_out->RegisterField("Temperature", theta);
-    paraview_out->RegisterField("Salinity", phi);
+    paraview_out->RegisterField("Temperature", temperature);
+    paraview_out->RegisterField("Salinity", salinity);
     paraview_out->RegisterField("Phase", phase);
-    paraview_out->RegisterField("Vorticity", w);
-    paraview_out->RegisterField("Stream", psi);
-    paraview_out->RegisterField("Velocity", v);
-    paraview_out->RegisterField("rVelocity", rv);
-    paraview_out->SetCycle(vis_impressions);
+    paraview_out->RegisterField("Vorticity", vorticity);
+    paraview_out->RegisterField("Stream", stream);
+    paraview_out->RegisterField("Velocity", velocity);
+    paraview_out->RegisterField("rVelocity", rvelocity);
+    paraview_out->SetCycle(vis_print);
     paraview_out->SetTime(t);
     paraview_out->Save();
 
@@ -133,13 +131,8 @@ double r_f(const Vector &x){
     return x(0);
 }
 
-double inv_r(const Vector &x){
+double r_inv_f(const Vector &x){
     return pow(x(0), -1);
-}
-
-void rot_f(const Vector &x, DenseMatrix &f){
-    f(0,0) = 0.;  f(0,1) = 1.;
-    f(1,0) = -1.; f(1,1) = 0.;
 }
 
 void zero_f(const Vector &x, Vector &f){
@@ -152,34 +145,91 @@ void r_inv_hat_f(const Vector &x, Vector &f){
     f(1) = 0.;
 }
 
-double T_fun(const double &salinity){
-    double a = 0.6037;
-    double b = 0.00058123;
-    return -(a*salinity + b*pow(salinity, 3));
+void rot_f(const Vector &x, DenseMatrix &f){
+    f(0,0) = 0.;  f(0,1) = 1.;
+    f(1,0) = -1.; f(1,1) = 0.;
 }
 
-double delta_rho_t_fun(const double &temperature, const double &salinity){
-    if (temperature < T_fun(salinity))
-        return 0.;
-
-    double a0 = -13.0,  b0 = 1.1,
-           a1 = 0.5,    b1 = -0.04,
-           a2 = -0.008,  
-           a3 = 0.0001;
-    return (a0 + a1*temperature + a2*pow(temperature, 2) + a3*pow(temperature, 3))*salinity +
-           (b0 + b1*temperature)*pow(abs(salinity), 1.5);
+double FusionPoint(const double S){
+    double S_ = S;//S_bounded(S);
+    return -(constants.FusionPoint_a*S_ + constants.FusionPoint_b*pow(S_, 3));
 }
 
-double delta_rho_p_fun(const double &temperature, const double &salinity){
-    if (temperature < T_fun(salinity))
-        return 0.;
+double Phase(const double T, const double S){
+    //Dimentionless
+    return 0.5*(1+tanh(5*EpsilonInv*(T-FusionPoint(S))));
+}
 
-    double a0 = 2617.9, b0 = -87.0, c0 = 31.0,
-           a1 = -13.0,  b1 = 1.6,
-           a2 = 0.2,    b2 = -0.03,
-           a3 = -0.003,
-           a4 = 0.00002;
-    return (a0 + a1*temperature + a2*pow(temperature, 2) + a3*pow(temperature, 3) + a4*pow(temperature, 4)) +
-           (b0 + b1*temperature + b2*pow(temperature, 2))*pow(abs(salinity), 0.5) +
-           (c0)*salinity;
+double HeatInertia(const double T, const double S){
+    return constants.m_s + (constants.m_l-constants.m_s)*Phase(T, S);
+}
+
+double HeatDiffusivity(const double T, const double S){ 
+    return constants.d_temperature_s + (constants.d_temperature_l-constants.d_temperature_s)*Phase(T, S);
+}
+
+double SaltDiffusivity(const double T, const double S){
+    return constants.d_salinity_s + (constants.d_salinity_l-constants.d_salinity_s)*Phase(T, S);
+}
+
+double Impermeability(const double T, const double S){
+    //Dimentionless (Actually has 1/Lenght^2 but its not scale dependent)
+    return Epsilon + pow(1-Phase(T, S), 2)/(pow(Phase(T, S), 3) + Epsilon);
+} 
+
+double ExpansivityTemperature(const double T, const double S){
+    double T_ = T;//T_bounded(T);
+    double S_ = S;//S_bounded(S);
+    return Phase(T, S)*constants.Buoyancy_k*(
+          (constants.Buoyancy_a1  + 
+           constants.Buoyancy_a2*2*(T_)  + 
+           constants.Buoyancy_a3*3*pow(T_, 2)    + 
+           constants.Buoyancy_a4*4*pow(T_, 3))*(S_) + 
+          (constants.Buoyancy_b1  + 
+           constants.Buoyancy_b2*2*(T_))*pow(abs(S_), 1.5)
+          );
+} 
+
+double ExpansivitySalinity(const double T, const double S){
+    double T_ = T;//T_bounded(T);
+    double S_ = S;//S_bounded(S);
+    return Phase(T, S)*constants.Buoyancy_k*(
+          (constants.Buoyancy_a0  + 
+           constants.Buoyancy_a1*(T_)  + 
+           constants.Buoyancy_a2*pow(T_, 2)    + 
+           constants.Buoyancy_a3*pow(T_, 3)    +
+           constants.Buoyancy_a4*pow(T_, 4))   + 
+          (constants.Buoyancy_b0  + 
+           constants.Buoyancy_b1*(T_)  +
+           constants.Buoyancy_b2*pow(T_, 2))*1.5*pow(abs(S_), 0.5)  +
+          (constants.Buoyancy_c0)*2*(S_)
+          );
+}
+
+double Buoyancy(const double T, const double S){
+    double T_ = T;//T_bounded(T);
+    double S_ = S;//S_bounded(S);
+    return Phase(T, S)*constants.Buoyancy_k*(
+          (constants.Buoyancy_a0  + 
+           constants.Buoyancy_a1*(T_)  + 
+           constants.Buoyancy_a2*pow(T_, 2)      + 
+           constants.Buoyancy_a3*pow(T_, 3)      +
+           constants.Buoyancy_a4*pow(T_, 4))*(S_) + 
+          (constants.Buoyancy_b0  + 
+           constants.Buoyancy_b1*(T_)  +
+           constants.Buoyancy_b2*pow(T_, 2))*pow(abs(S_), 1.5)  +
+          (constants.Buoyancy_c0)*pow(S_, 2)
+          );
+}
+
+double T_bounded(const double T){
+    return 0.5*(TemperatureMin+TemperatureMax)
+         + 0.5*(T-TemperatureMin)*tanh(5*EpsilonInv*(T-TemperatureMin))
+         + 0.5*(TemperatureMax-T)*tanh(5*EpsilonInv*(T-TemperatureMax));
+}
+
+double S_bounded(const double S){
+    return 0.5*(SalinityMin+SalinityMax)
+           + 0.5*(S-SalinityMin)*tanh(5*EpsilonInv*(S-SalinityMin))
+           + 0.5*(SalinityMax-S)*tanh(5*EpsilonInv*(S-SalinityMax));
 }
