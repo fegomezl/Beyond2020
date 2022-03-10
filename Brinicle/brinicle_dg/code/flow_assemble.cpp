@@ -7,9 +7,10 @@ double boundary_stream_f(const Vector &x);
 double boundary_stream_in_f(const Vector &x);
 double boundary_stream_out_f(const Vector &x);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_L2, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
     config(config),
     fespace_H1(fespace_H1),
+    fespace_L2(fespace_L2),
     block_offsets_H1(block_offsets_H1),
     ess_bdr_0(attributes), ess_bdr_1(attributes),
     ess_bdr_in(attributes), ess_bdr_out(attributes),
@@ -19,7 +20,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     B(block_offsets_H1),
     B0(NULL), B1(NULL),
     A00(NULL), A01(NULL), A10(NULL), A11(NULL),
-    temperature(&fespace_H1), salinity(&fespace_H1), 
+    temperature(&fespace_L2), salinity(&fespace_L2), 
     temperature_dr(&fespace_H1), salinity_dr(&fespace_H1), 
     phase(&fespace_H1), impermeability(&fespace_H1), 
     stream(&fespace_H1), stream_gradient(&fespace_ND), 

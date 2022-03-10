@@ -4,15 +4,15 @@
 double initial_temperature_f(const Vector &x);
 double initial_salinity_f(const Vector &x);
 
-Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
+Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_L2, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_L2, BlockVector &X):
     config(config),
-    TimeDependentOperator(2*fespace_H1.GetTrueVSize(), config.t_init),
-    fespace_H1(fespace_H1),
-    block_offsets_H1(block_offsets_H1),
+    TimeDependentOperator(2*fespace_L2.GetTrueVSize(), config.t_init),
+    fespace_L2(fespace_L2),
+    block_offsets_L2(block_offsets_L2),
     ess_bdr_0(attributes), ess_bdr_1(attributes),
-    temperature(&fespace_H1), salinity(&fespace_H1),
-    phase(&fespace_H1), 
-    heat_inertia(&fespace_H1), heat_diffusivity(&fespace_H1), salt_diffusivity(&fespace_H1), 
+    temperature(&fespace_L2), salinity(&fespace_L2),
+    phase(&fespace_L2), 
+    heat_inertia(&fespace_L2), heat_diffusivity(&fespace_L2), salt_diffusivity(&fespace_L2), 
     rvelocity(&fespace_ND), 
     coeff_r(r_f), 
     coeff_zero(dim, zero_f),
@@ -22,14 +22,11 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     coeff_rV(&rvelocity), coeff_rMV(coeff_r, coeff_zero), 
     coeff_dPdT(coeff_zero, coeff_zero), coeff_dT_2(coeff_zero, coeff_zero),
     M0(NULL), M1(NULL), 
-    M0_e(NULL), M1_e(NULL), 
-    M0_o(NULL), M1_o(NULL), 
     K0(NULL), K1(NULL), 
     T0(NULL), T1(NULL),
-    T0_e(NULL), T1_e(NULL),
     B0(NULL), B1(NULL), 
-    B0_dt(&fespace_H1), B1_dt(&fespace_H1),
-    Z0(&fespace_H1), Z1(&fespace_H1),
+    B0_dt(&fespace_L2), B1_dt(&fespace_L2),
+    Z0(&fespace_L2), Z1(&fespace_L2),
     M0_solver(MPI_COMM_WORLD), M1_solver(MPI_COMM_WORLD), 
     T0_solver(MPI_COMM_WORLD), T1_solver(MPI_COMM_WORLD)
 {
@@ -53,49 +50,33 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     ess_bdr_0 [0] = 0;   ess_bdr_0 [1] = 0;   
     ess_bdr_0 [2] = 0;   ess_bdr_0 [3] = 0;
     ess_bdr_0 [4] = 1;   ess_bdr_0 [5] = 0;
-    fespace_H1.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
+    fespace_L2.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
 
     ess_bdr_1 = 0;
     ess_bdr_1 [0] = 0;     ess_bdr_1 [1] = 0;
     ess_bdr_1 [2] = 0;     ess_bdr_1 [3] = 0;
     ess_bdr_1 [4] = 1;     ess_bdr_1 [5] = 0;
-    fespace_H1.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
+    fespace_L2.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
 
     //Apply initial conditions
     if (!config.restart){
         FunctionCoefficient coeff_initial_temperature(initial_temperature_f);
         ConstantCoefficient coeff_boundary_temperature(InflowTemperature);
         temperature.ProjectCoefficient(coeff_initial_temperature);
-        temperature.ProjectBdrCoefficient(coeff_boundary_temperature, ess_bdr_0);
         temperature.GetTrueDofs(X.GetBlock(0));
         
         FunctionCoefficient coeff_initial_salinity(initial_salinity_f);
         ConstantCoefficient coeff_boundary_salinity(InflowSalinity);
         salinity.ProjectCoefficient(coeff_initial_salinity);
-        salinity.ProjectBdrCoefficient(coeff_boundary_salinity, ess_bdr_1);
         salinity.GetTrueDofs(X.GetBlock(1));
     }
 
     //Create mass matrix                                   
-    ParBilinearForm m1(&fespace_H1);                 
+    ParBilinearForm m1(&fespace_L2);                 
     m1.AddDomainIntegrator(new MassIntegrator(coeff_r));  
     m1.Assemble();                                        
     m1.Finalize();                                        
     M1 = m1.ParallelAssemble();
-    M1_e = M1->EliminateRowsCols(ess_tdof_1);
-    M1_o = m1.ParallelAssemble();
-
-    //Set RHS
-    ConstantCoefficient Zero(0.);
-    ParLinearForm b0(&fespace_H1);
-    b0.AddDomainIntegrator(new DomainLFIntegrator(Zero));
-    b0.Assemble();
-    B0 = b0.ParallelAssemble();
-
-    ParLinearForm b1(&fespace_H1);
-    b1.AddDomainIntegrator(new DomainLFIntegrator(Zero));
-    b1.Assemble();
-    B1 = b1.ParallelAssemble();
 
     //Configure M solver
     M0_prec.SetPrintLevel(0);

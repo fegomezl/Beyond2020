@@ -30,6 +30,7 @@ void Artic_sea::output_results(){
     //Print general information of the program
     if (config.master){
         cout << "\n\nSize (H1): " << size_H1 << "\n"
+             << "Size (L2): " << size_L2 << "\n"
              << "Size (ND): " << size_ND << "\n"
              << "Mesh Size: " << h_min << "\n"
              << "Serial refinements: " << serial_refinements << "\n"
@@ -42,6 +43,7 @@ void Artic_sea::output_results(){
         std::ofstream out;
         out.open("results/state.txt", std::ios::trunc);
         out << "Size (H1): " << size_H1 << "\n"
+            << "Size (L2): " << size_L2 << "\n"
             << "Size (ND): " << size_ND << "\n"
             << "Mesh Size: " << h_min << "\n"
             << "Serial refinements: " << serial_refinements << "\n"

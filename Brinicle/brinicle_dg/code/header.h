@@ -76,6 +76,8 @@ struct Config{
     int iter_conduction;
     double reltol_sundials;
     double abstol_sundials;
+    double dg_sigma;
+    double dg_kappa;
 
     bool restart;
     double t_init;
@@ -83,7 +85,7 @@ struct Config{
 
 class Transport_Operator : public TimeDependentOperator{
     public:
-        Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
+        Transport_Operator(Config config, ParFiniteElementSpace &fespace_L2, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_L2, BlockVector &X);
 
         void SetParameters(const BlockVector &X, const Vector &rVelocity);
 
@@ -99,8 +101,8 @@ class Transport_Operator : public TimeDependentOperator{
         //Global parameters
         Config config;
 
-        ParFiniteElementSpace &fespace_H1;
-        Array<int> block_offsets_H1;
+        ParFiniteElementSpace &fespace_L2;
+        Array<int> block_offsets_L2;
         Array<int> ess_tdof_0, ess_tdof_1;
         Array<int> ess_bdr_0, ess_bdr_1;
 
@@ -127,11 +129,8 @@ class Transport_Operator : public TimeDependentOperator{
 
         //System objects
         HypreParMatrix *M0, *M1;
-        HypreParMatrix *M0_e, *M1_e; 
-        HypreParMatrix *M0_o, *M1_o;
         HypreParMatrix *K0, *K1;
         HypreParMatrix *T0, *T1;
-        HypreParMatrix *T0_e, *T1_e;
 
         HypreParVector *B0, *B1;
         HypreParVector B0_dt, B1_dt;
@@ -146,7 +145,7 @@ class Transport_Operator : public TimeDependentOperator{
 
 class Flow_Operator{
     public:
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_L2, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
 
         void SetParameters(const BlockVector &X);
 
@@ -162,6 +161,7 @@ class Flow_Operator{
 
         //Mesh objects
         ParFiniteElementSpace &fespace_H1;
+        ParFiniteElementSpace &fespace_L2;
         Array<int> block_offsets_H1;
         Array<int> ess_tdof_0, ess_tdof_1;
         Array<int> ess_bdr_0, ess_bdr_1;
@@ -239,17 +239,21 @@ class Artic_sea{
         ParMesh *pmesh;
 
         FiniteElementCollection *fec_H1;
+        FiniteElementCollection *fec_L2;
         FiniteElementCollection *fec_ND;
 
         ParFiniteElementSpace *fespace_H1;
+        ParFiniteElementSpace *fespace_L2;
         ParFiniteElementSpace *fespace_ND;
 
         Array<int> block_offsets_H1;
+        Array<int> block_offsets_L2;
         
         int dim;
         double h_min;
         int serial_refinements;
         HYPRE_Int size_H1;
+        HYPRE_Int size_L2;
         HYPRE_Int size_ND;
 
         //System objects

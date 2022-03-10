@@ -22,8 +22,8 @@ double S_bounded(const double S);
 void Artic_sea::assemble_system(){
     //Define solution x
     if (!config.restart){
-        temperature = new ParGridFunction(fespace_H1);
-        salinity = new ParGridFunction(fespace_H1);
+        temperature = new ParGridFunction(fespace_L2);
+        salinity = new ParGridFunction(fespace_L2);
     } else {
         std::ifstream in;
         std::ostringstream oss;
@@ -42,7 +42,7 @@ void Artic_sea::assemble_system(){
         salinity->GetTrueDofs(X.GetBlock(1));
     }
 
-    phase = new ParGridFunction(fespace_H1);
+    phase = new ParGridFunction(fespace_L2);
     vorticity = new ParGridFunction(fespace_H1);
     stream = new ParGridFunction(fespace_H1);
     velocity = new ParGridFunction(fespace_ND);
@@ -52,8 +52,8 @@ void Artic_sea::assemble_system(){
     Velocity = new HypreParVector(fespace_ND);
 
     //Initialize operators
-    transport_oper = new Transport_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
-    flow_oper = new Flow_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
+    transport_oper = new Transport_Operator(config, *fespace_L2, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_L2, X);
+    flow_oper = new Flow_Operator(config, *fespace_H1, *fespace_L2, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
 
     //Solve initial velocity field
     flow_oper->SetParameters(X);

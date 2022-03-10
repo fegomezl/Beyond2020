@@ -11,9 +11,10 @@ Artic_sea::Artic_sea(Config config):
     t(config.t_init), dt(config.dt_init), last(false),
     vis_steps(config.vis_steps_max), vis_print(0),
     pmesh(NULL), 
-    fec_H1(NULL), fec_ND(NULL), 
-    fespace_H1(NULL), fespace_ND(NULL),
+    fec_H1(NULL), fec_L2(NULL), fec_ND(NULL), 
+    fespace_H1(NULL), fespace_L2(NULL), fespace_ND(NULL),
     block_offsets_H1(3),
+    block_offsets_L2(3),
     temperature(NULL), salinity(NULL), phase(NULL), 
     vorticity(NULL), stream(NULL), 
     velocity(NULL), rvelocity(NULL), 
@@ -37,16 +38,10 @@ Transport_Operator::~Transport_Operator(){
     //Delete used memory
     delete M0; 
     delete M1; 
-    delete M0_e; 
-    delete M1_e; 
-    delete M0_o; 
-    delete M1_o; 
     delete K0; 
     delete K1; 
     delete T0; 
     delete T1; 
-    delete T0_e; 
-    delete T1_e; 
     delete B0;
     delete B1;
 }
@@ -63,8 +58,10 @@ Flow_Operator::~Flow_Operator(){
 Artic_sea::~Artic_sea(){
     delete pmesh;
     delete fec_H1;
+    delete fec_L2;
     delete fec_ND;
     delete fespace_H1;
+    delete fespace_L2;
     delete fespace_ND;
     delete temperature;
     delete salinity;

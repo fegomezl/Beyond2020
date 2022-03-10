@@ -87,6 +87,12 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
         temperature(ii) = temperature(ii) - FusionPoint(salinity(ii));
     }
 
+    heat_inertia.ExchangeFaceNbrData();
+    heat_diffusivity.ExchangeFaceNbrData();
+    salt_diffusivity.ExchangeFaceNbrData();
+    phase.ExchangeFaceNbrData();
+    temperature.ExchangeFaceNbrData();
+
     //Set the associated coefficients
     GridFunctionCoefficient coeff_I(&heat_inertia);
     GridFunctionCoefficient coeff_D0(&heat_diffusivity);
@@ -117,35 +123,59 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
 
     //Create corresponding bilinear forms
     if (M0) delete M0;
-    if (M0_e) delete M0_e;
-    if (M0_o) delete M0_o;
-    ParBilinearForm m0(&fespace_H1);
+    ParBilinearForm m0(&fespace_L2);
     m0.AddDomainIntegrator(new MassIntegrator(coeff_rM));
     m0.Assemble();
     m0.Finalize();
     M0 = m0.ParallelAssemble();
-    M0_e = M0->EliminateRowsCols(ess_tdof_0);
-    M0_o = m0.ParallelAssemble();
 
     M0_prec.SetOperator(*M0);
     M0_solver.SetOperator(*M0);
 
+    config.dg_sigma = 1.;
+    config.dg_kappa = 1.;
+
     //Create transport matrix
     if (K0) delete K0;
-    ParBilinearForm k0(&fespace_H1);
+    ParBilinearForm k0(&fespace_L2);
     k0.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD0));
     k0.AddDomainIntegrator(new ConvectionIntegrator(coeff_rMV));
+    k0.AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rD0, config.dg_sigma, config.dg_kappa));
+    k0.AddInteriorFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rMV, 1.));
+    k0.AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rD0, config.dg_sigma, config.dg_kappa), ess_bdr_0);
+    k0.AddBdrFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rMV, 1.), ess_bdr_0);
     k0.Assemble();
     k0.Finalize();
     K0 = k0.ParallelAssemble();    
 
     if (K1) delete K1;
-    ParBilinearForm k1(&fespace_H1);
+    ParBilinearForm k1(&fespace_L2);
     k1.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD1));
     k1.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k1.AddInteriorFaceIntegrator(new DGDiffusionIntegrator(coeff_rD1, config.dg_sigma, config.dg_kappa));
+    k1.AddInteriorFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rV, 1.));
+    k1.AddBdrFaceIntegrator(new DGDiffusionIntegrator(coeff_rD1, config.dg_sigma, config.dg_kappa), ess_bdr_1);
+    k1.AddBdrFaceIntegrator(new NonconservativeDGTraceIntegrator(coeff_rV, 1.), ess_bdr_1);
     k1.Assemble();
     k1.Finalize();
     K1 = k1.ParallelAssemble();
+
+    //Set RHS
+    if (B0) delete B0;
+    ParLinearForm b0(&fespace_L2);
+    ConstantCoefficient coeff_temperature_in(InflowTemperature);
+    b0.AddBdrFaceIntegrator(new DGDirichletLFIntegrator(coeff_temperature_in, coeff_rD0, config.dg_sigma, config.dg_kappa), ess_bdr_0);
+    b0.AddBdrFaceIntegrator(new BoundaryFlowIntegrator(coeff_temperature_in, coeff_rMV, -1.), ess_bdr_0);
+    b0.Assemble();
+    B0 = b0.ParallelAssemble();
+
+    if (B1) delete B1;
+    ParLinearForm b1(&fespace_L2);
+    ConstantCoefficient coeff_salinity_in(InflowSalinity);
+    b1.AddBdrFaceIntegrator(new DGDirichletLFIntegrator(coeff_salinity_in, coeff_rD1, config.dg_sigma, config.dg_kappa), ess_bdr_1);
+    b1.AddBdrFaceIntegrator(new BoundaryFlowIntegrator(coeff_salinity_in, coeff_rV, -1.), ess_bdr_1);
+    b1.Assemble();
+    B1 = b1.ParallelAssemble();
 }
 
 void Flow_Operator::SetParameters(const BlockVector &X){
@@ -165,6 +195,10 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         temperature(ii) = ExpansivityTemperature(T, S);
         salinity(ii) = ExpansivitySalinity(T, S);
     }
+
+    impermeability.ExchangeFaceNbrData();
+    temperature.ExchangeFaceNbrData();
+    salinity.ExchangeFaceNbrData();
 
     //Properties coefficients
     GridFunctionCoefficient coeff_impermeability(&impermeability);
