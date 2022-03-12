@@ -78,12 +78,8 @@ void Transport_Operator::SetParameters(const Vector &Temperature, const Vector &
     rvelocity.SetFromTrueDofs(rVelocity); 
 
     //Associate the values of each auxiliar function
-    for (int ii = 0; ii < phase.Size(); ii++){
+    for (int ii = 0; ii < temperature.Size(); ii++)
         salt_diffusivity(ii) = SaltDiffusivity(temperature(ii), salinity(ii));;
-
-        phase(ii) = Phase(temperature(ii), salinity(ii));
-        temperature(ii) = temperature(ii) - FusionPoint(salinity(ii));
-    }
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_D(&salt_diffusivity);
@@ -143,10 +139,7 @@ void Flow_Operator::SetParameters(const Vector &Temperature, const Vector &Salin
     vorticity_boundary.ProjectBdrCoefficient(coeff_vorticity, ess_bdr_0);
 
     stream_boundary.ProjectCoefficient(coeff_stream);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_in);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_out, ess_bdr_out);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_closed_down);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
+    stream_boundary.ProjectBdrCoefficient(coeff_stream, ess_bdr_1);
 
     //Define the non-constant RHS
     if (B1) delete B1;

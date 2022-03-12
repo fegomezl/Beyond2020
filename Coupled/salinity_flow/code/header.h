@@ -105,7 +105,7 @@ class Transport_Operator : public TimeDependentOperator{
         Array<int> ess_bdr;
 
         //Auxiliar grid functions
-        ParGridFunction temperature, salinity, phase;
+        ParGridFunction temperature, salinity;
         ParGridFunction rvelocity;
         ParGridFunction salt_diffusivity;
 
@@ -113,7 +113,6 @@ class Transport_Operator : public TimeDependentOperator{
         FunctionCoefficient coeff_r;
         VectorFunctionCoefficient coeff_zero;
 
-        ProductCoefficient coeff_rM;
         ProductCoefficient coeff_rD; 
 
         VectorGridFunctionCoefficient coeff_rV;
@@ -158,8 +157,6 @@ class Flow_Operator{
         Array<int> block_offsets_H1;
         Array<int> ess_tdof_0, ess_tdof_1;
         Array<int> ess_bdr_0, ess_bdr_1;
-        Array<int> ess_bdr_in, ess_bdr_out;
-        Array<int> ess_bdr_closed_down, ess_bdr_closed_up;
 
         //System objects
         ParGridFunction vorticity_boundary;
@@ -195,10 +192,6 @@ class Flow_Operator{
         //Boundary coefficients
         FunctionCoefficient coeff_vorticity;
         FunctionCoefficient coeff_stream;
-        FunctionCoefficient coeff_stream_in;
-        FunctionCoefficient coeff_stream_out;
-        ConstantCoefficient coeff_stream_closed_down;
-        ConstantCoefficient coeff_stream_closed_up;
 
         //Construction rV
         ParDiscreteLinearOperator gradient;

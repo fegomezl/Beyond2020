@@ -11,12 +11,10 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     block_offsets_H1(block_offsets_H1),
     ess_bdr(attributes),
     temperature(&fespace_H1), salinity(&fespace_H1),
-    phase(&fespace_H1), 
     salt_diffusivity(&fespace_H1), 
     rvelocity(&fespace_ND), 
     coeff_r(r_f), 
     coeff_zero(dim, zero_f),
-    coeff_rM(coeff_r, coeff_r),
     coeff_rD(coeff_r, coeff_r),
     coeff_rV(&rvelocity),
     M(NULL),  
@@ -33,16 +31,16 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 {
     //Define essential boundary conditions
     //   
-    //              4               1
-    //            /---|---------------------------\
+    //                            1
+    //            /-------------------------------\
     //            |                               |
     //            |                               |
-    //            |                               | 3
+    //            |                               | 
     //            |                               |
-    //          2 |                               |
-    //            |                               -
+    //          2 |                               | 3
     //            |                               |
-    //            |                               | 5
+    //            |                               |
+    //            |                               | 
     //            |                               |
     //            \-------------------------------/
     //                            0
@@ -50,7 +48,6 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     ess_bdr = 0;
     ess_bdr [0] = 0;   ess_bdr [1] = 0;   
     ess_bdr [2] = 0;   ess_bdr [3] = 0;
-    ess_bdr [4] = 0;   ess_bdr [5] = 0;
     fespace_H1.GetEssentialTrueDofs(ess_bdr, ess_tdof);
 
     //Apply initial conditions
