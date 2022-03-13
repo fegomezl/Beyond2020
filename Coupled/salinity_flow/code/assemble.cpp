@@ -129,11 +129,11 @@ void Artic_sea::assemble_system(){
 }
 
 double r_f(const Vector &x){
-    return x(0);
+    return Epsilon + x(0);
 }
 
 double r_inv_f(const Vector &x){
-    return pow(x(0), -1);
+    return pow(Epsilon + x(0), -1);
 }
 
 void zero_f(const Vector &x, Vector &f){
@@ -142,7 +142,7 @@ void zero_f(const Vector &x, Vector &f){
 }
 
 void r_inv_hat_f(const Vector &x, Vector &f){
-    f(0) = pow(x(0), -1);
+    f(0) = pow(Epsilon + x(0), -1);
     f(1) = 0.;
 }
 

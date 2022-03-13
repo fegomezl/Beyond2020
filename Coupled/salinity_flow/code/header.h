@@ -41,8 +41,8 @@ struct Constants{
     double d_temperature_s = k_s/(rho_s/L);    //Solid
 
     //Salt diffusivity (mm^2/min)
-    double d_salinity_l = 0.1;       //Liquid
-    double d_salinity_s = 0;         //Solid
+    double d_salinity_l = 0.1;                 //Liquid
+    double d_salinity_s = 0.000000001;         //Solid
 
     //Density coeficients (\Delta\rho)
     double Buoyancy_k = g/(v*rho_0); 

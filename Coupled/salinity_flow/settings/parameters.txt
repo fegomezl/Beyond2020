@@ -16,7 +16,7 @@ Simulation parameters
 0       #Rescale_stream?
 
 FE parameters
-2          #Refinements
+3          #Refinements
 1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)

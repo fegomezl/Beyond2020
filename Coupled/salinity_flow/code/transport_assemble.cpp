@@ -104,6 +104,8 @@ double initial_temperature_f(const Vector &x){
 }
 
 double initial_salinity_f(const Vector &x){
+    if (x(0) > 0.8*RMax)
+        return 1.;
     if (x(1) < ZMax/2)
         return 3.5;
     else
