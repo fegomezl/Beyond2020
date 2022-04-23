@@ -17,7 +17,6 @@ struct Constants{
     double g = 35280000;        //Gravity (mm/min^2)
 
     //Densities (kg/m3)
-    double rho_0 = 999.8;       //Density of pure water 
     double rho_l = 1028.3;      //Density of sea water
     double rho_s = 934.4;       //Density of sea ice 
 
@@ -45,16 +44,16 @@ struct Constants{
     double d_salinity_s = 0;         //Solid
 
     //Density coeficients (\Delta\rho)
-    double Buoyancy_k = g/(v*rho_0); 
-    double Buoyancy_a0 = 8.246121;              //T^(0)*S^(1)
-    double Buoyancy_a1 = -0.04109344;           //T^(1)*S^(1)
-    double Buoyancy_a2 = 0.0007731839;          //T^(2)*S^(1)
-    double Buoyancy_a3 = -0.000008323176;       //T^(3)*S^(1)
-    double Buoyancy_a4 = 0.00000005516023;      //T^(4)*S^(1)
-    double Buoyancy_b0 = -0.182739;             //T^(0)*S^(1.5)
-    double Buoyancy_b1 = 0.003327135;           //T^(1)*S^(1.5)
-    double Buoyancy_b2 = -0.00005600674;        //T^(2)*S^(1.5)
-    double Buoyancy_c0 = 0.04886169;            //T^(0)*S^(2)
+    double Buoyancy_k = g/v; 
+    double Buoyancy_a0 = 8.25E-3;        //T^(0)*S^(1)
+    double Buoyancy_a1 = -4.11E-5;       //T^(1)*S^(1)
+    double Buoyancy_a2 = 7.73E-7;        //T^(2)*S^(1)
+    double Buoyancy_a3 = -8.32E-9;       //T^(3)*S^(1)
+    double Buoyancy_a4 = 5.52E-11;       //T^(4)*S^(1)
+    double Buoyancy_b0 = -1.83E-4;       //T^(0)*S^(1.5)
+    double Buoyancy_b1 = 3.33E-6;        //T^(1)*S^(1.5)
+    double Buoyancy_b2 = -5.60E-8;       //T^(2)*S^(1.5)
+    double Buoyancy_c0 = 4.89E-5;        //T^(0)*S^(2)
 };
 
 struct Config{
