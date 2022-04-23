@@ -1,0 +1,41 @@
+Mesh Parameters
+settings/square_6.geo #Mesh_script
+0       #Rmin
+5       #Rmax
+0       #Zmin
+10      #Zmax
+1       #Inflow_window_size
+2       #Outflow_window_size
+10      #Rcells
+10      #Zcells
+
+Simulation parameters
+0.01    #Dt
+60      #Final_time
+10      #Visualization_steps
+0       #Rescale_stream?
+
+FE parameters
+5          #Refinements
+1          #Order
+0          #abstol(Conduction)
+0.00000001 #reltol(Conduction)
+100        #iter(Conduction)
+0.00001    #abstol(SUNDIALS)
+0.00001    #reltol(SUNDIALS)
+9          #nEpsilon
+
+Brinicle conditions
+2.5     #Velocity_inflow
+-2      #Initial_temperature
+-10     #Inflow_temperature
+3.5     #Initial_salinity
+20      #Inflow_salinity
+0.2     #Nucleation_length
+1       #Nucleation_height
+-10     #Nucleation_temperature
+3.5     #Nucleation_salinity
+
+Restart conditions
+0          #Restart?
+0          #Initial_time
