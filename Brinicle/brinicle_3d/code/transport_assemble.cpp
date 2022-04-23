@@ -78,7 +78,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 
     //Create mass matrix                                   
     ParBilinearForm m1(&fespace_H1);                 
-    m1.AddDomainIntegrator(new MassIntegrator(coeff_r));  
+    m1.AddDomainIntegrator(new MassIntegrator());  
     m1.Assemble();                                        
     m1.Finalize();                                        
     M1 = m1.ParallelAssemble();

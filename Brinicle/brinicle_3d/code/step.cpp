@@ -117,7 +117,7 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     if (M0_e) delete M0_e;
     if (M0_o) delete M0_o;
     ParBilinearForm m0(&fespace_H1);
-    m0.AddDomainIntegrator(new MassIntegrator(coeff_rM));
+    m0.AddDomainIntegrator(new MassIntegrator(coeff_M));
     m0.Assemble();
     m0.Finalize();
     M0 = m0.ParallelAssemble();
@@ -130,16 +130,16 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     //Create transport matrix
     if (K0) delete K0;
     ParBilinearForm k0(&fespace_H1);
-    k0.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD0));
-    k0.AddDomainIntegrator(new ConvectionIntegrator(coeff_rMV));
+    k0.AddDomainIntegrator(new DiffusionIntegrator(coeff_D0));
+    //k0.AddDomainIntegrator(new ConvectionIntegrator(coeff_rMV));
     k0.Assemble();
     k0.Finalize();
     K0 = k0.ParallelAssemble();    
 
     if (K1) delete K1;
     ParBilinearForm k1(&fespace_H1);
-    k1.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD1));
-    k1.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
+    k1.AddDomainIntegrator(new DiffusionIntegrator(coeff_D1));
+    //k1.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
     k1.Assemble();
     k1.Finalize();
     K1 = k1.ParallelAssemble();
