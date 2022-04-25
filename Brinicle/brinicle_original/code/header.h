@@ -10,7 +10,7 @@ using namespace std;
 using namespace mfem;
 
 struct Constants{
-    //Explicacion 
+    //All of the physical properties of the system 
 
     //Forces properties
     double v = 408;             //Kinematic viscosity \nu (mm^2/min)
@@ -36,8 +36,8 @@ struct Constants{
     double m_s = c_s/L;    //Solid
 
     //Thermal diffusivity (Thermal conductivity over volumetric latent heat k/(rho*L)) (mm^2/min)
-    double d_temperature_l = k_l/(rho_l*L);      //Liquid
-    double d_temperature_s = k_s/(rho_s/L);    //Solid
+    double d_temperature_l = 6.0E4*k_l/(rho_l*L);      //Liquid
+    double d_temperature_s = 6.0E4*k_s/(rho_s/L);    //Solid
 
     //Salt diffusivity (mm^2/min)
     double d_salinity_l = 0.1;       //Liquid
