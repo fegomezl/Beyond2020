@@ -218,6 +218,14 @@ class Flow_Operator{
         ParGridFunction stream_boundary;
         ParGridFunction velocity;
         ParGridFunction rvelocity;
+        ParGridFunction stream;
+        ParGridFunction stream_gradient;
+
+        ParGridFunction temperature;
+        ParGridFunction salinity;
+        ParGridFunction density;
+        ParGridFunction density_dr;
+        ParGridFunction impermeability;
 
         //System objects
         BlockVector B;
@@ -227,16 +235,6 @@ class Flow_Operator{
         HypreParMatrix *A01;
         HypreParMatrix *A10;
         HypreParMatrix *A11;
-
-        //Additional variables
-        ParGridFunction temperature;
-        ParGridFunction temperature_dr;
-        ParGridFunction salinity;
-        ParGridFunction salinity_dr;
-        ParGridFunction phase;
-        ParGridFunction impermeability;
-        ParGridFunction stream;
-        ParGridFunction stream_gradient;
       
         //Coefficients
         FunctionCoefficient coeff_r;
@@ -371,6 +369,4 @@ extern double HeatInertia(const double T, const double S);              //Coeffi
 extern double HeatDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the temperature equation
 extern double SaltDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the salinity equation
 extern double Impermeability(const double T, const double S);           //Inverse of the brinkman penalization permeability
-extern double ExpansivityTemperature(const double T, const double S);   //Expansivity coefficient for the temperature gradient
-extern double ExpansivitySalinity(const double T, const double S);      //Expansivity coefficient for the salinity gradient
-extern double Buoyancy(const double T, const double S);                 //Buoyancy coefficient for the relative density
+extern double Density(const double T, const double S);                  //Relative density of the fluid

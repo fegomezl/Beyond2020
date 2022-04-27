@@ -14,9 +14,7 @@ double HeatInertia(const double T, const double S);
 double HeatDiffusivity(const double T, const double S);
 double SaltDiffusivity(const double T, const double S);
 double Impermeability(const double T, const double S);
-double ExpansivityTemperature(const double T, const double S);
-double ExpansivitySalinity(const double T, const double S);
-double Buoyancy(const double T, const double S);
+double Density(const double T, const double S);
 
 //Initialize the solvers and the variables of the program
 void Artic_sea::assemble_system(){
@@ -189,36 +187,9 @@ double Impermeability(const double T, const double S){
     return Epsilon + pow(1-Phase(T, S), 2)/(pow(Phase(T, S), 3) + Epsilon);
 } 
 
-//Expansivity coefficient for the temperature gradient
-double ExpansivityTemperature(const double T, const double S){
-    return Phase(T, S)*constants.BuoyancyCoefficient*(
-          (constants.Density_a1  + 
-           constants.Density_a2*2*(T)  + 
-           constants.Density_a3*3*pow(T, 2)    + 
-           constants.Density_a4*4*pow(T, 3))*(S) + 
-          (constants.Density_b1  + 
-           constants.Density_b2*2*(T))*pow(abs(S), 1.5)
-          );
-} 
-
-//Expansivity coefficient for the salinity gradient
-double ExpansivitySalinity(const double T, const double S){
-    return Phase(T, S)*constants.BuoyancyCoefficient*(
-          (constants.Density_a0  + 
-           constants.Density_a1*(T)  + 
-           constants.Density_a2*pow(T, 2)    + 
-           constants.Density_a3*pow(T, 3)    +
-           constants.Density_a4*pow(T, 4))   + 
-          (constants.Density_b0  + 
-           constants.Density_b1*(T)  +
-           constants.Density_b2*pow(T, 2))*1.5*pow(abs(S), 0.5)  +
-          (constants.Density_c0)*2*(S)
-          );
-}
-
-//Buoyancy coefficient for the relative density
-double Buoyancy(const double T, const double S){
-    return Phase(T, S)*constants.BuoyancyCoefficient*(
+//Relative density of the fluid
+double Density(const double T, const double S){
+    return Phase(T, S)*(
           (constants.Density_a0  + 
            constants.Density_a1*(T)  + 
            constants.Density_a2*pow(T, 2)      + 

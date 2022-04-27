@@ -159,35 +159,27 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     temperature.SetFromTrueDofs(X.GetBlock(0));
     salinity.SetFromTrueDofs(X.GetBlock(1));
 
-    //Calculate derivatives of the fieds
-    temperature.GetDerivative(1, 0, temperature_dr);
-    salinity.GetDerivative(1, 0, salinity_dr);
-
-    //Calculate impermeability and buoyancy coefficients
-    for (int ii = 0; ii < phase.Size(); ii++){
+    //Calculate impermeability and density coefficients
+    for (int ii = 0; ii < impermeability.Size(); ii++){
         double T = temperature(ii);
         double S = salinity(ii);
 
         impermeability(ii) = Impermeability(T, S);
-        temperature(ii) = ExpansivityTemperature(T, S);
-        salinity(ii) = ExpansivitySalinity(T, S);
+        density(ii) = Density(T, S);
     }
+    
+    //Calculate gradient of the density field
+    density.GetDerivative(1, 0, density_dr);
 
     //Create impermeability and buoyancy coefficients
     GridFunctionCoefficient coeff_impermeability(&impermeability);
     ProductCoefficient coeff_neg_impermeability(-1., coeff_impermeability);
-
-    GridFunctionCoefficient coeff_temperature_dr(&temperature_dr);
-    GridFunctionCoefficient coeff_expansivity_temperature(&temperature);
-    ProductCoefficient coeff_buoyancy_temperature(coeff_expansivity_temperature, coeff_temperature_dr);
-
-    GridFunctionCoefficient coeff_salinity_dr(&salinity_dr);
-    GridFunctionCoefficient coeff_expansivity_salinity(&salinity);
-    ProductCoefficient coeff_buoyancy_salinity(coeff_expansivity_salinity, coeff_salinity_dr);
-
     ScalarVectorProductCoefficient coeff_neg_impermeability_r_inv_hat(coeff_neg_impermeability, coeff_r_inv_hat);
-    ProductCoefficient coeff_r_buoyancy_temperature(coeff_r, coeff_buoyancy_temperature);
-    ProductCoefficient coeff_r_buoyancy_salinity(coeff_r, coeff_buoyancy_salinity);
+
+    GridFunctionCoefficient coeff_density_dr(&density_dr);
+    ConstantCoefficient coeff_buoyancy_constant(constants.BuoyancyCoefficient);
+    ProductCoefficient coeff_buoyancy(coeff_buoyancy_constant, coeff_density_dr);
+    ProductCoefficient coeff_r_buoyancy(coeff_r, coeff_buoyancy);
     
     //Apply boundary conditions
     vorticity_boundary.ProjectCoefficient(coeff_vorticity);
@@ -202,8 +194,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     //Define non-constant RHS
     if (B1) delete B1;
     ParLinearForm b1(&fespace_H1);
-    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_temperature));
-    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_salinity));
+    b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy));
     b1.Assemble();
 
     //Define non-constant bilinear forms of the system
