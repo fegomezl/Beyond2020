@@ -1,13 +1,13 @@
 #include "header.h"
 
-//Initialize the system MPI variables
+//Initialization of the program variables 
 Config::Config(int pid, int nproc):
     pid(pid),
     master(pid == 0),
     nproc(nproc)
 {}
 
-//Initialize the main program
+//Initialization of the program
 Artic_sea::Artic_sea(Config config):
     config(config),
     t(config.t_init), dt(config.dt_init), last(false),

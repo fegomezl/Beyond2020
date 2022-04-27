@@ -1,8 +1,8 @@
 #include "header.h"
 
+//From  M(dX_dt) + K(X) = B
+//Solve M(dX_dt) + K(X) = B for dX_dt
 void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
-    //From  M(dX_dt) + K(X) = B
-    //Solve M(dX_dt) + K(X) = B for dX_dt
     
     //Initialize the corresponding vectors
     HypreParVector dX0_dt(&fespace_H1), dX1_dt(&fespace_H1);
@@ -34,8 +34,8 @@ void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
         dX_dt(ii) = dX1_dt(ii - block_offsets_H1[1]);
 }
 
+//Setup the ODE Jacobian T = M + dt*K
 int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &RHS, int j_update, int *j_status, double scaled_dt){
-    //Setup the ODE Jacobian T = M + dt*K
     
     if (T0) delete T0;
     if (T0_e) delete T0_e;
@@ -53,16 +53,15 @@ int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &RHS, int
 
     //Set dt for RHS
     B0_dt.Set(scaled_dt, *B0);
-
     B1_dt.Set(scaled_dt, *B1);
 
     *j_status = 1;
     return 0;
 }
 
+//From  M(dX_dt) + K(X) = B
+//Solve M(X_new - X) + dt*K(X_new) = dt*B for X_new
 int Transport_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double tol){
-    //From  M(dX_dt) + K(X) = B
-    //Solve M(X_new - X) + dt*K(X_new) = dt*B for X_new
     
     //Initialize the corresponding vectors
     HypreParVector X0_new(&fespace_H1), X1_new(&fespace_H1);

@@ -1,5 +1,6 @@
 #include "header.h"
 
+//Solution of the current system
 void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
 
     //Create the complete bilinear operator:
@@ -19,6 +20,7 @@ void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
     B.GetBlock(0) = *B0;
     B.GetBlock(1) = *B1;
 
+    //Create the solver object
     SuperLUSolver superlu(MPI_COMM_WORLD);
     superlu.SetOperator(A);
     superlu.SetPrintStatistics(false);
@@ -30,7 +32,7 @@ void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
     superlu.Mult(B, Y);
     superlu.DismantleGrid();
 
-    //Calculate velocity
+    //Calculate velocity field
     stream.Distribute(Y.GetBlock(1)); 
     gradient.Mult(stream, stream_gradient);
     VectorGridFunctionCoefficient coeff_stream_gradient(&stream_gradient);

@@ -1,11 +1,13 @@
 #include "header.h"
 
+//Usefull position functions
 double r_f(const Vector &x);
 double r_inv_f(const Vector &x);
 void zero_f(const Vector &x, Vector &f);
 void r_inv_hat_f(const Vector &x, Vector &f);
 void rot_f(const Vector &x, DenseMatrix &f);
 
+//Physical properties (in T,S)
 double FusionPoint(const double S);
 double Phase(const double T, const double S);
 double HeatInertia(const double T, const double S);
@@ -16,15 +18,15 @@ double ExpansivityTemperature(const double T, const double S);
 double ExpansivitySalinity(const double T, const double S);
 double Buoyancy(const double T, const double S);
 
-double T_bounded(const double T);
-double S_bounded(const double S);
-
+//Initialize the solvers and the variables of the program
 void Artic_sea::assemble_system(){
-    //Define solution x
+
     if (!config.restart){
+        //Define the temperature and salinity fields
         temperature = new ParGridFunction(fespace_H1);
         salinity = new ParGridFunction(fespace_H1);
     } else {
+        //Read input temperature and salinity fields
         std::ifstream in;
         std::ostringstream oss;
         oss << std::setw(10) << std::setfill('0') << config.pid;
@@ -42,6 +44,7 @@ void Artic_sea::assemble_system(){
         salinity->GetTrueDofs(X.GetBlock(1));
     }
 
+    //Define other fields
     phase = new ParGridFunction(fespace_H1);
     vorticity = new ParGridFunction(fespace_H1);
     stream = new ParGridFunction(fespace_H1);
@@ -71,7 +74,7 @@ void Artic_sea::assemble_system(){
     for (int ii = 0; ii < phase->Size(); ii++)
         (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
 
-    //Normalize stream
+    //Adimentionalize stream function
     if (config.rescale){
         double stream_local_max = stream->Max(), stream_max;
         double stream_local_min = stream->Min(), stream_min;
@@ -127,88 +130,103 @@ void Artic_sea::assemble_system(){
     }
 }
 
+//Function for r
 double r_f(const Vector &x){
     return x(0);
 }
 
+//Function for 1/r
 double r_inv_f(const Vector &x){
     return pow(x(0), -1);
 }
 
+//Function for 0 (vector)
 void zero_f(const Vector &x, Vector &f){
     f(0) = 0.;
     f(1) = 0.;
 }
 
+//Function for (1/r)*r^ (r^ unitary vector)
 void r_inv_hat_f(const Vector &x, Vector &f){
     f(0) = pow(x(0), -1);
     f(1) = 0.;
 }
 
+//Function for ( 0   1 )
+//             (-1   0 )
 void rot_f(const Vector &x, DenseMatrix &f){
     f(0,0) = 0.;  f(0,1) = 1.;
     f(1,0) = -1.; f(1,1) = 0.;
 }
 
+//Fusion temperature at a given salinity
 double FusionPoint(const double S){
     return -(constants.FusionPoint_a*S + constants.FusionPoint_b*pow(S, 3));
 }
 
+//Phase indicator (1 for liquid and 0 for solid)
 double Phase(const double T, const double S){
     return 0.5*(1+tanh(5*EpsilonInv*(T-FusionPoint(S))));
 }
 
+//Coefficient for the mass term in the temperature equation
 double HeatInertia(const double T, const double S){
-    return constants.m_s + (constants.m_l-constants.m_s)*Phase(T, S);
+    return constants.TemperatureMass_s + (constants.TemperatureMass_l-constants.TemperatureMass_l)*Phase(T, S);
 }
 
+//Coefficient for the diffusion term in the temperature equation
 double HeatDiffusivity(const double T, const double S){ 
-    return constants.d_temperature_s + (constants.d_temperature_l-constants.d_temperature_s)*Phase(T, S);
+    return constants.TemperatureDiffusion_s + (constants.TemperatureDiffusion_l-constants.TemperatureDiffusion_s)*Phase(T, S);
 }
 
+//Coefficient for the diffusion term in the salinity equation
 double SaltDiffusivity(const double T, const double S){
-    return constants.d_salinity_s + (constants.d_salinity_l-constants.d_salinity_s)*Phase(T, S);
+    return constants.SalinityDiffusion_s + (constants.SalinityDiffusion_l-constants.SalinityDiffusion_s)*Phase(T, S);
 }
 
+//Inverse of the brinkman penalization permeability
 double Impermeability(const double T, const double S){
     return Epsilon + pow(1-Phase(T, S), 2)/(pow(Phase(T, S), 3) + Epsilon);
 } 
 
+//Expansivity coefficient for the temperature gradient
 double ExpansivityTemperature(const double T, const double S){
-    return Phase(T, S)*constants.Buoyancy_k*(
-          (constants.Buoyancy_a1  + 
-           constants.Buoyancy_a2*2*(T)  + 
-           constants.Buoyancy_a3*3*pow(T, 2)    + 
-           constants.Buoyancy_a4*4*pow(T, 3))*(S) + 
-          (constants.Buoyancy_b1  + 
-           constants.Buoyancy_b2*2*(T))*pow(abs(S), 1.5)
+    return Phase(T, S)*constants.BuoyancyCoefficient*(
+          (constants.Density_a1  + 
+           constants.Density_a2*2*(T)  + 
+           constants.Density_a3*3*pow(T, 2)    + 
+           constants.Density_a4*4*pow(T, 3))*(S) + 
+          (constants.Density_b1  + 
+           constants.Density_b2*2*(T))*pow(abs(S), 1.5)
           );
 } 
 
+//Expansivity coefficient for the salinity gradient
 double ExpansivitySalinity(const double T, const double S){
-    return Phase(T, S)*constants.Buoyancy_k*(
-          (constants.Buoyancy_a0  + 
-           constants.Buoyancy_a1*(T)  + 
-           constants.Buoyancy_a2*pow(T, 2)    + 
-           constants.Buoyancy_a3*pow(T, 3)    +
-           constants.Buoyancy_a4*pow(T, 4))   + 
-          (constants.Buoyancy_b0  + 
-           constants.Buoyancy_b1*(T)  +
-           constants.Buoyancy_b2*pow(T, 2))*1.5*pow(abs(S), 0.5)  +
-          (constants.Buoyancy_c0)*2*(S)
+    return Phase(T, S)*constants.BuoyancyCoefficient*(
+          (constants.Density_a0  + 
+           constants.Density_a1*(T)  + 
+           constants.Density_a2*pow(T, 2)    + 
+           constants.Density_a3*pow(T, 3)    +
+           constants.Density_a4*pow(T, 4))   + 
+          (constants.Density_b0  + 
+           constants.Density_b1*(T)  +
+           constants.Density_b2*pow(T, 2))*1.5*pow(abs(S), 0.5)  +
+          (constants.Density_c0)*2*(S)
           );
 }
 
+//Buoyancy coefficient for the relative density
 double Buoyancy(const double T, const double S){
-    return Phase(T, S)*constants.Buoyancy_k*(
-          (constants.Buoyancy_a0  + 
-           constants.Buoyancy_a1*(T)  + 
-           constants.Buoyancy_a2*pow(T, 2)      + 
-           constants.Buoyancy_a3*pow(T, 3)      +
-           constants.Buoyancy_a4*pow(T, 4))*(S) + 
-          (constants.Buoyancy_b0  + 
-           constants.Buoyancy_b1*(T)  +
-           constants.Buoyancy_b2*pow(T, 2))*pow(abs(S), 1.5)  +
-          (constants.Buoyancy_c0)*pow(S, 2)
+    return Phase(T, S)*constants.BuoyancyCoefficient*(
+          (constants.Density_a0  + 
+           constants.Density_a1*(T)  + 
+           constants.Density_a2*pow(T, 2)      + 
+           constants.Density_a3*pow(T, 3)      +
+           constants.Density_a4*pow(T, 4))*(S) + 
+          (constants.Density_b0  + 
+           constants.Density_b1*(T)  +
+           constants.Density_b2*pow(T, 2))*pow(abs(S), 1.5)  +
+          (constants.Density_c0)*pow(S, 2)
           );
 }

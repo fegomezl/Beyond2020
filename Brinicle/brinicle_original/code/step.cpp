@@ -1,6 +1,8 @@
 #include "header.h"
 
+//Evolve the simulation one time step 
 void Artic_sea::time_step(){
+
     //Update iteration parameters
     last = (t >= config.t_final - 1e-8*config.dt_init);
     dt = min(dt, config.t_final - t);
@@ -15,6 +17,7 @@ void Artic_sea::time_step(){
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
 
+    //Print visualization on certain steps
     if (last || vis_steps <= vis_iteration){
         //Update parameters
         vis_iteration = 0;
@@ -32,7 +35,7 @@ void Artic_sea::time_step(){
         for (int ii = 0; ii < phase->Size(); ii++)
             (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
     
-        //Normalize stream
+        //Adimentionalize stream function
         if (config.rescale){
             double stream_local_max = stream->Max(), stream_max;
             double stream_local_min = stream->Min(), stream_min;
@@ -42,7 +45,7 @@ void Artic_sea::time_step(){
                     (*stream)(ii) = ((*stream)(ii)-stream_min)/(stream_max-stream_min);
         }
 
-        //Graph
+        //Print fields
         paraview_out->SetCycle(vis_print);
         paraview_out->SetTime(t);
         paraview_out->Save();
@@ -71,8 +74,9 @@ void Artic_sea::time_step(){
     }
 }
 
+//Update of the solver on each iteration
 void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelocity){
-    //Recover actual information
+    //Recover current information
     temperature.SetFromTrueDofs(X.GetBlock(0));
     salinity.SetFromTrueDofs(X.GetBlock(1));
     rvelocity.SetFromTrueDofs(rVelocity); 
@@ -148,15 +152,18 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     K1 = k1.ParallelAssemble();
 }
 
+//Update of the solver on each iteration
 void Flow_Operator::SetParameters(const BlockVector &X){
-    //Update information
+
+    //Recover current information
     temperature.SetFromTrueDofs(X.GetBlock(0));
     salinity.SetFromTrueDofs(X.GetBlock(1));
 
+    //Calculate derivatives of the fieds
     temperature.GetDerivative(1, 0, temperature_dr);
     salinity.GetDerivative(1, 0, salinity_dr);
 
-    //Calculate eta and buoyancy coefficients
+    //Calculate impermeability and buoyancy coefficients
     for (int ii = 0; ii < phase.Size(); ii++){
         double T = temperature(ii);
         double S = salinity(ii);
@@ -166,7 +173,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         salinity(ii) = ExpansivitySalinity(T, S);
     }
 
-    //Properties coefficients
+    //Create impermeability and buoyancy coefficients
     GridFunctionCoefficient coeff_impermeability(&impermeability);
     ProductCoefficient coeff_neg_impermeability(-1., coeff_impermeability);
 
@@ -178,7 +185,6 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     GridFunctionCoefficient coeff_expansivity_salinity(&salinity);
     ProductCoefficient coeff_buoyancy_salinity(coeff_expansivity_salinity, coeff_salinity_dr);
 
-    //Rotational coupled coefficients
     ScalarVectorProductCoefficient coeff_neg_impermeability_r_inv_hat(coeff_neg_impermeability, coeff_r_inv_hat);
     ProductCoefficient coeff_r_buoyancy_temperature(coeff_r, coeff_buoyancy_temperature);
     ProductCoefficient coeff_r_buoyancy_salinity(coeff_r, coeff_buoyancy_salinity);
@@ -193,7 +199,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_closed_down);
     stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
 
-    //Define the non-constant RHS
+    //Define non-constant RHS
     if (B1) delete B1;
     ParLinearForm b1(&fespace_H1);
     b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy_temperature));

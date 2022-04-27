@@ -35,31 +35,31 @@ struct Constants{
      * T_f = -(a*S + b *S^3)
      * in °C
      ****/
-    double FusionPoint_a = 6.04E-1;//0.6037;       
-    double FusionPoint_b = 5.81E-4;//0.00058123;   
+    double FusionPoint_a = 6.04E-1;
+    double FusionPoint_b = 5.81E-4;
 
     /****
      * Coefficients for the mass term of the temperature
      * equation given by specific heat capacity over 
      * latent heat (c/L) in 1/°C
      ****/ 
-    double m_l = 1.17E-2;//0.011683;      //Liquid;
-    double m_s = 6.57E-3;//0.006570;      //Solid;
+    double TemperatureMass_l = 1.17E-2;      //Liquid;
+    double TemperatureMass_s = 6.57E-3;      //Solid;
 
     /****
      * Coefficients for the diffusion term of the temperature 
      * equation given by thermal conductivity over volumetric 
      * latent heat (k/(rho*L)) in  mm^2/min
      ****/ 
-    double d_temperature_l = 9.82E-2;//0.098236;      //Liquid;
-    double d_temperature_s = 4.47E-1;//0.447059;      //Solid;
+    double TemperatureDiffusion_l = 9.82E-2;      //Liquid;
+    double TemperatureDiffusion_s = 4.47E-1;      //Solid;
 
     /****
      * Coefficients for the diffusion term of the salinity
      * equation given by salt diffusivity (d) in mm^2/min
      ****/ 
-    double d_salinity_l = 6.00E-2;       //Liquid
-    double d_salinity_s = 1.00E-7;       //Solid
+    double SalinityDiffusion_l = 6.00E-2;       //Liquid
+    double SalinityDiffusion_s = 1.00E-7;       //Solid
 
     /****
      * Coefficients for the relative density equation in terms of 
@@ -68,18 +68,22 @@ struct Constants{
      *                 + (b0 + b1*T + b2*T^2)*S^1.5
      *                 + (c0)*S^2
      * which is dimentionless
-     * Also the buoyancy coefficient (k) given by g/nu in 1/(mm*min)
      ****/
-    double Buoyancy_k = 8.647E+4;
-    double Buoyancy_a0 = 8.25E-3;
-    double Buoyancy_a1 = -4.11E-5;
-    double Buoyancy_a2 = 7.73E-7;
-    double Buoyancy_a3 = -8.32E-9;
-    double Buoyancy_a4 = 5.52E-11;
-    double Buoyancy_b0 = -1.83E-4;
-    double Buoyancy_b1 = 3.33E-6;
-    double Buoyancy_b2 = -5.60E-8;
-    double Buoyancy_c0 = 4.89E-5;
+    double Density_a0 = 8.25E-3;
+    double Density_a1 = -4.11E-5;
+    double Density_a2 = 7.73E-7;
+    double Density_a3 = -8.32E-9;
+    double Density_a4 = 5.52E-11;
+    double Density_b0 = -1.83E-4;
+    double Density_b1 = 3.33E-6;
+    double Density_b2 = -5.60E-8;
+    double Density_c0 = 4.89E-5;
+
+    /****
+     * Coefficient for the buoyancy term(k) 
+     * given by g/nu in 1/(mm*min)
+     ****/ 
+    double BuoyancyCoefficient = 8.647E+4;
 };
 
 //Main variables for the program
@@ -268,7 +272,7 @@ class Artic_sea{
         //Initialize the solvers and the variables
         void assemble_system();
 
-        //Evolve the simulationone time step 
+        //Evolve the simulation one time step 
         void time_step();
 
         //Print the final results
@@ -363,9 +367,10 @@ extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
 //Physical properties (in T,S)
 extern double FusionPoint(const double S);                              //Fusion temperature at a given salinity
 extern double Phase(const double T, const double S);                    //Phase indicator (1 for liquid and 0 for solid)
-extern double HeatInertia(const double T, const double S);              //Heat capacity over latent heat
-extern double HeatDiffusivity(const double T, const double S);          //Heat conduction over latent heat
-extern double SaltDiffusivity(const double T, const double S);          //Diffusion coefficient for the mass equation
+extern double HeatInertia(const double T, const double S);              //Coefficient for the mass term in the temperature equation
+extern double HeatDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the temperature equation
+extern double SaltDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the salinity equation
 extern double Impermeability(const double T, const double S);           //Inverse of the brinkman penalization permeability
 extern double ExpansivityTemperature(const double T, const double S);   //Expansivity coefficient for the temperature gradient
 extern double ExpansivitySalinity(const double T, const double S);      //Expansivity coefficient for the salinity gradient
+extern double Buoyancy(const double T, const double S);                 //Buoyancy coefficient for the relative density

@@ -1,6 +1,6 @@
 #include "header.h"
 
-//Boundary values
+//Boundary conditions
 double boundary_vorticity_f(const Vector &x);
 
 double boundary_stream_f(const Vector &x);
@@ -32,29 +32,33 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     coeff_stream_closed_down(0.), coeff_stream_closed_up(InflowFlux),
     gradient(&fespace_H1, &fespace_ND)
 { 
-    //Define essential boundary conditions
-    //   
-    //              4               1
-    //            /---|---------------------------\
-    //            |                               |
-    //            |                               |
-    //            |                               | 3
-    //            |                               |
-    //          2 |                               |
-    //            |                               -
-    //            |                               |
-    //            |                               | 5
-    //            |                               |
-    //            \-------------------------------/
-    //                            0
-    //
+    /****
+     * Define essential boundary conditions
+     * 
+     *           4               1
+     *         /---|---------------------------\
+     *         |                               |
+     *         |                               |
+     *         |                               | 3
+     *         |                               |
+     *       2 |                               |
+     *         |                               -
+     *         |                               |
+     *         |                               | 5
+     *         |                               |
+     *         \-------------------------------/
+     *                            0
+     *
+     ****/
     
+    //Vorticity boundary conditions
     ess_bdr_0 = 0;
     ess_bdr_0[0] = 0; ess_bdr_0[1] = 0;
     ess_bdr_0[2] = 1; ess_bdr_0[3] = 0;
     ess_bdr_0[4] = 0; ess_bdr_0[5] = 0;
     fespace_H1.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
   
+    //Stream boundary conditions
     ess_bdr_1 = 0;
     ess_bdr_1[0] = 1; ess_bdr_1[1] = 1;
     ess_bdr_1[2] = 1; ess_bdr_1[3] = 1;
@@ -119,11 +123,12 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     SetParameters(X);
 }
 
-//Boundary values
+//Boundary condition for vorticity
 double boundary_vorticity_f(const Vector &x){
     return 0.;
 }
 
+//Boundary condition for stream
 double boundary_stream_f(const Vector &x){
     double x_rel = x(0)/RIn;
     double y_rel = x(1)/ZOut;
@@ -135,11 +140,13 @@ double boundary_stream_f(const Vector &x){
     return InflowFlux*in*out;
 }
 
+//Boundary condition for stream at inlet
 double boundary_stream_in_f(const Vector &x){
     double x_rel = x(0)/RIn;
     return InflowFlux*pow(x_rel, 2)*(2-pow(x_rel, 2));
 }
 
+//Boundary condition for stream at outlet
 double boundary_stream_out_f(const Vector &x){
     double y_rel = x(1)/ZOut;
     return InflowFlux*pow(y_rel, 2)*(3-2*y_rel);

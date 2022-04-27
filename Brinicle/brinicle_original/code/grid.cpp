@@ -1,6 +1,6 @@
 #include "header.h"
 
-//Creates or reads the mesh, along with the FES needed and the block vectors
+//Create the mesh and the FES
 void Artic_sea::make_grid(const char *mesh_file){
 
     //Read mesh (serial)

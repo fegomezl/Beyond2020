@@ -1,7 +1,6 @@
 #include "header.h"
 
-//Prints the final state of the system, 
-//along with the main results of the program
+//Print the final results
 void Artic_sea::output_results(){
 
     //Save final state

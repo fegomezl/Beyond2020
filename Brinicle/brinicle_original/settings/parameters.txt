@@ -26,7 +26,7 @@ FE parameters
 9          #nEpsilon
 
 Brinicle conditions
-100    #Velocity_inflow
+10    #Velocity_inflow
 -2      #Initial_temperature
 -10     #Inflow_temperature
 3.5     #Initial_salinity
