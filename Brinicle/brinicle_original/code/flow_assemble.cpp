@@ -7,7 +7,7 @@ double boundary_stream_f(const Vector &x);
 double boundary_stream_in_f(const Vector &x);
 double boundary_stream_out_f(const Vector &x);
 
-Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
+Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1):
     config(config),
     fespace_H1(fespace_H1),
     block_offsets_H1(block_offsets_H1),
@@ -118,9 +118,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     gradient.AddDomainIntegrator(new GradientInterpolator);
     gradient.Assemble();
     gradient.Finalize();
-
-    //Set initial system
-    SetParameters(X);
 }
 
 //Boundary condition for vorticity

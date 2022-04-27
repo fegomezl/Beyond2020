@@ -189,7 +189,7 @@ class Transport_Operator : public TimeDependentOperator{
 class Flow_Operator{
     public:
         //Initialization of the solver
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1);
 
         //Update of the solver on each iteration
         void SetParameters(const BlockVector &X);
