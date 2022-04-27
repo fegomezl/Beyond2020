@@ -9,65 +9,96 @@
 using namespace std;
 using namespace mfem;
 
-struct Constants{
-    //All of the physical properties of the system 
+//Main constants for the simulation
+struct Constants{ 
+    /****
+     * Physical properties of the system
+     *
+     * Density of liquid phase (rho_l): 1028.3 kg/m^3
+     * Specific heat capacity of liquid phase (c_l): 3.77 kJ/(kg*°C)
+     * Thermal conductivity of liquid phase (k_l): 0.5433 W/(m*°C)
+     * Salt diffusivity of liquid phase (d_l): 0.001 mm^2/s
+     *
+     * Density of solid phase (rho_s): 934.4 kg/m^3
+     * Specific heat capacity of solid phase (c_s): 2.12 kJ/(kg*°C)
+     * Thermal conductivity of solid phase (k_s): 2.2467 W/(m*°C)
+     * Salt diffusivity of solid phase (d_s): 0 mm^2/s
+     *
+     * Kinematic viscosity (nu): 6.8 mm^2/s
+     * Latent heat (L): 322.7 kJ/kg
+     * Gravity (g): 9.8 m/s^2
+     ****/
 
-    //Forces properties
-    double v = 408;             //Kinematic viscosity \nu (mm^2/min)
-    double g = 35280000;        //Gravity (mm/min^2)
+    /****
+     * Coefficients for the equation of the fusion 
+     * temperature T_f in terms of salinity S:
+     * T_f = -(a*S + b *S^3)
+     * in °C
+     ****/
+    double FusionPoint_a = 6.04E-1;//0.6037;       
+    double FusionPoint_b = 5.81E-4;//0.00058123;   
 
-    //Densities (kg/m3)
-    double rho_l = 1028.3;      //Density of sea water
-    double rho_s = 934.4;       //Density of sea ice 
+    /****
+     * Coefficients for the mass term of the temperature
+     * equation given by specific heat capacity over 
+     * latent heat (c/L) in 1/°C
+     ****/ 
+    double m_l = 1.17E-2;//0.011683;      //Liquid;
+    double m_s = 6.57E-3;//0.006570;      //Solid;
 
-    //Energy properties
-    double c_l = 3.77;              //Specific heat capacity of sea water (kJ/(kg*°C))
-    double c_s = 2.12;              //Specific heat capacity of sea ice (kJ/(kg*°C))
-    double k_l = 0.5433;            //Thermal diffusivity of sea water (W/(m*°C))
-    double k_s = 2.2467;            //Thermal diffusivity of sea ice (W/(m*°C))
-    double L = 322.7;               //Latent Heat (kJ/kg)
+    /****
+     * Coefficients for the diffusion term of the temperature 
+     * equation given by thermal conductivity over volumetric 
+     * latent heat (k/(rho*L)) in  mm^2/min
+     ****/ 
+    double d_temperature_l = 9.82E-2;//0.098236;      //Liquid;
+    double d_temperature_s = 4.47E-1;//0.447059;      //Solid;
 
-    //Fusion point coeficients (°C)
-    double FusionPoint_a = 0.6037;       
-    double FusionPoint_b = 0.00058123;   
+    /****
+     * Coefficients for the diffusion term of the salinity
+     * equation given by salt diffusivity (d) in mm^2/min
+     ****/ 
+    double d_salinity_l = 6.00E-2;       //Liquid
+    double d_salinity_s = 1.00E-7;       //Solid
 
-    //Heat inertia (Specific heat capacity over latent heat c/L) (Dimentionless)
-    double m_l = c_l/L;    //Liquid
-    double m_s = c_s/L;    //Solid
-
-    //Thermal diffusivity (Thermal conductivity over volumetric latent heat k/(rho*L)) (mm^2/min)
-    double d_temperature_l = 6.0E4*k_l/(rho_l*L);      //Liquid
-    double d_temperature_s = 6.0E4*k_s/(rho_s/L);    //Solid
-
-    //Salt diffusivity (mm^2/min)
-    double d_salinity_l = 0.1;       //Liquid
-    double d_salinity_s = 0;         //Solid
-
-    //Density coeficients (\Delta\rho)
-    double Buoyancy_k = g/v; 
-    double Buoyancy_a0 = 8.25E-3;        //T^(0)*S^(1)
-    double Buoyancy_a1 = -4.11E-5;       //T^(1)*S^(1)
-    double Buoyancy_a2 = 7.73E-7;        //T^(2)*S^(1)
-    double Buoyancy_a3 = -8.32E-9;       //T^(3)*S^(1)
-    double Buoyancy_a4 = 5.52E-11;       //T^(4)*S^(1)
-    double Buoyancy_b0 = -1.83E-4;       //T^(0)*S^(1.5)
-    double Buoyancy_b1 = 3.33E-6;        //T^(1)*S^(1.5)
-    double Buoyancy_b2 = -5.60E-8;       //T^(2)*S^(1.5)
-    double Buoyancy_c0 = 4.89E-5;        //T^(0)*S^(2)
+    /****
+     * Coefficients for the relative density equation in terms of 
+     * temperature T and salinity S given by:
+     * Delta rho / rho = (a0 + a1*T + a2*T^3 + a3*T^3 + a4*T^4)*S
+     *                 + (b0 + b1*T + b2*T^2)*S^1.5
+     *                 + (c0)*S^2
+     * which is dimentionless
+     * Also the buoyancy coefficient (k) given by g/nu in 1/(mm*min)
+     ****/
+    double Buoyancy_k = 8.647E+4;
+    double Buoyancy_a0 = 8.25E-3;
+    double Buoyancy_a1 = -4.11E-5;
+    double Buoyancy_a2 = 7.73E-7;
+    double Buoyancy_a3 = -8.32E-9;
+    double Buoyancy_a4 = 5.52E-11;
+    double Buoyancy_b0 = -1.83E-4;
+    double Buoyancy_b1 = 3.33E-6;
+    double Buoyancy_b2 = -5.60E-8;
+    double Buoyancy_c0 = 4.89E-5;
 };
 
+//Main variables for the program
 struct Config{
-    Config(int pid, int nproc);
+    //Initialization of the program variables 
+    Config(int pid, int nproc);     
 
+    //MPI variables
     bool master;
     int nproc;
     int pid;
 
+    //Time and visualization variables
     double dt_init;
     double t_final;
     int vis_steps_max;
     bool rescale;
 
+    //FEM variables 
     int refinements;
     int order;
     double reltol_conduction;
@@ -76,17 +107,23 @@ struct Config{
     double reltol_sundials;
     double abstol_sundials;
 
+    //Re-Initialization variables
     bool restart;
     double t_init;
 };
 
+
+//Solver for the temperature and salinity field
 class Transport_Operator : public TimeDependentOperator{
     public:
+        //Initialization of the solver
         Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
 
+        //Update of the solver on each iteration
         void SetParameters(const BlockVector &X, const Vector &rVelocity);
 
-        virtual void Mult(const Vector &X, Vector &dX_dt) const;    //Solver for explicit methods
+        //Time-evolving functions
+        virtual void Mult(const Vector &X, Vector &dX_dt) const;
         virtual int SUNImplicitSetup(const Vector &X, const Vector &RHS, int j_update, int *j_status, double scaled_dt);
 	    virtual int SUNImplicitSolve(const Vector &X, Vector &X_new, double tol);
 
@@ -98,6 +135,7 @@ class Transport_Operator : public TimeDependentOperator{
         //Global parameters
         Config config;
 
+        //FEM parameters
         ParFiniteElementSpace &fespace_H1;
         Array<int> block_offsets_H1;
         Array<int> ess_tdof_0, ess_tdof_1;
@@ -143,12 +181,16 @@ class Transport_Operator : public TimeDependentOperator{
         HypreBoomerAMG T0_prec, T1_prec;
 };
 
+//Solver for the velocity field
 class Flow_Operator{
     public:
+        //Initialization of the solver
         Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
 
+        //Update of the solver on each iteration
         void SetParameters(const BlockVector &X);
 
+        //Solution of the current system
         void Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity);
 
         ~Flow_Operator();
@@ -159,7 +201,7 @@ class Flow_Operator{
         //Global parameters
         Config config;
 
-        //Mesh objects
+        //FEM objects
         ParFiniteElementSpace &fespace_H1;
         Array<int> block_offsets_H1;
         Array<int> ess_tdof_0, ess_tdof_1;
@@ -167,13 +209,13 @@ class Flow_Operator{
         Array<int> ess_bdr_in, ess_bdr_out;
         Array<int> ess_bdr_closed_down, ess_bdr_closed_up;
 
-        //System objects
+        //Auxiliar grid functions
         ParGridFunction vorticity_boundary;
         ParGridFunction stream_boundary;
         ParGridFunction velocity;
         ParGridFunction rvelocity;
 
-        //Solver objects
+        //System objects
         BlockVector B;
         HypreParVector *B0, *B1;
 
@@ -192,13 +234,12 @@ class Flow_Operator{
         ParGridFunction stream;
         ParGridFunction stream_gradient;
       
-        //Rotational coefficients
+        //Coefficients
         FunctionCoefficient coeff_r;
         FunctionCoefficient coeff_r_inv;
         VectorFunctionCoefficient coeff_r_inv_hat;
         MatrixFunctionCoefficient coeff_rot;
 
-        //Boundary coefficients
         FunctionCoefficient coeff_vorticity;
         FunctionCoefficient coeff_stream;
         FunctionCoefficient coeff_stream_in;
@@ -206,19 +247,31 @@ class Flow_Operator{
         ConstantCoefficient coeff_stream_closed_down;
         ConstantCoefficient coeff_stream_closed_up;
 
-        //Construction rV
+        //Interpolation objects
         ParDiscreteLinearOperator gradient;
 };
 
+//Main class of the program
 class Artic_sea{
     public:
+        //Initialization of the program
         Artic_sea(Config config);
+
+        //Run the program
         void run(const char *mesh_file);
+
         ~Artic_sea();
     private:
+        //Create the mesh and the FES
         void make_grid(const char *mesh_file);
+
+        //Initialize the solvers and the variables
         void assemble_system();
+
+        //Evolve the simulationone time step 
         void time_step();
+
+        //Print the final results
         void output_results();
 
         //Global parameters
@@ -234,7 +287,7 @@ class Artic_sea{
         int vis_print;
         double total_time;
 
-        //Mesh objects
+        //FEM objects
         ParMesh *pmesh;
 
         FiniteElementCollection *fec_H1;
@@ -265,15 +318,15 @@ class Artic_sea{
         HypreParVector *Velocity;
         HypreParVector *rVelocity;
 
-        //Operators
+        //Solvers
         Transport_Operator *transport_oper;
         Flow_Operator *flow_oper;
 
-        //Solver objects
+        //Time evolving operators
         ODESolver *ode_solver;
         ARKStepSolver *arkode;
 
-        //Print parameters
+        //Output gate
         ParaViewDataCollection *paraview_out;
 };
 
@@ -298,8 +351,6 @@ extern double NucleationTemperature;    //Temperature of the nucleation point
 extern double NucleationSalinity;       //Salinity of the nucleation point
                                             
 extern double InflowFlux;                        //Flux at the inflow boundary divided by 2PI
-extern double TemperatureMax, TemperatureMin;    //Limits of the temperature scale
-extern double SalinityMax, SalinityMin;          //Limits of the salinity scale
 
 //Usefull position functions
 extern double r_f(const Vector &x);                     //Function for r
@@ -318,7 +369,3 @@ extern double SaltDiffusivity(const double T, const double S);          //Diffus
 extern double Impermeability(const double T, const double S);           //Inverse of the brinkman penalization permeability
 extern double ExpansivityTemperature(const double T, const double S);   //Expansivity coefficient for the temperature gradient
 extern double ExpansivitySalinity(const double T, const double S);      //Expansivity coefficient for the salinity gradient
-
-//Bounding variables
-extern double T_bounded(const double T);        //Bounding of temperature according to expectations
-extern double S_bounded(const double S);        //Bounding of salinity according to expectations

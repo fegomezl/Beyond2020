@@ -10,8 +10,8 @@ settings/square_6.geo #Mesh_script
 10      #Zcells
 
 Simulation parameters
-0.0001   #Dt
-0.05     #Final_time
+0.0001  #Dt
+0.1   #Final_time
 10      #Visualization_steps
 0       #Rescale_stream?
 
@@ -26,7 +26,7 @@ FE parameters
 9          #nEpsilon
 
 Brinicle conditions
-10      #Velocity_inflow
+100    #Velocity_inflow
 -2      #Initial_temperature
 -10     #Inflow_temperature
 3.5     #Initial_salinity

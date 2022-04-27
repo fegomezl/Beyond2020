@@ -1,5 +1,6 @@
 #include "header.h"
 
+//Creates or reads the mesh, along with the FES needed and the block vectors
 void Artic_sea::make_grid(const char *mesh_file){
 
     //Read mesh (serial)
@@ -29,9 +30,8 @@ void Artic_sea::make_grid(const char *mesh_file){
         //Refine mesh (parallel)
         for (int ii = 0; ii < config.refinements - serial_refinements; ii++)
             pmesh->UniformRefinement();
-    }
-
-    if (config.restart){
+    } else {
+        //Read the input mesh
         std::ifstream in;
         std::ostringstream oss;
         oss << std::setw(10) << std::setfill('0') << config.pid;
@@ -46,7 +46,7 @@ void Artic_sea::make_grid(const char *mesh_file){
     double null;
     pmesh->GetCharacteristics(h_min, null, null, null);
 
-    //Create the FEM space associated with the mesh
+    //Create the FEM spaces associated with the mesh
     fec_H1 = new H1_FECollection(config.order, dim);
     fespace_H1 = new ParFiniteElementSpace(pmesh, fec_H1);
     size_H1 = fespace_H1->GlobalTrueVSize();

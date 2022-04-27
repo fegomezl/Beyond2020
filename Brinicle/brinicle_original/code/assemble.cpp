@@ -151,12 +151,10 @@ void rot_f(const Vector &x, DenseMatrix &f){
 }
 
 double FusionPoint(const double S){
-    double S_ = S;//S_bounded(S);
-    return -(constants.FusionPoint_a*S_ + constants.FusionPoint_b*pow(S_, 3));
+    return -(constants.FusionPoint_a*S + constants.FusionPoint_b*pow(S, 3));
 }
 
 double Phase(const double T, const double S){
-    //Dimentionless
     return 0.5*(1+tanh(5*EpsilonInv*(T-FusionPoint(S))));
 }
 
@@ -173,63 +171,44 @@ double SaltDiffusivity(const double T, const double S){
 }
 
 double Impermeability(const double T, const double S){
-    //Dimentionless (Actually has 1/Lenght^2 but its not scale dependent)
     return Epsilon + pow(1-Phase(T, S), 2)/(pow(Phase(T, S), 3) + Epsilon);
 } 
 
 double ExpansivityTemperature(const double T, const double S){
-    double T_ = T;//T_bounded(T);
-    double S_ = S;//S_bounded(S);
     return Phase(T, S)*constants.Buoyancy_k*(
           (constants.Buoyancy_a1  + 
-           constants.Buoyancy_a2*2*(T_)  + 
-           constants.Buoyancy_a3*3*pow(T_, 2)    + 
-           constants.Buoyancy_a4*4*pow(T_, 3))*(S_) + 
+           constants.Buoyancy_a2*2*(T)  + 
+           constants.Buoyancy_a3*3*pow(T, 2)    + 
+           constants.Buoyancy_a4*4*pow(T, 3))*(S) + 
           (constants.Buoyancy_b1  + 
-           constants.Buoyancy_b2*2*(T_))*pow(abs(S_), 1.5)
+           constants.Buoyancy_b2*2*(T))*pow(abs(S), 1.5)
           );
 } 
 
 double ExpansivitySalinity(const double T, const double S){
-    double T_ = T;//T_bounded(T);
-    double S_ = S;//S_bounded(S);
     return Phase(T, S)*constants.Buoyancy_k*(
           (constants.Buoyancy_a0  + 
-           constants.Buoyancy_a1*(T_)  + 
-           constants.Buoyancy_a2*pow(T_, 2)    + 
-           constants.Buoyancy_a3*pow(T_, 3)    +
-           constants.Buoyancy_a4*pow(T_, 4))   + 
+           constants.Buoyancy_a1*(T)  + 
+           constants.Buoyancy_a2*pow(T, 2)    + 
+           constants.Buoyancy_a3*pow(T, 3)    +
+           constants.Buoyancy_a4*pow(T, 4))   + 
           (constants.Buoyancy_b0  + 
-           constants.Buoyancy_b1*(T_)  +
-           constants.Buoyancy_b2*pow(T_, 2))*1.5*pow(abs(S_), 0.5)  +
-          (constants.Buoyancy_c0)*2*(S_)
+           constants.Buoyancy_b1*(T)  +
+           constants.Buoyancy_b2*pow(T, 2))*1.5*pow(abs(S), 0.5)  +
+          (constants.Buoyancy_c0)*2*(S)
           );
 }
 
 double Buoyancy(const double T, const double S){
-    double T_ = T;//T_bounded(T);
-    double S_ = S;//S_bounded(S);
     return Phase(T, S)*constants.Buoyancy_k*(
           (constants.Buoyancy_a0  + 
-           constants.Buoyancy_a1*(T_)  + 
-           constants.Buoyancy_a2*pow(T_, 2)      + 
-           constants.Buoyancy_a3*pow(T_, 3)      +
-           constants.Buoyancy_a4*pow(T_, 4))*(S_) + 
+           constants.Buoyancy_a1*(T)  + 
+           constants.Buoyancy_a2*pow(T, 2)      + 
+           constants.Buoyancy_a3*pow(T, 3)      +
+           constants.Buoyancy_a4*pow(T, 4))*(S) + 
           (constants.Buoyancy_b0  + 
-           constants.Buoyancy_b1*(T_)  +
-           constants.Buoyancy_b2*pow(T_, 2))*pow(abs(S_), 1.5)  +
-          (constants.Buoyancy_c0)*pow(S_, 2)
+           constants.Buoyancy_b1*(T)  +
+           constants.Buoyancy_b2*pow(T, 2))*pow(abs(S), 1.5)  +
+          (constants.Buoyancy_c0)*pow(S, 2)
           );
-}
-
-double T_bounded(const double T){
-    return 0.5*(TemperatureMin+TemperatureMax)
-         + 0.5*(T-TemperatureMin)*tanh(5*EpsilonInv*(T-TemperatureMin))
-         + 0.5*(TemperatureMax-T)*tanh(5*EpsilonInv*(T-TemperatureMax));
-}
-
-double S_bounded(const double S){
-    return 0.5*(SalinityMin+SalinityMax)
-           + 0.5*(S-SalinityMin)*tanh(5*EpsilonInv*(S-SalinityMin))
-           + 0.5*(SalinityMax-S)*tanh(5*EpsilonInv*(S-SalinityMax));
 }

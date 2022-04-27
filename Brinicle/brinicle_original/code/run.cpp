@@ -1,11 +1,13 @@
 #include "header.h"
 
+//Initialize the system MPI variables
 Config::Config(int pid, int nproc):
     pid(pid),
     master(pid == 0),
     nproc(nproc)
 {}
 
+//Initialize the main program
 Artic_sea::Artic_sea(Config config):
     config(config),
     t(config.t_init), dt(config.dt_init), last(false),
@@ -23,8 +25,8 @@ Artic_sea::Artic_sea(Config config):
     paraview_out(NULL)
 {}
 
+//Run the program
 void Artic_sea::run(const char *mesh_file){
-    //Run the program
     make_grid(mesh_file);
     assemble_system();
     for (iteration = 1, vis_iteration = 1; !last; iteration++, vis_iteration++)
@@ -33,8 +35,9 @@ void Artic_sea::run(const char *mesh_file){
     output_results();
 }
 
+//Delete used memory
+
 Transport_Operator::~Transport_Operator(){
-    //Delete used memory
     delete M0; 
     delete M1; 
     delete M0_e; 

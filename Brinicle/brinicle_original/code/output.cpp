@@ -1,6 +1,9 @@
 #include "header.h"
 
+//Prints the final state of the system, 
+//along with the main results of the program
 void Artic_sea::output_results(){
+
     //Save final state
     std::ofstream out;
     std::ostringstream oss;
@@ -21,6 +24,7 @@ void Artic_sea::output_results(){
     salinity->Save(out);
     out.close();
 
+    //Update the initial time for future simulations
     if (config.master){
         out.open("settings/parameters.txt", std::ios::app);
         out << t << "       #Initial_time\n";
