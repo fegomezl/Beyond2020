@@ -1,10 +1,8 @@
 #include "header.h"
 
-/*
+/****
  * All the nomeclarure is explained in the header
- *
- */
-
+ ****/
 
 double RMin, RMax, ZMin, ZMax;
 double RIn, ZOut;
@@ -22,6 +20,7 @@ double NucleationSalinity;
 
 double InflowFlux;                    
 double RelaxationTime = 0.08;
+double RenormalizationScale = 1.E+9;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters

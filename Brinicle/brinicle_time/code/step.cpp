@@ -89,6 +89,8 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
 
         phase(ii) = Phase(temperature(ii), salinity(ii));
         temperature(ii) = temperature(ii) - FusionPoint(salinity(ii));
+
+        bound_salinity(ii) = RenormalizationFlux(salinity(ii));
     }
 
     //Set the associated coefficients
@@ -110,10 +112,21 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
 
     SumCoefficient coeff_M(coeff_I, DeltaT);
 
+    GridFunctionCoefficient coeff_bound(&bound_salinity);
+
+    GradientGridFunctionCoefficient coeff_dS(&bound_salinity);
+    InnerProductCoefficient coeff_dS_2(coeff_dS, coeff_dS);
+    PowerCoefficient coeff_dS_mag(coeff_dS_2, 0.5);
+    SumCoefficient coeff_dS_mag_e(Epsilon, coeff_dS_mag);
+    PowerCoefficient coeff_inv_dS_mag_e(coeff_dS_mag_e, -1.);
+
+    ProductCoefficient coeff_k_eq(coeff_bound, coeff_inv_dS_mag_e);
+    SumCoefficient coeff_D1_eq(coeff_D1, coeff_k_eq);
+
     //Construct final coefficients
     coeff_rM.SetBCoef(coeff_M);
     coeff_rD0.SetBCoef(coeff_D0); 
-    coeff_rD1.SetBCoef(coeff_D1); 
+    coeff_rD1.SetBCoef(coeff_D1_eq); 
 
     coeff_rV.SetGridFunction(&rvelocity);
     coeff_rMV.SetACoef(coeff_M);

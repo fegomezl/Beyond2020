@@ -151,6 +151,7 @@ class Transport_Operator : public TimeDependentOperator{
         ParGridFunction heat_inertia;
         ParGridFunction heat_diffusivity;
         ParGridFunction salt_diffusivity;
+        ParGridFunction bound_salinity;
 
         //Coefficients
         FunctionCoefficient coeff_r;
@@ -353,7 +354,8 @@ extern double NucleationTemperature;    //Temperature of the nucleation point
 extern double NucleationSalinity;       //Salinity of the nucleation point
                                             
 extern double InflowFlux;                        //Flux at the inflow boundary divided by 2PI
-extern double RelaxationTime;                     //Waiting time in order to achive maximum flux
+extern double RelaxationTime;                    //Waiting time in order to achive maximum flux
+extern double RenormalizationScale;              //Scale for the renormalization flux
 
 //Usefull position functions
 extern double r_f(const Vector &x);                     //Function for r
@@ -364,6 +366,7 @@ extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
                                                         //             (-1   0 )
 
 //Physical properties (in T,S)
+extern double RenormalizationFlux(const double S);                          //Renormalization flux for excess of salinity
 extern double FusionPoint(const double S);                              //Fusion temperature at a given salinity
 extern double Phase(const double T, const double S);                    //Phase indicator (1 for liquid and 0 for solid)
 extern double HeatInertia(const double T, const double S);              //Coefficient for the mass term in the temperature equation

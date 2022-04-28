@@ -15,6 +15,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     phase(&fespace_H1), 
     heat_inertia(&fespace_H1), heat_diffusivity(&fespace_H1), salt_diffusivity(&fespace_H1), 
     rvelocity(&fespace_ND), 
+    bound_salinity(&fespace_H1), 
     coeff_r(r_f), 
     coeff_zero(dim, zero_f),
     coeff_rM(coeff_r, coeff_r),

@@ -8,6 +8,7 @@ void r_inv_hat_f(const Vector &x, Vector &f);
 void rot_f(const Vector &x, DenseMatrix &f);
 
 //Physical properties (in T,S)
+double RenormalizationFlux(const double S);
 double FusionPoint(const double S);
 double Phase(const double T, const double S);
 double HeatInertia(const double T, const double S);
@@ -155,6 +156,11 @@ void r_inv_hat_f(const Vector &x, Vector &f){
 void rot_f(const Vector &x, DenseMatrix &f){
     f(0,0) = 0.;  f(0,1) = 1.;
     f(1,0) = -1.; f(1,1) = 0.;
+}
+
+//Renormalization flux for excess of salinity
+double RenormalizationFlux(const double S){
+    return RenormalizationScale*0.5*((InitialSalinity-S)*(1+tanh(5*EpsilonInv*(InitialSalinity-S))) - (S-InflowSalinity)*(1+tanh(5*EpsilonInv*(S-InflowSalinity))));
 }
 
 //Fusion temperature at a given salinity
