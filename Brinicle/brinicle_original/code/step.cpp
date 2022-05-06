@@ -85,7 +85,7 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     for (int ii = 0; ii < phase.Size(); ii++){
         heat_inertia(ii) = HeatInertia(temperature(ii), salinity(ii));
         heat_diffusivity(ii) = HeatDiffusivity(temperature(ii), salinity(ii));
-        salt_diffusivity(ii) = SaltDiffusivity(temperature(ii), salinity(ii));;
+        salt_diffusivity(ii) = SaltDiffusivity(temperature(ii), salinity(ii));
 
         phase(ii) = Phase(temperature(ii), salinity(ii));
         temperature(ii) = temperature(ii) - FusionPoint(salinity(ii));

@@ -151,6 +151,8 @@ double initial_salinity_f(const Vector &x){
 
     if (NucleationRegion)
         return NucleationSalinity;
+    else if (x(0) < RIn && x(1) > ZMax - NucleationHeight)
+        return InflowSalinity;
     else
         return InitialSalinity;
 }
