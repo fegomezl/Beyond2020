@@ -109,6 +109,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     M0_solver.SetAbsTol(config.abstol_conduction);
     M0_solver.SetMaxIter(config.iter_conduction);
     M0_solver.SetPrintLevel(0);
+    M0_solver.SetPreconditioner(M0_prec);
 
     M1_prec.SetPrintLevel(0);
     M1_prec.SetOperator(*M1);
@@ -117,7 +118,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     M1_solver.SetMaxIter(config.iter_conduction);
     M1_solver.SetPrintLevel(0);
     M1_solver.SetPreconditioner(M1_prec);
-    M1_solver.SetOperator(*M1);                                                                                     
+    M1_solver.SetOperator(*M1); 
 
     //Configure T solver 
     T0_prec.SetPrintLevel(0);
