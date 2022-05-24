@@ -142,7 +142,9 @@ double initial_temperature_f(const Vector &x){
 
     if (NucleationRegion)
         return NucleationTemperature;
-    else
+    else if (x(0) < RIn && x(1) > ZMax - NucleationHeight){
+        return ((x(1)-ZMax+NucleationHeight)/NucleationHeight)*(InflowTemperature-InitialTemperature) + InitialTemperature;
+    } else
         return InitialTemperature;
 }
 
@@ -151,8 +153,8 @@ double initial_salinity_f(const Vector &x){
 
     if (NucleationRegion)
         return NucleationSalinity;
-    else if (x(0) < RIn && x(1) > ZMax - NucleationHeight)
-        return InflowSalinity;
-    else
+    else if (x(0) < RIn && x(1) > ZMax - NucleationHeight){
+        return ((x(1)-ZMax+NucleationHeight)/NucleationHeight)*(InflowSalinity-InitialSalinity) + InitialSalinity;
+    } else
         return InitialSalinity;
 }
