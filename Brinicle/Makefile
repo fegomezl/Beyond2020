@@ -1,4 +1,4 @@
-include ../../local_config.mk
+include ../local_config.mk
 
 #Mesh parmeters
 SCRIPT=$(shell sed -n 2p settings/parameters.txt | cut -d '#' -f 1)
@@ -56,7 +56,7 @@ main: main.x
 	@$(RUN)$< --mesh results/mesh.msh \
 			  -Rmin $(RMIN) -Rmax $(RMAX) -Zmin $(ZMIN) -Zmax $(ZMAX) \
 			  -Li $(LI) -Lo $(LO) \
-			  -dt $(DT) -t_f $(T_FI) -v_s $(VIS) \
+			  -dt $(DT) -t_f $(T_FI) -v_s $(VIS) -rc $(RC)\
 			  -ref $(REF) -o $(ORDER) \
 			  -abstol_c $(ABST_C) -reltol_c $(RELT_C) -iter_c $(ITER_C) \
 			  -abstol_s $(ABST_S) -reltol_s $(RELT_S) -eps $(EPSILON) \
