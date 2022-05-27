@@ -96,7 +96,7 @@ results/mesh.msh: settings/parameters.txt
 	@echo -e 'Reading parameters ... \c'
 	@bash settings/configure_script.sh
 	@echo -e 'Generating mesh ... \c'
-	@gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
+	@$(GMSH_INSTALL)gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
 results/analysis.pdf: settings/analysis.gp

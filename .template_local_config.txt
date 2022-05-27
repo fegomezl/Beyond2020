@@ -6,6 +6,9 @@ MFEM_INSTALL_DIR =
 #PETSC_INC = -I$(MFEM_INSTALL_DIR)/../../petsc/include
 #SUNDIALS_INC = -I$(MFEM_INSTALL_DIR)/../../sundials/install/include
 
+#If gmsh installed from source, else leave empty
+GMSH_INSTALL = #/opt/gmsh-4.10.3-Linux64/bin/
+
 SHARE_DIR = NULL
 PARAVIEW_PATH = 
 PROCCESORS = 4
