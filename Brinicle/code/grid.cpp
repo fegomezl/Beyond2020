@@ -15,36 +15,24 @@ void Artic_sea::make_grid(const char *mesh_file){
         serial_refinements = min(config.refinements, (int)floor(log(min_elements/elements)/(dim*log(2.))));
     else
         serial_refinements = 0;
-    
-    if (!config.restart){
-        //Refine mesh (serial)
-        for (int ii = 0; ii < serial_refinements; ii++)
-            mesh->UniformRefinement();
-    }
+
+    //Refine mesh (serial)
+    for (int ii = 0; ii < serial_refinements; ii++)
+        mesh->UniformRefinement();
     
     //Make mesh (parallel), delete the serial
     pmesh = new ParMesh(MPI_COMM_WORLD, *mesh);
     delete mesh;
     
-    if (!config.restart){
-        //Refine mesh (parallel)
-        for (int ii = 0; ii < config.refinements - serial_refinements; ii++)
-            pmesh->UniformRefinement();
-    } else {
-        //Read the input mesh
-        std::ifstream in;
-        std::ostringstream oss;
-        oss << std::setw(10) << std::setfill('0') << config.pid;
-        std::string n_mesh = "results/restart/pmesh_"+oss.str()+".msh";
-
-        in.open(n_mesh.c_str(),std::ios::in);
-        pmesh->Load(in,1,0); 
-        in.close();
-    }
+    //Refine mesh (parallel)
+    for (int ii = 0; ii < config.refinements - serial_refinements; ii++)
+        pmesh->UniformRefinement();
 
     //Calculate minimum size of elements
     double null;
     pmesh->GetCharacteristics(h_min, null, null, null);
+    if (config.master)
+        cout << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n"; 
 
     //Create the FEM spaces associated with the mesh
     fec_H1 = new H1_FECollection(config.order, dim);

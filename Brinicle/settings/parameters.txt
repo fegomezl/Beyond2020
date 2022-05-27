@@ -1,22 +1,25 @@
-Mesh Parameters
-settings/square_6.geo #Mesh_script
-0       #Rmin
-10      #Rmax
-0       #Zmin
-40      #Zmax
-2       #Inflow_window_size
-5       #Outflow_window_size
-10      #Rcells
-10      #Zcells
+--------------------------
+Parameters of the program
+--------------------------
+Units:
+mm      (milimeters)
+s       (seconds)
+°C      (celcius)
+%wt     (weight_percentage)
 
-Simulation parameters
-0.0001  #Dt
-0.1       #Final_time
-10      #Visualization_steps
-0       #Rescale_stream?
+Mesh Parameters:
+settings/sea.geo    #Mesh_script
+10                  #R(mm)
+40                  #Z(mm)
+2                   #Inflow(mm)
 
-FE parameters
-3          #Refinements
+Simulation parameters:
+0.01       #Dt(s)
+10         #Final_time(s)
+10         #Visualization_steps
+
+FE parameters:
+4          #Refinements
 1          #Order
 0          #abstol(Conduction)
 0.00000001 #reltol(Conduction)
@@ -25,17 +28,13 @@ FE parameters
 0.00001    #reltol(SUNDIALS)
 9          #nEpsilon
 
-Brinicle conditions
-2500    #Velocity_inflow
--2      #Initial_temperature
--10     #Inflow_temperature
-3.5     #Initial_salinity
-20      #Inflow_salinity
-1       #Nucleation_length
-4       #Nucleation_height
--10     #Nucleation_temperature
-3.5     #Nucleation_salinity
-
-Restart conditions
-0          #Restart?
-0          #Initial_time
+Brinicle conditions:
+300        #FlowRate(mm^3/s)
+1          #Nucleation_length(mm)
+4          #Nucleation_height(mm)
+-2         #Initial_temperature(°C)
+-10        #Inflow_temperature(°C)
+-10        #Nucleation_temperature(°C)
+3.5        #Initial_salinity(%wt)
+20         #Inflow_salinity(%wt)
+3.5        #Nucleation_salinity(%wt)

@@ -5,14 +5,13 @@ double boundary_vorticity_f(const Vector &x);
 
 double boundary_stream_f(const Vector &x);
 double boundary_stream_in_f(const Vector &x);
-double boundary_stream_out_f(const Vector &x);
 
 Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1):
     config(config),
     fespace_H1(fespace_H1),
     block_offsets_H1(block_offsets_H1),
     ess_bdr_0(attributes), ess_bdr_1(attributes),
-    ess_bdr_in(attributes), ess_bdr_out(attributes),
+    ess_bdr_in(attributes),
     ess_bdr_closed_down(attributes), ess_bdr_closed_up(attributes),
     vorticity_boundary(&fespace_H1), stream_boundary(&fespace_H1), 
     velocity(&fespace_ND), rvelocity(&fespace_ND),
@@ -28,26 +27,26 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     coeff_rot(dim, rot_f), 
     coeff_vorticity(boundary_vorticity_f), 
     coeff_stream(boundary_stream_f), 
-    coeff_stream_in(boundary_stream_in_f), coeff_stream_out(boundary_stream_out_f),
+    coeff_stream_in(boundary_stream_in_f),
     coeff_stream_closed_down(0.), coeff_stream_closed_up(InflowFlux),
     gradient(&fespace_H1, &fespace_ND)
 { 
     /****
      * Define essential boundary conditions
      * 
-     *           4               1
+     *           4              1
      *         /---|---------------------------\
      *         |                               |
      *         |                               |
-     *         |                               | 3
+     *         |                               | 
      *         |                               |
-     *       2 |                               |
-     *         |                               -
+     *       2 |                               | 3
      *         |                               |
-     *         |                               | 5
+     *         |                               |
+     *         |                               | 
      *         |                               |
      *         \-------------------------------/
-     *                            0
+     *                          0
      *
      ****/
     
@@ -55,22 +54,19 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     ess_bdr_0 = 0;
     ess_bdr_0[0] = 0; ess_bdr_0[1] = 0;
     ess_bdr_0[2] = 1; ess_bdr_0[3] = 0;
-    ess_bdr_0[4] = 0; ess_bdr_0[5] = 0;
+    ess_bdr_0[4] = 0; 
     fespace_H1.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
   
     //Stream boundary conditions
     ess_bdr_1 = 0;
     ess_bdr_1[0] = 0; ess_bdr_1[1] = 1;
     ess_bdr_1[2] = 1; ess_bdr_1[3] = 1;
-    ess_bdr_1[4] = 1; ess_bdr_1[5] = 1;
+    ess_bdr_1[4] = 1; 
     fespace_H1.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
 
     ess_bdr_in = 0;
     ess_bdr_in[4] = 1;
-    
-    ess_bdr_out = 0;
-    //ess_bdr_out[5] = 1;
-    
+     
     ess_bdr_closed_down = 0;
     ess_bdr_closed_down[0] = 1;
     ess_bdr_closed_down[2] = 1;
@@ -86,7 +82,6 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
 
     stream_boundary.ProjectCoefficient(coeff_stream);
     stream_boundary.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_in);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_out, ess_bdr_out);
     stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_closed_down);
     stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
 
@@ -128,24 +123,15 @@ double boundary_vorticity_f(const Vector &x){
 
 //Boundary condition for stream
 double boundary_stream_f(const Vector &x){
-    double x_rel = x(0)/RIn;
-    double y_rel = x(1)/ZOut;
-    double in = 1., out = 1.;
-    if (x(0) < RIn)
-        in = pow(x_rel, 2)*(2-pow(x_rel, 2));
-    if (x(1) < ZOut)
-        out = pow(y_rel, 2)*(3-2*y_rel);
-    return InflowFlux*in*out;
+    double x_rel = x(0)/RInflow;
+    double y_rel = x(1)/Z;
+    if (x(0) < RInflow)
+        return InflowFlux*y_rel*pow(x_rel, 2)*(2-pow(x_rel, 2));
+    return InflowFlux*y_rel;
 }
 
 //Boundary condition for stream at inlet
 double boundary_stream_in_f(const Vector &x){
-    double x_rel = x(0)/RIn;
+    double x_rel = x(0)/RInflow;
     return InflowFlux*pow(x_rel, 2)*(2-pow(x_rel, 2));
-}
-
-//Boundary condition for stream at outlet
-double boundary_stream_out_f(const Vector &x){
-    double y_rel = x(1)/ZOut;
-    return InflowFlux*pow(y_rel, 2)*(3-2*y_rel);
 }

@@ -7,7 +7,7 @@ double initial_salinity_f(const Vector &x);
 //Initialization of the solver
 Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
     config(config),
-    TimeDependentOperator(2*fespace_H1.GetTrueVSize(), config.t_init),
+    TimeDependentOperator(2*fespace_H1.GetTrueVSize(), 0.),
     fespace_H1(fespace_H1),
     block_offsets_H1(block_offsets_H1),
     ess_bdr_0(attributes), ess_bdr_1(attributes),
@@ -37,19 +37,19 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     /****
      * Define essential boundary conditions
      * 
-     *           4               1
+     *           4              1
      *         /---|---------------------------\
      *         |                               |
      *         |                               |
-     *         |                               | 3
+     *         |                               | 
      *         |                               |
-     *       2 |                               |
-     *         |                               -
+     *       2 |                               | 3
      *         |                               |
-     *         |                               | 5
+     *         |                               |
+     *         |                               | 
      *         |                               |
      *         \-------------------------------/
-     *                            0
+     *                          0
      *
      ****/
 
@@ -57,30 +57,28 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     ess_bdr_0 = 0;
     ess_bdr_0 [0] = 0;   ess_bdr_0 [1] = 0;   
     ess_bdr_0 [2] = 0;   ess_bdr_0 [3] = 0;
-    ess_bdr_0 [4] = 1;   ess_bdr_0 [5] = 0;
+    ess_bdr_0 [4] = 1;   
     fespace_H1.GetEssentialTrueDofs(ess_bdr_0, ess_tdof_0);
 
     //Salinity boundary conditions
     ess_bdr_1 = 0;
     ess_bdr_1 [0] = 0;     ess_bdr_1 [1] = 0;
     ess_bdr_1 [2] = 0;     ess_bdr_1 [3] = 0;
-    ess_bdr_1 [4] = 1;     ess_bdr_1 [5] = 0;
+    ess_bdr_1 [4] = 1;     
     fespace_H1.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
 
-    if (!config.restart){
-        //Apply initial conditions
-        FunctionCoefficient coeff_initial_temperature(initial_temperature_f);
-        ConstantCoefficient coeff_boundary_temperature(InflowTemperature);
-        temperature.ProjectCoefficient(coeff_initial_temperature);
-        temperature.ProjectBdrCoefficient(coeff_boundary_temperature, ess_bdr_0);
-        temperature.GetTrueDofs(X.GetBlock(0));
-        
-        FunctionCoefficient coeff_initial_salinity(initial_salinity_f);
-        ConstantCoefficient coeff_boundary_salinity(InflowSalinity);
-        salinity.ProjectCoefficient(coeff_initial_salinity);
-        salinity.ProjectBdrCoefficient(coeff_boundary_salinity, ess_bdr_1);
-        salinity.GetTrueDofs(X.GetBlock(1));
-    }
+    //Apply initial conditions
+    FunctionCoefficient coeff_initial_temperature(initial_temperature_f);
+    ConstantCoefficient coeff_boundary_temperature(InflowTemperature);
+    temperature.ProjectCoefficient(coeff_initial_temperature);
+    temperature.ProjectBdrCoefficient(coeff_boundary_temperature, ess_bdr_0);
+    temperature.GetTrueDofs(X.GetBlock(0));
+    
+    FunctionCoefficient coeff_initial_salinity(initial_salinity_f);
+    ConstantCoefficient coeff_boundary_salinity(InflowSalinity);
+    salinity.ProjectCoefficient(coeff_initial_salinity);
+    salinity.ProjectBdrCoefficient(coeff_boundary_salinity, ess_bdr_1);
+    salinity.GetTrueDofs(X.GetBlock(1));
 
     //Create mass matrix                                   
     ParBilinearForm m1(&fespace_H1);                 
@@ -138,23 +136,23 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 
 //Initial conditions
 double initial_temperature_f(const Vector &x){
-    bool NucleationRegion = (x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
+    bool NucleationRegion = (x(0) > RInflow && x(1) > Z - NucleationHeight) || pow(x(0)-(RInflow+ NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
 
     if (NucleationRegion)
         return NucleationTemperature;
-    else if (x(0) < RIn && x(1) > ZMax - NucleationHeight){
-        return ((x(1)-ZMax+NucleationHeight)/NucleationHeight)*(InflowTemperature-InitialTemperature) + InitialTemperature;
+    else if (x(0) < RInflow && x(1) > Z - NucleationHeight){
+        return ((x(1)-Z+NucleationHeight)/NucleationHeight)*(InflowTemperature-InitialTemperature) + InitialTemperature;
     } else
         return InitialTemperature;
 }
 
 double initial_salinity_f(const Vector &x){
-    bool NucleationRegion = (x(0) > RIn && x(1) > ZMax - NucleationHeight) || pow(x(0)-(RIn+ NucleationLength), 2) + pow(x(1)-(ZMax - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle      
+    bool NucleationRegion = (x(0) > RInflow && x(1) > Z - NucleationHeight) || pow(x(0)-(RInflow+ NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
 
     if (NucleationRegion)
         return NucleationSalinity;
-    else if (x(0) < RIn && x(1) > ZMax - NucleationHeight){
-        return ((x(1)-ZMax+NucleationHeight)/NucleationHeight)*(InflowSalinity-InitialSalinity) + InitialSalinity;
+    else if (x(0) < RInflow && x(1) > Z - NucleationHeight){
+        return ((x(1)-Z+NucleationHeight)/NucleationHeight)*(InflowSalinity-InitialSalinity) + InitialSalinity;
     } else
         return InitialSalinity;
 }

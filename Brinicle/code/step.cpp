@@ -33,44 +33,25 @@ void Artic_sea::time_step(){
         
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++)
-            (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
-    
-        //Adimentionalize stream function
-        if (config.rescale){
-            double stream_local_max = stream->Max(), stream_max;
-            double stream_local_min = stream->Min(), stream_min;
-            MPI_Allreduce(&stream_local_max, &stream_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-            MPI_Allreduce(&stream_local_min, &stream_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-            for (int ii = 0; ii < stream->Size(); ii++)
-                    (*stream)(ii) = ((*stream)(ii)-stream_min)/(stream_max-stream_min);
-        }
+            (*phase)(ii) = (*temperature)(ii) - FusionPoint((*salinity)(ii));
 
         //Print fields
         paraview_out->SetCycle(vis_print);
-        paraview_out->SetTime(t);
+        paraview_out->SetTime(t*t_ref);
         paraview_out->Save();
     }
 
     //Print the system state
-    double percentage = 100*(t-config.t_init)/(config.t_final-config.t_init);
+    double percentage = 100*t/config.t_final;
     string progress = to_string((int)percentage)+"%";
     if (config.master){
         cout.precision(4);
         cout << left << setw(12)
              << iteration << setw(12)
-             << dt << setw(12)
-             << t  << setw(12)
+             << dt*t_ref << setw(12)
+             << t*t_ref  << setw(12)
              << progress << "\r";
         cout.flush();
-
-        std::ofstream out;
-        out.open("results/progress.txt", std::ios::app);
-        out << left << setw(12)
-            << iteration << setw(12)
-            << dt << setw(12)
-            << t  << setw(12)
-            << progress << "\n";
-        out.close();
     }
 }
 
@@ -83,7 +64,6 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
 
     //Associate the values of each auxiliar function
     for (int ii = 0; ii < phase.Size(); ii++){
-        heat_inertia(ii) = HeatInertia(temperature(ii), salinity(ii));
         heat_diffusivity(ii) = HeatDiffusivity(temperature(ii), salinity(ii));
         salt_diffusivity(ii) = SaltDiffusivity(temperature(ii), salinity(ii));
 
@@ -92,7 +72,6 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     }
 
     //Set the associated coefficients
-    GridFunctionCoefficient coeff_I(&heat_inertia);
     GridFunctionCoefficient coeff_D0(&heat_diffusivity);
     GridFunctionCoefficient coeff_D1(&salt_diffusivity);
 
@@ -108,7 +87,8 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     PowerCoefficient coeff_inv_dT_2(coeff_dT_2e, -1.);
     ProductCoefficient DeltaT(coeff_dPdT, coeff_inv_dT_2);
 
-    SumCoefficient coeff_M(coeff_I, DeltaT);
+    ProductCoefficient coeff_latent(constants.Stefan/T_ref, DeltaT);
+    SumCoefficient coeff_M(1., coeff_latent);
 
     //Construct final coefficients
     coeff_rM.SetBCoef(coeff_M);
@@ -177,8 +157,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     ScalarVectorProductCoefficient coeff_neg_impermeability_r_inv_hat(coeff_neg_impermeability, coeff_r_inv_hat);
 
     GridFunctionCoefficient coeff_density_dr(&density_dr);
-    ConstantCoefficient coeff_buoyancy_constant(constants.BuoyancyCoefficient);
-    ProductCoefficient coeff_buoyancy(coeff_buoyancy_constant, coeff_density_dr);
+    ProductCoefficient coeff_buoyancy(constants.BuoyancyCoefficient*pow(L_ref, 2)/V_ref, coeff_density_dr);
     ProductCoefficient coeff_r_buoyancy(coeff_r, coeff_buoyancy);
     
     //Apply boundary conditions
@@ -187,7 +166,6 @@ void Flow_Operator::SetParameters(const BlockVector &X){
 
     stream_boundary.ProjectCoefficient(coeff_stream);
     stream_boundary.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_in);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_out, ess_bdr_out);
     stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_closed_down);
     stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
 

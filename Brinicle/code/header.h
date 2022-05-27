@@ -17,11 +17,13 @@ struct Constants{
      * Density of liquid phase (rho_l): 1028.3 kg/m^3
      * Specific heat capacity of liquid phase (c_l): 3.77 kJ/(kg*°C)
      * Thermal conductivity of liquid phase (k_l): 0.5433 W/(m*°C)
+     * Thermal diffusivity of liquid phase (a_l): 0.140 mm^2/s
      * Salt diffusivity of liquid phase (d_l): 0.001 mm^2/s
      *
      * Density of solid phase (rho_s): 934.4 kg/m^3
      * Specific heat capacity of solid phase (c_s): 2.12 kJ/(kg*°C)
      * Thermal conductivity of solid phase (k_s): 2.2467 W/(m*°C)
+     * Thermal diffusivity of solid phase (a_s): 1.13 mm^2/s
      * Salt diffusivity of solid phase (d_s): 0 mm^2/s
      *
      * Kinematic viscosity (nu): 6.8 mm^2/s
@@ -39,26 +41,24 @@ struct Constants{
     double FusionPoint_b = 5.81E-4;
 
     /****
-     * Coefficients for the mass term of the temperature
-     * equation given by specific heat capacity over 
-     * latent heat (c/L) in 1/°C
+     * Stefan number, missing the temperature 
+     * term (latent heat over mean specific 
+     * heat capacity)(L((c_l+c_s)/2)) in °C
      ****/ 
-    double TemperatureMass_l = 1.17E-2;      //Liquid;
-    double TemperatureMass_s = 6.57E-3;      //Solid;
+    double Stefan = 1.09E+2;
 
     /****
      * Coefficients for the diffusion term of the temperature 
-     * equation given by thermal conductivity over volumetric 
-     * latent heat (k/(rho*L)) in  mm^2/min
+     * equation (a) in  mm^2/s
      ****/ 
-    double TemperatureDiffusion_l = 9.82E-2;      //Liquid;
-    double TemperatureDiffusion_s = 4.47E-1;      //Solid;
+    double TemperatureDiffusion_l = 1.400E-1;      //Liquid;
+    double TemperatureDiffusion_s = 1.13E+0;      //Solid;
 
     /****
      * Coefficients for the diffusion term of the salinity
-     * equation given by salt diffusivity (d) in mm^2/min
+     * equation (d) in mm^2/s
      ****/ 
-    double SalinityDiffusion_l = 5.00E+0;       //Liquid
+    double SalinityDiffusion_l = 1.00E-1;       //Liquid
     double SalinityDiffusion_s = 1.00E-7;       //Solid
 
     /****
@@ -81,9 +81,11 @@ struct Constants{
 
     /****
      * Coefficient for the buoyancy term(k) 
-     * given by g/nu in 1/(mm*min)
+     * given by g/nu in 1/(mm*s)
      ****/ 
-    double BuoyancyCoefficient = 8.647E+4;
+    double Gravity = 9800;
+    double Viscosity = 6.8;
+    double BuoyancyCoefficient = 1.44E+3;
 };
 
 //Main variables for the program
@@ -110,10 +112,6 @@ struct Config{
     int iter_conduction;
     double reltol_sundials;
     double abstol_sundials;
-
-    //Re-Initialization variables
-    bool restart;
-    double t_init;
 };
 
 
@@ -210,7 +208,7 @@ class Flow_Operator{
         Array<int> block_offsets_H1;
         Array<int> ess_tdof_0, ess_tdof_1;
         Array<int> ess_bdr_0, ess_bdr_1;
-        Array<int> ess_bdr_in, ess_bdr_out;
+        Array<int> ess_bdr_in;
         Array<int> ess_bdr_closed_down, ess_bdr_closed_up;
 
         //Auxiliar grid functions
@@ -245,7 +243,6 @@ class Flow_Operator{
         FunctionCoefficient coeff_vorticity;
         FunctionCoefficient coeff_stream;
         FunctionCoefficient coeff_stream_in;
-        FunctionCoefficient coeff_stream_out;
         ConstantCoefficient coeff_stream_closed_down;
         ConstantCoefficient coeff_stream_closed_up;
 
@@ -335,24 +332,32 @@ class Artic_sea{
 //Constants associated with physical properties
 const static Constants constants;
 
+//Dimentional constants
+extern double L_ref;
+extern double V_ref;
+extern double t_ref;
+extern double T0_ref;
+extern double T_ref;
+extern double S0_ref;
+extern double S_ref;
+
 //Simulation parameters
-extern double RMin, RMax, ZMin, ZMax;       //Size of the domain
-extern double RIn, ZOut;                    //Size of the inflow and outflow
+extern double R, Z;                         //Size of the domain
+extern double RInflow;                      //Size of the inlet
 extern double Epsilon, EpsilonInv;          //Size of the indetermination window in heaviside functions 
                                             //(10̣^(-n) and 10^(n) respectively)
 
 //Brinicle conditions
-extern double InflowVelocity;           //Velocity of the inflow
-extern double InitialTemperature;       //Initial temperature of the domain
-extern double InflowTemperature;        //Temperature of the inflow
-extern double InitialSalinity;          //Initial salinity of the domain
-extern double InflowSalinity;           //Salinity of the inflow
+extern double FluxRate;                 //Flux of inflow water 
+extern double InflowFlux;               //Flux at the inflow boundary divided by 2PI
 extern double NucleationLength;         //Lenght of the nucleation point
 extern double NucleationHeight;         //Height of the nucleation point
+extern double InitialTemperature;       //Initial temperature of the domain
+extern double InflowTemperature;        //Temperature of the inflow
 extern double NucleationTemperature;    //Temperature of the nucleation point
+extern double InitialSalinity;          //Initial salinity of the domain
+extern double InflowSalinity;           //Salinity of the inflow
 extern double NucleationSalinity;       //Salinity of the nucleation point
-                                            
-extern double InflowFlux;                        //Flux at the inflow boundary divided by 2PI
 
 //Usefull position functions
 extern double r_f(const Vector &x);                     //Function for r
@@ -365,7 +370,6 @@ extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
 //Physical properties (in T,S)
 extern double FusionPoint(const double S);                              //Fusion temperature at a given salinity
 extern double Phase(const double T, const double S);                    //Phase indicator (1 for liquid and 0 for solid)
-extern double HeatInertia(const double T, const double S);              //Coefficient for the mass term in the temperature equation
 extern double HeatDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the temperature equation
 extern double SaltDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the salinity equation
 extern double Impermeability(const double T, const double S);           //Inverse of the brinkman penalization permeability

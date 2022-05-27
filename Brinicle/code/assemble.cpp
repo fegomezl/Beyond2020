@@ -19,30 +19,9 @@ double Density(const double T, const double S);
 //Initialize the solvers and the variables of the program
 void Artic_sea::assemble_system(){
 
-    if (!config.restart){
-        //Define the temperature and salinity fields
-        temperature = new ParGridFunction(fespace_H1);
-        salinity = new ParGridFunction(fespace_H1);
-    } else {
-        //Read input temperature and salinity fields
-        std::ifstream in;
-        std::ostringstream oss;
-        oss << std::setw(10) << std::setfill('0') << config.pid;
-        std::string n_temperature = "results/restart/temperature_"+oss.str()+".gf";
-        std::string n_salinity = "results/restart/salinity_"+oss.str()+".gf";
-
-        in.open(n_temperature.c_str(),std::ios::in);
-        temperature = new ParGridFunction(pmesh, in);
-        in.close();
-        temperature->GetTrueDofs(X.GetBlock(0));
-
-        in.open(n_salinity.c_str(),std::ios::in);
-        salinity = new ParGridFunction(pmesh, in);
-        in.close();
-        salinity->GetTrueDofs(X.GetBlock(1));
-    }
-
-    //Define other fields
+    //Define fields
+    temperature = new ParGridFunction(fespace_H1);
+    salinity = new ParGridFunction(fespace_H1);
     phase = new ParGridFunction(fespace_H1);
     vorticity = new ParGridFunction(fespace_H1);
     stream = new ParGridFunction(fespace_H1);
@@ -70,17 +49,7 @@ void Artic_sea::assemble_system(){
     
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++)
-        (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
-
-    //Adimentionalize stream function
-    if (config.rescale){
-        double stream_local_max = stream->Max(), stream_max;
-        double stream_local_min = stream->Min(), stream_min;
-        MPI_Allreduce(&stream_local_max, &stream_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(&stream_local_min, &stream_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-        for (int ii = 0; ii < stream->Size(); ii++)
-                (*stream)(ii) = ((*stream)(ii)-stream_min)/(stream_max-stream_min);
-    }
+        (*phase)(ii) = (*temperature)(ii) - FusionPoint((*salinity)(ii));
 
     //Set the ODE solver type
     arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT);
@@ -103,7 +72,7 @@ void Artic_sea::assemble_system(){
     paraview_out->RegisterField("Velocity", velocity);
     paraview_out->RegisterField("rVelocity", rvelocity);
     paraview_out->SetCycle(vis_print);
-    paraview_out->SetTime(t);
+    paraview_out->SetTime(t*t_ref);
     paraview_out->Save();
 
     //Start program check
@@ -112,19 +81,11 @@ void Artic_sea::assemble_system(){
              << "--------------------------------------------------\n"
              << left << setw(12)
              << "Step" << setw(12)
-             << "Dt" << setw(12)
-             << "Time" << setw(12)
+             << "Dt(s)" << setw(12)
+             << "Time(s)" << setw(12)
              << "Progress"
              << left << setw(12)
              << "\n--------------------------------------------------\n";
-
-        ofstream out;
-        out.open("results/progress.txt", std::ios::trunc);
-        out << left << setw(12) 
-            << "Step" << setw(12)
-            << "Dt" << setw(12)
-            << "Time" << setw(12)
-            << "Progress" << "\n";
     }
 }
 
@@ -159,7 +120,8 @@ void rot_f(const Vector &x, DenseMatrix &f){
 
 //Fusion temperature at a given salinity
 double FusionPoint(const double S){
-    return -(constants.FusionPoint_a*S + constants.FusionPoint_b*pow(S, 3));
+    double S_ = S_ref*S + S0_ref;
+    return (-(constants.FusionPoint_a*S_ + constants.FusionPoint_b*pow(S_, 3)) - T0_ref)/T_ref;
 }
 
 //Phase indicator (1 for liquid and 0 for solid)
@@ -167,19 +129,14 @@ double Phase(const double T, const double S){
     return 0.5*(1+tanh(5*EpsilonInv*(T-FusionPoint(S))));
 }
 
-//Coefficient for the mass term in the temperature equation
-double HeatInertia(const double T, const double S){
-    return constants.TemperatureMass_s + (constants.TemperatureMass_l-constants.TemperatureMass_l)*Phase(T, S);
-}
-
 //Coefficient for the diffusion term in the temperature equation
 double HeatDiffusivity(const double T, const double S){ 
-    return constants.TemperatureDiffusion_s + (constants.TemperatureDiffusion_l-constants.TemperatureDiffusion_s)*Phase(T, S);
+    return (constants.TemperatureDiffusion_s + (constants.TemperatureDiffusion_l-constants.TemperatureDiffusion_s)*Phase(T, S))/(V_ref*L_ref);
 }
 
 //Coefficient for the diffusion term in the salinity equation
 double SaltDiffusivity(const double T, const double S){
-    return constants.SalinityDiffusion_s + (constants.SalinityDiffusion_l-constants.SalinityDiffusion_s)*Phase(T, S);
+    return (constants.SalinityDiffusion_s + (constants.SalinityDiffusion_l-constants.SalinityDiffusion_s)*Phase(T, S))/(V_ref*L_ref);
 }
 
 //Inverse of the brinkman penalization permeability
@@ -189,15 +146,17 @@ double Impermeability(const double T, const double S){
 
 //Relative density of the fluid
 double Density(const double T, const double S){
+    double T_ = T_ref*T+T0_ref;
+    double S_ = S_ref*S+S0_ref;
     return Phase(T, S)*(
           (constants.Density_a0  + 
-           constants.Density_a1*(T)  + 
-           constants.Density_a2*pow(T, 2)      + 
-           constants.Density_a3*pow(T, 3)      +
-           constants.Density_a4*pow(T, 4))*(S) + 
+           constants.Density_a1*(T_)  + 
+           constants.Density_a2*pow(T_, 2)      + 
+           constants.Density_a3*pow(T_, 3)      +
+           constants.Density_a4*pow(T_, 4))*(S_) + 
           (constants.Density_b0  + 
-           constants.Density_b1*(T)  +
-           constants.Density_b2*pow(T, 2))*pow(abs(S), 1.5)  +
-          (constants.Density_c0)*pow(S, 2)
+           constants.Density_b1*(T_)  +
+           constants.Density_b2*pow(T_, 2))*pow(abs(S_), 1.5)  +
+          (constants.Density_c0)*pow(S_, 2)
           );
 }

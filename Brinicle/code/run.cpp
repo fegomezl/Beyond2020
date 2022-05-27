@@ -10,7 +10,9 @@ Config::Config(int pid, int nproc):
 //Initialization of the program
 Artic_sea::Artic_sea(Config config):
     config(config),
-    t(config.t_init), dt(config.dt_init), last(false),
+    t(0.),
+    dt(config.dt_init),
+    last(false),
     vis_steps(config.vis_steps_max), vis_print(0),
     pmesh(NULL), 
     fec_H1(NULL), fec_ND(NULL), 
