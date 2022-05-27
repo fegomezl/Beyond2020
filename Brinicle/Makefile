@@ -88,8 +88,6 @@ main.x: $(DEPENDENCIES)
 	@echo -e 'Done!\n'
 
 .objects/%.o: code/%.cpp
-	@echo $()
-	@echo $(FLAGS)
 	@echo -e 'Building' $@ '... \c'
 	$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
 	@echo -e 'Done!\n'
