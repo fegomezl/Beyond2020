@@ -89,7 +89,7 @@ main.x: $(DEPENDENCIES)
 
 .objects/%.o: code/%.cpp
 	@echo -e 'Building' $@ '... \c'
-	$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
+	@$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
 	@echo -e 'Done!\n'
 
 results/mesh.msh: settings/parameters.txt
