@@ -43,8 +43,7 @@ cd ${INSTALL_DIR}/petsc_src
 
 make PETSC_DIR=${INSTALL_DIR}/petsc_src PETSC_ARCH=arch-linux-c-opt all
 make PETSC_DIR=${INSTALL_DIR}/petsc_src PETSC_ARCH=arch-linux-c-opt install
-make PETSC_DIR=${INSTALL_DIR}/petsc PETSC_ARCH="" check
-make SLEPC_DIR=${INSTALL_DIR}/petsc_src/arch-linux-c-opt/externalpackages/git.slepc PETSC_DIR=${INSTALL_DIR}/petsc
+make SLEPC_DIR=${INSTALL_DIR}/petsc PETSC_DIR=${INSTALL_DIR}/petsc PETSC_ARCH="" check
 
 #If you want the the system to use the MPI executable and/or the installed librarys as default add them to the path
 #export PATH=${INSTALL_DIR}/petsc/bin/:$PATH
@@ -59,7 +58,7 @@ mkdir build
 cd ${SUNDIALS_DIR}/build
 cmake -DCMAKE_INSTALL_PREFIX=${SUNDIALS_DIR}/install -DEXAMPLES_INSTALL_PATH=${SUNDIALS_DIR}/install/examples -DENABLE_MPI:BOOL=ON -DENABLE_PETSC:BOOL=ON -DENABLE_HYPRE:BOOL=ON -DHYPRE_INCLUDE_DIR=${PETSC_DIR}/include -DHYPRE_LIBRARY_DIR=${PETSC_DIR}/lib DLAPACK_LIBRARIES=${PETSC_DIR}/lib -DPETSC_ARCH= -DPETSC_DIR=${PETSC_DIR} -DSUNDIALS_INDEX_SIZE=32 ${SUNDIALS_DIR}
 
-make install -j 16
+make install -j 8
 
 #If RAM problems when executing make, add 4 or 8 afte the -j
 
@@ -77,7 +76,11 @@ cmake -DMFEM_USE_MPI:BOOL=ON -DMFEM_USE_METIS:BOOL=ON -DMFEM_ENABLE_MINIAPPS:BOO
 #In case you are using the zlib instaled with PETSC add before ${INSTALL_DIR}/mfem
 #-DZLIB_INCLUDE_DIR=${PETSC_DIR}/include -DZLIB_LIBRARIES=${PETSC_DIR}/lib/libz.a
 
-make -j 16
+make -j 8
+make examples -j 8
+make miniapps -j 8
+make tests -j 8
 make install
+make test
 
 #If RAM problems when executing make, add 4 or 8 afte the -j
