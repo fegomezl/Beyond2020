@@ -41,14 +41,10 @@ cd ${INSTALL_DIR}/petsc_src
 #If you are runing on a virtual variable/module base system add after ./configure
 # CC=$CC CXX=$CXX FC=$FC F77=$F77 F90=$F90 CPP=$CPP 
 
-make PETSC_DIR=/opt/MFEM/petsc_src PETSC_ARCH=arch-linux-c-opt install
-make PETSC_DIR=/opt/MFEM/petsc PETSC_ARCH="" check
-make SLEPC_DIR=/opt/MFEM/petsc_src/arch-linux-c-opt/externalpackages/git.slepc PETSC_DIR=/opt/MFEM/petsc
-
-
 make PETSC_DIR=${INSTALL_DIR}/petsc_src PETSC_ARCH=arch-linux-c-opt all
 make PETSC_DIR=${INSTALL_DIR}/petsc_src PETSC_ARCH=arch-linux-c-opt install
-make SLEPC_DIR=${INSTALL_DIR}/petsc PETSC_DIR=${INSTALL_DIR}/petsc PETSC_ARCH="" check
+make PETSC_DIR=${INSTALL_DIR}/petsc PETSC_ARCH="" check
+make SLEPC_DIR=${INSTALL_DIR}/petsc_src/arch-linux-c-opt/externalpackages/git.slepc PETSC_DIR=${INSTALL_DIR}/petsc
 
 #If you want the the system to use the MPI executable and/or the installed librarys as default add them to the path
 #export PATH=${INSTALL_DIR}/petsc/bin/:$PATH
