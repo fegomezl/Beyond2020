@@ -42,7 +42,7 @@ T_IN=$(shell sed -n 41p settings/parameters.txt | tr -d -c 0-9.)
 
 #Compiling parameters
 CXX = mpic++
-FLAGS = -std=c++11 -O3 $(MFEM_FLAGS)
+FLAGS = -std=c++11 -O3 $(MFEM_FLAGS) $(PETSC_INC) $(SUNDIALS_INC)
 RUN = mpirun -np $(PROCCESORS) ./
 SOURCES = $(wildcard code/*.cpp)
 DEPENDENCIES = $(SOURCES:code/%.cpp=.objects/%.o)
@@ -88,8 +88,10 @@ main.x: $(DEPENDENCIES)
 	@echo -e 'Done!\n'
 
 .objects/%.o: code/%.cpp
+	@echo $()
+	@echo $(FLAGS)
 	@echo -e 'Building' $@ '... \c'
-	@$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
+	$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
 	@echo -e 'Done!\n'
 
 results/mesh.msh: settings/parameters.txt
