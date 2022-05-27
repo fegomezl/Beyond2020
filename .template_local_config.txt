@@ -1,8 +1,14 @@
-#Computer parameters
+#For Spack instalations
 MFEM_INSTALL_DIR = 
+
+#For source instalations
+#MFEM_INSTALL_DIR = /opt/MFEM/mfem/build
+#PETSC_INC = -I/opt/MFEM/petsc/include      #$(MFEM_INSTALL_DIR)/../../petsc/include 
+#SUNDIALS_INC = -I/opt/MFEM/sundials/install/include  #$(MFEM_INSTALL_DIR)/../../sundials/install/include
+
 SHARE_DIR = NULL
 PARAVIEW_PATH = 
-PROCCESORS = 1
+PROCCESORS = 4
 
 #Add variables from MFEM
 CONFIG_MK = $(MFEM_INSTALL_DIR)/share/mfem/config.mk
