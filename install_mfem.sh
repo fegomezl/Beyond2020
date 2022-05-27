@@ -41,6 +41,11 @@ cd ${INSTALL_DIR}/petsc_src
 #If you are runing on a virtual variable/module base system add after ./configure
 # CC=$CC CXX=$CXX FC=$FC F77=$F77 F90=$F90 CPP=$CPP 
 
+make PETSC_DIR=/opt/MFEM/petsc_src PETSC_ARCH=arch-linux-c-opt install
+make PETSC_DIR=/opt/MFEM/petsc PETSC_ARCH="" check
+make SLEPC_DIR=/opt/MFEM/petsc_src/arch-linux-c-opt/externalpackages/git.slepc PETSC_DIR=/opt/MFEM/petsc
+
+
 make PETSC_DIR=${INSTALL_DIR}/petsc_src PETSC_ARCH=arch-linux-c-opt all
 make PETSC_DIR=${INSTALL_DIR}/petsc_src PETSC_ARCH=arch-linux-c-opt install
 make SLEPC_DIR=${INSTALL_DIR}/petsc PETSC_DIR=${INSTALL_DIR}/petsc PETSC_ARCH="" check
@@ -77,10 +82,6 @@ cmake -DMFEM_USE_MPI:BOOL=ON -DMFEM_USE_METIS:BOOL=ON -DMFEM_ENABLE_MINIAPPS:BOO
 #-DZLIB_INCLUDE_DIR=${PETSC_DIR}/include -DZLIB_LIBRARIES=${PETSC_DIR}/lib/libz.a
 
 make -j 16
+make install
 
 #If RAM problems when executing make, add 4 or 8 afte the -j
-
-
-
-
-
