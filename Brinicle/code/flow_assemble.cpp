@@ -60,7 +60,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
   
     //Stream boundary conditions
     ess_bdr_1 = 0;
-    ess_bdr_1[0] = 1; ess_bdr_1[1] = 1;
+    ess_bdr_1[0] = 0; ess_bdr_1[1] = 1;
     ess_bdr_1[2] = 1; ess_bdr_1[3] = 1;
     ess_bdr_1[4] = 1; ess_bdr_1[5] = 1;
     fespace_H1.GetEssentialTrueDofs(ess_bdr_1, ess_tdof_1);
@@ -69,7 +69,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     ess_bdr_in[4] = 1;
     
     ess_bdr_out = 0;
-    ess_bdr_out[5] = 1;
+    //ess_bdr_out[5] = 1;
     
     ess_bdr_closed_down = 0;
     ess_bdr_closed_down[0] = 1;
@@ -78,6 +78,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, P
     ess_bdr_closed_up = 0;
     ess_bdr_closed_up[1] = 1;
     ess_bdr_closed_up[3] = 1;
+    ess_bdr_closed_up[5] = 1;
 
     //Apply boundary conditions
     vorticity_boundary.ProjectCoefficient(coeff_vorticity);
