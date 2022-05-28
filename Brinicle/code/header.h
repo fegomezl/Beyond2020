@@ -34,11 +34,11 @@ struct Constants{
     /****
      * Coefficients for the equation of the fusion 
      * temperature T_f in terms of salinity S:
-     * T_f = -(a*S + b *S^3)
+     * T_f = a*S + b *S^3
      * in °C
      ****/
-    double FusionPoint_a = 6.04E-1;
-    double FusionPoint_b = 5.81E-4;
+    double FusionPoint_a = -6.04E-1;
+    double FusionPoint_b = -5.81E-4;
 
     /****
      * Stefan number, missing the temperature 
@@ -52,7 +52,7 @@ struct Constants{
      * equation (a) in  mm^2/s
      ****/ 
     double TemperatureDiffusion_l = 1.400E-1;      //Liquid;
-    double TemperatureDiffusion_s = 1.13E+0;      //Solid;
+    double TemperatureDiffusion_s = 1.13E+0;       //Solid;
 
     /****
      * Coefficients for the diffusion term of the salinity
@@ -270,9 +270,6 @@ class Artic_sea{
         //Evolve the simulation one time step 
         void time_step();
 
-        //Print the final results
-        void output_results();
-
         //Global parameters
         Config config;
 
@@ -330,7 +327,7 @@ class Artic_sea{
 };
 
 //Constants associated with physical properties
-const static Constants constants;
+extern Constants constants;
 
 //Dimentional constants
 extern double L_ref;

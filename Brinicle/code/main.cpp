@@ -1,9 +1,6 @@
 #include "header.h"
 
-/*
- * All the nomeclarure is explained in the header
- *
- */
+Constants constants;
 
 double L_ref;
 double V_ref;
@@ -131,18 +128,26 @@ int main(int argc, char *argv[]){
         InflowSalinity = (InflowSalinity-S0_ref)/S_ref;
         NucleationSalinity = (NucleationSalinity-S0_ref)/S_ref;
 
+        constants.TemperatureDiffusion_l /= V_ref*L_ref;
+        constants.TemperatureDiffusion_s /= V_ref*L_ref;
+        constants.SalinityDiffusion_l /= V_ref*L_ref;
+        constants.SalinityDiffusion_s /= V_ref*L_ref;
+
+        constants.BuoyancyCoefficient *= pow(L_ref, 2)/V_ref;
+
         Epsilon = pow(10, -nEpsilon); 
         EpsilonInv = pow(10, nEpsilon); 
 
-        if (config.master)
+        if (config.master){
             cout << "\nAdimentional numbers:\n"
                  << "Reynolds number: " << L_ref*V_ref/constants.Viscosity << "\n" 
                  << "Froude number: " << V_ref*pow(constants.Gravity*L_ref, -0.5) << "\n" 
-                 << "Peclet number(T_l): " << L_ref*V_ref/constants.TemperatureDiffusion_l << "\n" 
-                 << "Peclet number(T_s): " << L_ref*V_ref/constants.TemperatureDiffusion_s << "\n" 
-                 << "Peclet number(S_l): " << L_ref*V_ref/constants.SalinityDiffusion_l << "\n" 
-                 << "Peclet number(S_s): " << L_ref*V_ref/constants.SalinityDiffusion_s << "\n" 
-                 << "Stefan number: " << T_ref/constants.Stefan << "\n\n";
+                 << "Peclet number(T_l): " << 1/constants.TemperatureDiffusion_l << "\n" 
+                 << "Peclet number(T_s): " << 1/constants.TemperatureDiffusion_s << "\n" 
+                 << "Peclet number(S_l): " << 1/constants.SalinityDiffusion_l << "\n" 
+                 << "Peclet number(S_s): " << 1/constants.SalinityDiffusion_s << "\n" 
+                 << "Stefan number: " << T_ref/constants.Stefan << "\n";
+        }
 
         tic();
         Artic_sea artic_sea(config);

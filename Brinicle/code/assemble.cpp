@@ -10,7 +10,6 @@ void rot_f(const Vector &x, DenseMatrix &f);
 //Physical properties (in T,S)
 double FusionPoint(const double S);
 double Phase(const double T, const double S);
-double HeatInertia(const double T, const double S);
 double HeatDiffusivity(const double T, const double S);
 double SaltDiffusivity(const double T, const double S);
 double Impermeability(const double T, const double S);
@@ -78,14 +77,15 @@ void Artic_sea::assemble_system(){
     //Start program check
     if (config.master){
         cout << left << setw(12)
-             << "--------------------------------------------------\n"
+             << "--------------------------------------------------------------\n"
              << left << setw(12)
              << "Step" << setw(12)
+             << "Printed" << setw(12)
              << "Dt(s)" << setw(12)
              << "Time(s)" << setw(12)
              << "Progress"
              << left << setw(12)
-             << "\n--------------------------------------------------\n";
+             << "\n--------------------------------------------------------------\n";
     }
 }
 
@@ -121,7 +121,7 @@ void rot_f(const Vector &x, DenseMatrix &f){
 //Fusion temperature at a given salinity
 double FusionPoint(const double S){
     double S_ = S_ref*S + S0_ref;
-    return (-(constants.FusionPoint_a*S_ + constants.FusionPoint_b*pow(S_, 3)) - T0_ref)/T_ref;
+    return (constants.FusionPoint_a*S_ + constants.FusionPoint_b*pow(S_, 3) - T0_ref)/T_ref;
 }
 
 //Phase indicator (1 for liquid and 0 for solid)
@@ -131,12 +131,12 @@ double Phase(const double T, const double S){
 
 //Coefficient for the diffusion term in the temperature equation
 double HeatDiffusivity(const double T, const double S){ 
-    return (constants.TemperatureDiffusion_s + (constants.TemperatureDiffusion_l-constants.TemperatureDiffusion_s)*Phase(T, S))/(V_ref*L_ref);
+    return constants.TemperatureDiffusion_s + (constants.TemperatureDiffusion_l-constants.TemperatureDiffusion_s)*Phase(T, S);
 }
 
 //Coefficient for the diffusion term in the salinity equation
 double SaltDiffusivity(const double T, const double S){
-    return (constants.SalinityDiffusion_s + (constants.SalinityDiffusion_l-constants.SalinityDiffusion_s)*Phase(T, S))/(V_ref*L_ref);
+    return constants.SalinityDiffusion_s + (constants.SalinityDiffusion_l-constants.SalinityDiffusion_s)*Phase(T, S);
 }
 
 //Inverse of the brinkman penalization permeability

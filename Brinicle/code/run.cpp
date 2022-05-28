@@ -34,7 +34,9 @@ void Artic_sea::run(const char *mesh_file){
     for (iteration = 1, vis_iteration = 1; !last; iteration++, vis_iteration++)
         time_step();
     total_time = toc();
-    output_results();
+
+    if (config.master)
+        cout << "Total execution time: " << total_time << " s" << "\n";
 }
 
 //Delete used memory

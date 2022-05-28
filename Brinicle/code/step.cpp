@@ -48,6 +48,7 @@ void Artic_sea::time_step(){
         cout.precision(4);
         cout << left << setw(12)
              << iteration << setw(12)
+             << vis_print << setw(12)
              << dt*t_ref << setw(12)
              << t*t_ref  << setw(12)
              << progress << "\r";
@@ -157,7 +158,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     ScalarVectorProductCoefficient coeff_neg_impermeability_r_inv_hat(coeff_neg_impermeability, coeff_r_inv_hat);
 
     GridFunctionCoefficient coeff_density_dr(&density_dr);
-    ProductCoefficient coeff_buoyancy(constants.BuoyancyCoefficient*pow(L_ref, 2)/V_ref, coeff_density_dr);
+    ProductCoefficient coeff_buoyancy(constants.BuoyancyCoefficient, coeff_density_dr);
     ProductCoefficient coeff_r_buoyancy(coeff_r, coeff_buoyancy);
     
     //Apply boundary conditions

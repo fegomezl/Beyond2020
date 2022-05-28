@@ -16,7 +16,7 @@ settings/sea.geo    #Mesh_script
 Simulation parameters:
 0.01       #Dt(s)
 10         #Final_time(s)
-10         #Visualization_steps
+2          #Visualization_steps
 
 FE parameters:
 4          #Refinements

@@ -31,8 +31,14 @@ void Artic_sea::make_grid(const char *mesh_file){
     //Calculate minimum size of elements
     double null;
     pmesh->GetCharacteristics(h_min, null, null, null);
+
     if (config.master)
-        cout << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n"; 
+        cout << "\nSize (H1): " << size_H1 << "\n"
+             << "Size (ND): " << size_ND << "\n"
+             << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n"
+             << "Serial refinements: " << serial_refinements << "\n"
+             << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
+             << "Total refinements: " << config.refinements << "\n\n";
 
     //Create the FEM spaces associated with the mesh
     fec_H1 = new H1_FECollection(config.order, dim);
