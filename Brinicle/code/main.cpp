@@ -3,7 +3,6 @@
 Constants constants;
 
 double L_ref;
-double V_ref;
 double t_ref;
 double T0_ref;
 double T_ref;
@@ -15,15 +14,16 @@ double RInflow;
 double Epsilon, EpsilonInv;
 
 double FluxRate;
-double InflowFlux;                    
 double NucleationLength;
 double NucleationHeight;
 double InitialTemperature;
 double InflowTemperature;
 double NucleationTemperature;
+double ZeroTemperature;
 double InitialSalinity;
 double InflowSalinity;
 double NucleationSalinity;
+double ZeroSalinity;
 
 int main(int argc, char *argv[]){
     //Define MPI parameters
@@ -101,10 +101,9 @@ int main(int argc, char *argv[]){
 
     {
         L_ref = RInflow;
-        V_ref = FluxRate*pow(L_ref, -2);
-        t_ref = L_ref/V_ref;
-        T0_ref = InflowTemperature;
-        T_ref = InitialTemperature-InflowTemperature;
+        t_ref = 2*M_PI*pow(RInflow, 3)/FluxRate;
+        T0_ref = InitialTemperature;
+        T_ref = InflowTemperature-InitialTemperature;
         S0_ref = InitialSalinity;
         S_ref = InflowSalinity-InitialSalinity;
 
@@ -113,40 +112,71 @@ int main(int argc, char *argv[]){
 
         R /= L_ref;
         Z /= L_ref;
-        RInflow /= L_ref;
+        RInflow = 1.;
 
-        FluxRate = 1.;
-        InflowFlux = 0.5*M_1_PI;
         NucleationLength /= L_ref;
         NucleationHeight /= L_ref;
 
-        InitialTemperature = (InitialTemperature-T0_ref)/T_ref;
-        InflowTemperature = (InflowTemperature-T0_ref)/T_ref;
+        InitialTemperature = 0.;
+        InflowTemperature = 1.;
         NucleationTemperature = (NucleationTemperature-T0_ref)/T_ref;
+        ZeroTemperature = T0_ref/T_ref;
 
-        InitialSalinity = (InitialSalinity-S0_ref)/S_ref;
-        InflowSalinity = (InflowSalinity-S0_ref)/S_ref;
+        InitialSalinity = 0.;
+        InflowSalinity = 1.;
         NucleationSalinity = (NucleationSalinity-S0_ref)/S_ref;
+        ZeroSalinity = S0_ref/S_ref;
 
-        constants.TemperatureDiffusion_l /= V_ref*L_ref;
-        constants.TemperatureDiffusion_s /= V_ref*L_ref;
-        constants.SalinityDiffusion_l /= V_ref*L_ref;
-        constants.SalinityDiffusion_s /= V_ref*L_ref;
+        constants.FusionPoint_a *= S_ref/T_ref;
+        constants.FusionPoint_b *= pow(S_ref, 3)/T_ref;
 
-        constants.BuoyancyCoefficient *= pow(L_ref, 2)/V_ref;
+        constants.Stefan /= abs(T_ref);
+
+        constants.TemperatureDiffusion_l *= t_ref*pow(L_ref, -2);
+        constants.TemperatureDiffusion_s *= t_ref*pow(L_ref, -2);
+        constants.SalinityDiffusion_l *= t_ref*pow(L_ref, -2);
+        constants.SalinityDiffusion_s *= t_ref*pow(L_ref, -2);
+
+        constants.Density_a0 *= S_ref;
+        constants.Density_a1 *= S_ref*T_ref;
+        constants.Density_a2 *= S_ref*pow(T_ref, 2);
+        constants.Density_a3 *= S_ref*pow(T_ref, 3);
+        constants.Density_a4 *= S_ref*pow(T_ref, 4);
+        constants.Density_b0 *= pow(abs(S_ref), 1.5);
+        constants.Density_b1 *= pow(abs(S_ref), 1.5)*T_ref;
+        constants.Density_b2 *= pow(abs(S_ref), 1.5)*pow(T_ref, 2);
+        constants.Density_c0 *= pow(S_ref, 2);
+
+        constants.BuoyancyCoefficient *= t_ref*L_ref;
 
         Epsilon = pow(10, -nEpsilon); 
         EpsilonInv = pow(10, nEpsilon); 
 
         if (config.master){
-            cout << "\nAdimentional numbers:\n"
-                 << "Reynolds number: " << L_ref*V_ref/constants.Viscosity << "\n" 
-                 << "Froude number: " << V_ref*pow(constants.Gravity*L_ref, -0.5) << "\n" 
+            cout << "\na:\n"
+                 << "T: " << T0_ref << "\n"
+                 << "S: " << S0_ref << "\n";
+            cout << "Fusion Point:\n"
+                 << "a: " << constants.FusionPoint_a << "\n"
+                 << "b: " << constants.FusionPoint_b << "\n"
+                 << "Density:\n"
+                 << "a0: " << constants.Density_a0 << "\n"
+                 << "a1: " << constants.Density_a1 << "\n"
+                 << "a2: " << constants.Density_a2 << "\n"
+                 << "a3: " << constants.Density_a3 << "\n"
+                 << "a4: " << constants.Density_a4 << "\n"
+                 << "b0: " << constants.Density_b0 << "\n"
+                 << "b1: " << constants.Density_b1 << "\n"
+                 << "b2: " << constants.Density_b2 << "\n"
+                 << "c0: " << constants.Density_c0 << "\n";
+            cout << "Adimentional numbers:\n"
+                 << "Reynolds number: "    << pow(RInflow, 2)/(t_ref*constants.Viscosity) << "\n" 
+                 << "Froude number: "      << pow(RInflow/constants.Gravity, 0.5)/t_ref << "\n" 
                  << "Peclet number(T_l): " << 1/constants.TemperatureDiffusion_l << "\n" 
                  << "Peclet number(T_s): " << 1/constants.TemperatureDiffusion_s << "\n" 
                  << "Peclet number(S_l): " << 1/constants.SalinityDiffusion_l << "\n" 
                  << "Peclet number(S_s): " << 1/constants.SalinityDiffusion_s << "\n" 
-                 << "Stefan number: " << T_ref/constants.Stefan << "\n";
+                 << "Stefan number: " << 1/constants.Stefan << "\n";
         }
 
         tic();

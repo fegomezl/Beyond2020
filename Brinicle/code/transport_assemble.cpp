@@ -13,7 +13,7 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     ess_bdr_0(attributes), ess_bdr_1(attributes),
     temperature(&fespace_H1), salinity(&fespace_H1),
     phase(&fespace_H1), 
-    heat_inertia(&fespace_H1), heat_diffusivity(&fespace_H1), salt_diffusivity(&fespace_H1), 
+    heat_diffusivity(&fespace_H1), salt_diffusivity(&fespace_H1), 
     rvelocity(&fespace_ND), 
     coeff_r(r_f), 
     coeff_zero(dim, zero_f),
@@ -69,13 +69,13 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 
     //Apply initial conditions
     FunctionCoefficient coeff_initial_temperature(initial_temperature_f);
-    ConstantCoefficient coeff_boundary_temperature(InflowTemperature);
+    ConstantCoefficient coeff_boundary_temperature(1.);
     temperature.ProjectCoefficient(coeff_initial_temperature);
     temperature.ProjectBdrCoefficient(coeff_boundary_temperature, ess_bdr_0);
     temperature.GetTrueDofs(X.GetBlock(0));
     
     FunctionCoefficient coeff_initial_salinity(initial_salinity_f);
-    ConstantCoefficient coeff_boundary_salinity(InflowSalinity);
+    ConstantCoefficient coeff_boundary_salinity(1.);
     salinity.ProjectCoefficient(coeff_initial_salinity);
     salinity.ProjectBdrCoefficient(coeff_boundary_salinity, ess_bdr_1);
     salinity.GetTrueDofs(X.GetBlock(1));
@@ -136,23 +136,23 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 
 //Initial conditions
 double initial_temperature_f(const Vector &x){
-    bool NucleationRegion = (x(0) > RInflow && x(1) > Z - NucleationHeight) || pow(x(0)-(RInflow+ NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
+    bool NucleationRegion = (x(0) > 1. && x(1) > Z - NucleationHeight) || pow(x(0)-(1. + NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
 
     if (NucleationRegion)
         return NucleationTemperature;
-    else if (x(0) < RInflow && x(1) > Z - NucleationHeight){
-        return ((x(1)-Z+NucleationHeight)/NucleationHeight)*(InflowTemperature-InitialTemperature) + InitialTemperature;
+    else if (x(0) < 1. && x(1) > Z - NucleationHeight){
+        return (x(1)-Z+NucleationHeight)/NucleationHeight;
     } else
-        return InitialTemperature;
+        return 0.;
 }
 
 double initial_salinity_f(const Vector &x){
-    bool NucleationRegion = (x(0) > RInflow && x(1) > Z - NucleationHeight) || pow(x(0)-(RInflow+ NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
+    bool NucleationRegion = (x(0) > 1. && x(1) > Z - NucleationHeight) || pow(x(0)-(1. + NucleationLength), 2) + pow(x(1)-(Z - NucleationHeight), 2) < pow(NucleationLength, 2);         //Wall with a small circle
 
     if (NucleationRegion)
         return NucleationSalinity;
-    else if (x(0) < RInflow && x(1) > Z - NucleationHeight){
-        return ((x(1)-Z+NucleationHeight)/NucleationHeight)*(InflowSalinity-InitialSalinity) + InitialSalinity;
+    else if (x(0) < 1. && x(1) > Z - NucleationHeight){
+        return (x(1)-Z+NucleationHeight)/NucleationHeight;
     } else
-        return InitialSalinity;
+        return 0.;
 }

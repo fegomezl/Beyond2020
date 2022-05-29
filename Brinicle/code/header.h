@@ -43,7 +43,7 @@ struct Constants{
     /****
      * Stefan number, missing the temperature 
      * term (latent heat over mean specific 
-     * heat capacity)(L((c_l+c_s)/2)) in °C
+     * heat capacity)(L/((c_l+c_s)/2)) in °C
      ****/ 
     double Stefan = 1.09E+2;
 
@@ -64,7 +64,7 @@ struct Constants{
     /****
      * Coefficients for the relative density equation in terms of 
      * temperature T and salinity S given by:
-     * Delta rho / rho = (a0 + a1*T + a2*T^3 + a3*T^3 + a4*T^4)*S
+     * Delta rho / rho = (a0 + a1*T + a2*T^2 + a3*T^3 + a4*T^4)*S
      *                 + (b0 + b1*T + b2*T^2)*S^1.5
      *                 + (c0)*S^2
      * which is dimentionless
@@ -102,7 +102,6 @@ struct Config{
     double dt_init;
     double t_final;
     int vis_steps_max;
-    bool rescale;
 
     //FEM variables 
     int refinements;
@@ -146,7 +145,6 @@ class Transport_Operator : public TimeDependentOperator{
         //Auxiliar grid functions
         ParGridFunction temperature, salinity, phase;
         ParGridFunction rvelocity;
-        ParGridFunction heat_inertia;
         ParGridFunction heat_diffusivity;
         ParGridFunction salt_diffusivity;
 
@@ -212,12 +210,11 @@ class Flow_Operator{
         Array<int> ess_bdr_closed_down, ess_bdr_closed_up;
 
         //Auxiliar grid functions
-        ParGridFunction vorticity_boundary;
-        ParGridFunction stream_boundary;
-        ParGridFunction velocity;
-        ParGridFunction rvelocity;
+        ParGridFunction vorticity;
         ParGridFunction stream;
         ParGridFunction stream_gradient;
+        ParGridFunction velocity;
+        ParGridFunction rvelocity;
 
         ParGridFunction temperature;
         ParGridFunction salinity;
@@ -240,7 +237,7 @@ class Flow_Operator{
         VectorFunctionCoefficient coeff_r_inv_hat;
         MatrixFunctionCoefficient coeff_rot;
 
-        FunctionCoefficient coeff_vorticity;
+        ConstantCoefficient coeff_vorticity;
         FunctionCoefficient coeff_stream;
         FunctionCoefficient coeff_stream_in;
         ConstantCoefficient coeff_stream_closed_down;
@@ -331,7 +328,6 @@ extern Constants constants;
 
 //Dimentional constants
 extern double L_ref;
-extern double V_ref;
 extern double t_ref;
 extern double T0_ref;
 extern double T_ref;
@@ -346,15 +342,16 @@ extern double Epsilon, EpsilonInv;          //Size of the indetermination window
 
 //Brinicle conditions
 extern double FluxRate;                 //Flux of inflow water 
-extern double InflowFlux;               //Flux at the inflow boundary divided by 2PI
 extern double NucleationLength;         //Lenght of the nucleation point
 extern double NucleationHeight;         //Height of the nucleation point
 extern double InitialTemperature;       //Initial temperature of the domain
 extern double InflowTemperature;        //Temperature of the inflow
 extern double NucleationTemperature;    //Temperature of the nucleation point
+extern double ZeroTemperature;          
 extern double InitialSalinity;          //Initial salinity of the domain
 extern double InflowSalinity;           //Salinity of the inflow
 extern double NucleationSalinity;       //Salinity of the nucleation point
+extern double ZeroSalinity;          
 
 //Usefull position functions
 extern double r_f(const Vector &x);                     //Function for r
@@ -365,7 +362,7 @@ extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
                                                         //             (-1   0 )
 
 //Physical properties (in T,S)
-extern double FusionPoint(const double S);                              //Fusion temperature at a given salinity
+extern double FusionPoint(const double T, const double S);                              //Fusion temperature at a given salinity
 extern double Phase(const double T, const double S);                    //Phase indicator (1 for liquid and 0 for solid)
 extern double HeatDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the temperature equation
 extern double SaltDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the salinity equation

@@ -8,7 +8,7 @@ void r_inv_hat_f(const Vector &x, Vector &f);
 void rot_f(const Vector &x, DenseMatrix &f);
 
 //Physical properties (in T,S)
-double FusionPoint(const double S);
+double FusionPoint(const double T, const double S);
 double Phase(const double T, const double S);
 double HeatDiffusivity(const double T, const double S);
 double SaltDiffusivity(const double T, const double S);
@@ -48,7 +48,7 @@ void Artic_sea::assemble_system(){
     
     //Calculate phases
     for (int ii = 0; ii < phase->Size(); ii++)
-        (*phase)(ii) = (*temperature)(ii) - FusionPoint((*salinity)(ii));
+        (*phase)(ii) = FusionPoint((*temperature)(ii), (*salinity)(ii));
 
     //Set the ODE solver type
     arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT);
@@ -76,6 +76,7 @@ void Artic_sea::assemble_system(){
 
     //Start program check
     if (config.master){
+        cout.precision(4);
         cout << left << setw(12)
              << "--------------------------------------------------------------\n"
              << left << setw(12)
@@ -86,6 +87,13 @@ void Artic_sea::assemble_system(){
              << "Progress"
              << left << setw(12)
              << "\n--------------------------------------------------------------\n";
+        cout << left << setw(12)
+             << 0 << setw(12)
+             << vis_print << setw(12)
+             << dt*t_ref << setw(12)
+             << t*t_ref  << setw(12)
+             << "0%" << "\r";
+        cout.flush();
     }
 }
 
@@ -119,14 +127,15 @@ void rot_f(const Vector &x, DenseMatrix &f){
 }
 
 //Fusion temperature at a given salinity
-double FusionPoint(const double S){
-    double S_ = S_ref*S + S0_ref;
-    return (constants.FusionPoint_a*S_ + constants.FusionPoint_b*pow(S_, 3) - T0_ref)/T_ref;
+double FusionPoint(const double T, const double S){
+    double T_ = T + ZeroTemperature;
+    double S_ = S + ZeroSalinity;
+    return (1-2*signbit(T_ref))*(T_ - (constants.FusionPoint_a*(S_) + constants.FusionPoint_b*pow(S_, 3)));
 }
 
 //Phase indicator (1 for liquid and 0 for solid)
 double Phase(const double T, const double S){
-    return 0.5*(1+tanh(5*EpsilonInv*(T-FusionPoint(S))));
+    return 0.5*(1+tanh(5*EpsilonInv*FusionPoint(T, S)));
 }
 
 //Coefficient for the diffusion term in the temperature equation
@@ -146,16 +155,16 @@ double Impermeability(const double T, const double S){
 
 //Relative density of the fluid
 double Density(const double T, const double S){
-    double T_ = T_ref*T+T0_ref;
-    double S_ = S_ref*S+S0_ref;
+    double T_ = T + ZeroTemperature;
+    double S_ = S + ZeroSalinity;
     return Phase(T, S)*(
-          (constants.Density_a0  + 
-           constants.Density_a1*(T_)  + 
-           constants.Density_a2*pow(T_, 2)      + 
-           constants.Density_a3*pow(T_, 3)      +
-           constants.Density_a4*pow(T_, 4))*(S_) + 
-          (constants.Density_b0  + 
-           constants.Density_b1*(T_)  +
+          (constants.Density_a0                                +
+           constants.Density_a1*(T_)                           +
+           constants.Density_a2*pow(T_, 2)                     +
+           constants.Density_a3*pow(T_, 3)                     +
+           constants.Density_a4*pow(T_, 4))*(S_)               +
+          (constants.Density_b0                                + 
+           constants.Density_b1*(T_)                           +
            constants.Density_b2*pow(T_, 2))*pow(abs(S_), 1.5)  +
           (constants.Density_c0)*pow(S_, 2)
           );

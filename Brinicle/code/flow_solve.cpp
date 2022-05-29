@@ -32,8 +32,10 @@ void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
     superlu.Mult(B, Y);
     superlu.DismantleGrid();
 
-    //Calculate velocity field
+    vorticity.Distribute(Y.GetBlock(0)); 
     stream.Distribute(Y.GetBlock(1)); 
+
+    //Calculate velocity field
     gradient.Mult(stream, stream_gradient);
     VectorGridFunctionCoefficient coeff_stream_gradient(&stream_gradient);
     MatrixVectorProductCoefficient coeff_rV(coeff_rot, coeff_stream_gradient);

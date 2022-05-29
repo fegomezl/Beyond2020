@@ -33,7 +33,7 @@ void Artic_sea::time_step(){
         
         //Calculate phases
         for (int ii = 0; ii < phase->Size(); ii++)
-            (*phase)(ii) = (*temperature)(ii) - FusionPoint((*salinity)(ii));
+            (*phase)(ii) = FusionPoint((*temperature)(ii), (*salinity)(ii));
 
         //Print fields
         paraview_out->SetCycle(vis_print);
@@ -64,12 +64,15 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     rvelocity.SetFromTrueDofs(rVelocity); 
 
     //Associate the values of each auxiliar function
+    double T, S = 0.;
     for (int ii = 0; ii < phase.Size(); ii++){
-        heat_diffusivity(ii) = HeatDiffusivity(temperature(ii), salinity(ii));
-        salt_diffusivity(ii) = SaltDiffusivity(temperature(ii), salinity(ii));
+        T = temperature(ii);
+        S = salinity(ii);
 
-        phase(ii) = Phase(temperature(ii), salinity(ii));
-        temperature(ii) = temperature(ii) - FusionPoint(salinity(ii));
+        heat_diffusivity(ii) = HeatDiffusivity(T, S);
+        salt_diffusivity(ii) = SaltDiffusivity(T, S);
+        phase(ii)            = Phase(T, S);
+        temperature(ii)      = FusionPoint(T, S);
     }
 
     //Set the associated coefficients
@@ -88,7 +91,7 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
     PowerCoefficient coeff_inv_dT_2(coeff_dT_2e, -1.);
     ProductCoefficient DeltaT(coeff_dPdT, coeff_inv_dT_2);
 
-    ProductCoefficient coeff_latent(constants.Stefan/T_ref, DeltaT);
+    ProductCoefficient coeff_latent(constants.Stefan, DeltaT);
     SumCoefficient coeff_M(1., coeff_latent);
 
     //Construct final coefficients
@@ -141,9 +144,10 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     salinity.SetFromTrueDofs(X.GetBlock(1));
 
     //Calculate impermeability and density coefficients
-    for (int ii = 0; ii < impermeability.Size(); ii++){
-        double T = temperature(ii);
-        double S = salinity(ii);
+    double T, S = 0.;
+    for (int ii = 0; ii < density.Size(); ii++){
+        T = temperature(ii);
+        S = salinity(ii);
 
         impermeability(ii) = Impermeability(T, S);
         density(ii) = Density(T, S);
@@ -162,13 +166,11 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     ProductCoefficient coeff_r_buoyancy(coeff_r, coeff_buoyancy);
     
     //Apply boundary conditions
-    vorticity_boundary.ProjectCoefficient(coeff_vorticity);
-    vorticity_boundary.ProjectBdrCoefficient(coeff_vorticity, ess_bdr_0);
+    vorticity.ProjectBdrCoefficient(coeff_vorticity, ess_bdr_0);
 
-    stream_boundary.ProjectCoefficient(coeff_stream);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_in);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_closed_down);
-    stream_boundary.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
+    stream.ProjectBdrCoefficient(coeff_stream_in, ess_bdr_in);
+    stream.ProjectBdrCoefficient(coeff_stream_closed_down, ess_bdr_closed_down);
+    stream.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
 
     //Define non-constant RHS
     if (B1) delete B1;
@@ -182,7 +184,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     a11.AddDomainIntegrator(new DiffusionIntegrator(coeff_neg_impermeability));
     a11.AddDomainIntegrator(new ConvectionIntegrator(coeff_neg_impermeability_r_inv_hat));
     a11.Assemble();
-    a11.EliminateEssentialBC(ess_bdr_1, stream_boundary, b1, Operator::DIAG_KEEP);
+    a11.EliminateEssentialBC(ess_bdr_1, stream, b1, Operator::DIAG_KEEP);
     a11.Finalize();
     A11 = a11.ParallelAssemble();
 
@@ -191,7 +193,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     a10.AddDomainIntegrator(new MixedGradGradIntegrator);
     a10.AddDomainIntegrator(new MixedDirectionalDerivativeIntegrator(coeff_r_inv_hat));
     a10.Assemble();
-    a10.EliminateTrialDofs(ess_bdr_0, vorticity_boundary, b1);
+    a10.EliminateTrialDofs(ess_bdr_0, vorticity, b1);
     a10.EliminateTestDofs(ess_bdr_1);    
     a10.Finalize();
     A10 = a10.ParallelAssemble();
