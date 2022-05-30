@@ -83,7 +83,7 @@ results/mesh.msh: settings/parameters.txt settings/mesh_config.sh
 	@echo -e 'Reading parameters ... \c'
 	@bash settings/mesh_config.sh
 	@echo -e 'Generating mesh ... \c'
-	@gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
+	@$(GMSH_INSTALL)gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
 clean:
