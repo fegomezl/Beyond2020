@@ -35,8 +35,11 @@ void Artic_sea::run(const char *mesh_file){
         time_step();
     total_time = toc();
 
-    if (config.master)
-        cout << "Total execution time: " << total_time << " s" << "\n";
+    if (config.master){
+        cout << "\n\nIterations: " << iteration-1 << "\n"
+             << "Total Printed: " << vis_print << "\n"
+             << "Total execution time: " << total_time << " s" << "\n\n";
+    }
 }
 
 //Delete used memory

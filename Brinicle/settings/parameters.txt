@@ -14,9 +14,9 @@ settings/sea.geo    #Mesh_script
 2                   #Inflow(mm)
 
 Simulation parameters:
-0.01       #Dt(s)
-10         #Final_time(s)
-2          #Visualization_steps
+0.001       #Dt(s)
+0.1         #Final_time(s)
+10          #Visualization_steps
 
 FE parameters:
 4          #Refinements
@@ -29,7 +29,7 @@ FE parameters:
 9          #nEpsilon
 
 Brinicle conditions:
-300        #FlowRate(mm^3/s)
+525        #FlowRate(mm^3/s)
 1          #Nucleation_length(mm)
 4          #Nucleation_height(mm)
 -2         #Initial_temperature(°C)

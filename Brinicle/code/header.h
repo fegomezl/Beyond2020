@@ -58,7 +58,7 @@ struct Constants{
      * Coefficients for the diffusion term of the salinity
      * equation (d) in mm^2/s
      ****/ 
-    double SalinityDiffusion_l = 1.00E-1;       //Liquid
+    double SalinityDiffusion_l = 1.00E-3;       //Liquid
     double SalinityDiffusion_s = 1.00E-7;       //Solid
 
     /****

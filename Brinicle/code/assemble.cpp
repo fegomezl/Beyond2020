@@ -93,7 +93,6 @@ void Artic_sea::assemble_system(){
              << dt*t_ref << setw(12)
              << t*t_ref  << setw(12)
              << "0%" << "\r";
-        cout.flush();
     }
 }
 

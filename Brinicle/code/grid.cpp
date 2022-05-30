@@ -53,7 +53,7 @@ void Artic_sea::make_grid(const char *mesh_file){
     if (config.master)
         cout << "\nSize (H1): " << size_H1 << "\n"
              << "Size (ND): " << size_ND << "\n"
-             << "Mesh Size: " << h_min << " (" << h_min*RInflow << " mm)\n"
+             << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n"
              << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
              << "Total refinements: " << config.refinements << "\n\n";

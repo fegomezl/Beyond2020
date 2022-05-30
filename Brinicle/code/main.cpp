@@ -153,25 +153,17 @@ int main(int argc, char *argv[]){
         EpsilonInv = pow(10, nEpsilon); 
 
         if (config.master){
-            cout << "\na:\n"
-                 << "T: " << T0_ref << "\n"
-                 << "S: " << S0_ref << "\n";
-            cout << "Fusion Point:\n"
-                 << "a: " << constants.FusionPoint_a << "\n"
-                 << "b: " << constants.FusionPoint_b << "\n"
-                 << "Density:\n"
-                 << "a0: " << constants.Density_a0 << "\n"
-                 << "a1: " << constants.Density_a1 << "\n"
-                 << "a2: " << constants.Density_a2 << "\n"
-                 << "a3: " << constants.Density_a3 << "\n"
-                 << "a4: " << constants.Density_a4 << "\n"
-                 << "b0: " << constants.Density_b0 << "\n"
-                 << "b1: " << constants.Density_b1 << "\n"
-                 << "b2: " << constants.Density_b2 << "\n"
-                 << "c0: " << constants.Density_c0 << "\n";
+            cout << "\nScale:\n"
+                 << "L: " << L_ref << " mm\n"
+                 << "V: " << L_ref/t_ref << " mm/s\n"
+                 << "T_0: " << T0_ref << " °C\n"
+                 << "T: " << T_ref << " °C\n"
+                 << "S_0: " << S0_ref << " %wt\n"
+                 << "S: " << S_ref << " %wt\n";
             cout << "Adimentional numbers:\n"
                  << "Reynolds number: "    << pow(RInflow, 2)/(t_ref*constants.Viscosity) << "\n" 
                  << "Froude number: "      << pow(RInflow/constants.Gravity, 0.5)/t_ref << "\n" 
+                 << "Reynolds/Froude^2 number: "    << constants.BuoyancyCoefficient << "\n" 
                  << "Peclet number(T_l): " << 1/constants.TemperatureDiffusion_l << "\n" 
                  << "Peclet number(T_s): " << 1/constants.TemperatureDiffusion_s << "\n" 
                  << "Peclet number(S_l): " << 1/constants.SalinityDiffusion_l << "\n" 
