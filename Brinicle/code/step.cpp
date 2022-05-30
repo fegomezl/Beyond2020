@@ -8,11 +8,11 @@ void Artic_sea::time_step(){
     dt = min(dt, config.t_final - t);
 
     //Perform the time_step
-    transport_oper->SetParameters(X, *rVelocity);
+    transport_oper->SetParameters(X, Y);
     ode_solver->Step(X, t, dt);
 
     flow_oper->SetParameters(X);
-    flow_oper->Solve(Y, *Velocity, *rVelocity);
+    flow_oper->Solve(Y);
 
     //Update visualization steps
     vis_steps = (dt == config.dt_init) ? config.vis_steps_max : int((config.dt_init/dt)*config.vis_steps_max);
@@ -28,12 +28,12 @@ void Artic_sea::time_step(){
         salinity->Distribute(X.GetBlock(1));
         vorticity->Distribute(Y.GetBlock(0));
         stream->Distribute(Y.GetBlock(1));
-        velocity->Distribute(Velocity);
-        rvelocity->Distribute(rVelocity);
         
         //Calculate phases
-        for (int ii = 0; ii < phase->Size(); ii++)
-            (*phase)(ii) = FusionPoint((*temperature)(ii), (*salinity)(ii));
+        for (int ii = 0; ii < phase->Size(); ii++){
+            (*relative_temperature)(ii) = RelativeTemperature((*temperature)(ii), (*salinity)(ii));
+            (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
+        }
 
         //Print fields
         paraview_out->SetCycle(vis_print);
@@ -57,11 +57,11 @@ void Artic_sea::time_step(){
 }
 
 //Update of the solver on each iteration
-void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelocity){
+void Transport_Operator::SetParameters(const BlockVector &X, const BlockVector &Y){
     //Recover current information
     temperature.SetFromTrueDofs(X.GetBlock(0));
     salinity.SetFromTrueDofs(X.GetBlock(1));
-    rvelocity.SetFromTrueDofs(rVelocity); 
+    stream.SetFromTrueDofs(Y.GetBlock(1));
 
     //Associate the values of each auxiliar function
     double T, S = 0.;
@@ -71,16 +71,19 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
 
         heat_diffusivity(ii) = HeatDiffusivity(T, S);
         salt_diffusivity(ii) = SaltDiffusivity(T, S);
+        relative_temperature(ii)      = RelativeTemperature(T, S);
         phase(ii)            = Phase(T, S);
-        temperature(ii)      = FusionPoint(T, S);
     }
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_D0(&heat_diffusivity);
+    coeff_rD0.SetBCoef(coeff_D0); 
+    
     GridFunctionCoefficient coeff_D1(&salt_diffusivity);
+    coeff_rD1.SetBCoef(coeff_D1); 
 
     //Construct latent heat term
-    GradientGridFunctionCoefficient coeff_dT(&temperature);
+    GradientGridFunctionCoefficient coeff_dT(&relative_temperature);
     GradientGridFunctionCoefficient coeff_dP(&phase);
     
     coeff_dPdT.SetACoef(coeff_dP);  coeff_dT_2.SetACoef(coeff_dT);
@@ -93,14 +96,12 @@ void Transport_Operator::SetParameters(const BlockVector &X, const Vector &rVelo
 
     ProductCoefficient coeff_latent(constants.Stefan, DeltaT);
     SumCoefficient coeff_M(1., coeff_latent);
-
-    //Construct final coefficients
     coeff_rM.SetBCoef(coeff_M);
-    coeff_rD0.SetBCoef(coeff_D0); 
-    coeff_rD1.SetBCoef(coeff_D1); 
-
-    coeff_rV.SetGridFunction(&rvelocity);
     coeff_rMV.SetACoef(coeff_M);
+
+    //Construct convective term
+    GradientGridFunctionCoefficient coeff_d_stream(&stream);
+    coeff_rV.SetBCoef(coeff_d_stream);
     coeff_rMV.SetBCoef(coeff_rV);
 
     //Create corresponding bilinear forms
@@ -149,7 +150,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
         T = temperature(ii);
         S = salinity(ii);
 
-        impermeability(ii) = Impermeability(T, S);
+        impermeability(ii) = -Impermeability(T, S);
         density(ii) = Density(T, S);
     }
     
@@ -158,8 +159,7 @@ void Flow_Operator::SetParameters(const BlockVector &X){
 
     //Create impermeability and buoyancy coefficients
     GridFunctionCoefficient coeff_impermeability(&impermeability);
-    ProductCoefficient coeff_neg_impermeability(-1., coeff_impermeability);
-    ScalarVectorProductCoefficient coeff_neg_impermeability_r_inv_hat(coeff_neg_impermeability, coeff_r_inv_hat);
+    ScalarVectorProductCoefficient coeff_impermeability_r_inv_hat(coeff_impermeability, coeff_r_inv_hat);
 
     GridFunctionCoefficient coeff_density_dr(&density_dr);
     ProductCoefficient coeff_buoyancy(constants.BuoyancyCoefficient, coeff_density_dr);
@@ -181,8 +181,8 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     //Define non-constant bilinear forms of the system
     if (A11) delete A11;
     ParBilinearForm a11(&fespace_H1);
-    a11.AddDomainIntegrator(new DiffusionIntegrator(coeff_neg_impermeability));
-    a11.AddDomainIntegrator(new ConvectionIntegrator(coeff_neg_impermeability_r_inv_hat));
+    a11.AddDomainIntegrator(new DiffusionIntegrator(coeff_impermeability));
+    a11.AddDomainIntegrator(new ConvectionIntegrator(coeff_impermeability_r_inv_hat));
     a11.Assemble();
     a11.EliminateEssentialBC(ess_bdr_1, stream, b1, Operator::DIAG_KEEP);
     a11.Finalize();

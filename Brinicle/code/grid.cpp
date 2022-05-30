@@ -37,10 +37,6 @@ void Artic_sea::make_grid(const char *mesh_file){
     fespace_H1 = new ParFiniteElementSpace(pmesh, fec_H1);
     size_H1 = fespace_H1->GlobalTrueVSize();
 
-    fec_ND = new ND_FECollection(config.order, dim);
-    fespace_ND = new ParFiniteElementSpace(pmesh, fec_ND);
-    size_ND = fespace_ND->GlobalTrueVSize();
-
     //Create the block offsets
     block_offsets_H1[0] = 0;
     block_offsets_H1[1] = fespace_H1->TrueVSize();
@@ -51,10 +47,9 @@ void Artic_sea::make_grid(const char *mesh_file){
     Y.Update(block_offsets_H1); Y = 0.;
 
     if (config.master)
-        cout << "\nSize (H1): " << size_H1 << "\n"
-             << "Size (ND): " << size_ND << "\n"
-             << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n"
-             << "Serial refinements: " << serial_refinements << "\n"
+        cout << "\nSerial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
-             << "Total refinements: " << config.refinements << "\n\n";
+             << "Total refinements: " << config.refinements << "\n"
+             << "Size (H1): " << size_H1 << "\n"
+             << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n\n";
 }

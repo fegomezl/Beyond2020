@@ -16,7 +16,7 @@ settings/sea.geo    #Mesh_script
 Simulation parameters:
 0.001       #Dt(s)
 0.1         #Final_time(s)
-10          #Visualization_steps
+5           #Visualization_steps
 
 FE parameters:
 4          #Refinements
@@ -33,8 +33,8 @@ Brinicle conditions:
 1          #Nucleation_length(mm)
 4          #Nucleation_height(mm)
 -2         #Initial_temperature(°C)
--10        #Inflow_temperature(°C)
--10        #Nucleation_temperature(°C)
+-8         #Inflow_temperature(°C)
+-8         #Nucleation_temperature(°C)
 3.5        #Initial_salinity(%wt)
-20         #Inflow_salinity(%wt)
+22.5       #Inflow_salinity(%wt)
 3.5        #Nucleation_salinity(%wt)

@@ -2,13 +2,13 @@
 
 //Usefull position functions
 double r_f(const Vector &x);
-double r_inv_f(const Vector &x);
 void zero_f(const Vector &x, Vector &f);
 void r_inv_hat_f(const Vector &x, Vector &f);
 void rot_f(const Vector &x, DenseMatrix &f);
 
 //Physical properties (in T,S)
-double FusionPoint(const double T, const double S);
+double FusionPoint(const double S);
+double RelativeTemperature(const double T, const double S);
 double Phase(const double T, const double S);
 double HeatDiffusivity(const double T, const double S);
 double SaltDiffusivity(const double T, const double S);
@@ -21,34 +21,30 @@ void Artic_sea::assemble_system(){
     //Define fields
     temperature = new ParGridFunction(fespace_H1);
     salinity = new ParGridFunction(fespace_H1);
+    relative_temperature = new ParGridFunction(fespace_H1);
     phase = new ParGridFunction(fespace_H1);
     vorticity = new ParGridFunction(fespace_H1);
     stream = new ParGridFunction(fespace_H1);
-    velocity = new ParGridFunction(fespace_ND);
-    rvelocity = new ParGridFunction(fespace_ND);
-
-    rVelocity = new HypreParVector(fespace_ND);
-    Velocity = new HypreParVector(fespace_ND);
 
     //Initialize operators
-    transport_oper = new Transport_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
-    flow_oper = new Flow_Operator(config, *fespace_H1, *fespace_ND, dim, pmesh->bdr_attributes.Max(), block_offsets_H1);
+    transport_oper = new Transport_Operator(config, *fespace_H1, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
+    flow_oper = new Flow_Operator(config, *fespace_H1, dim, pmesh->bdr_attributes.Max(), block_offsets_H1);
 
     //Solve initial velocity field
     flow_oper->SetParameters(X);
-    flow_oper->Solve(Y, *Velocity, *rVelocity);
+    flow_oper->Solve(Y);
 
     //Set initial state
     temperature->Distribute(X.GetBlock(0));
     salinity->Distribute(X.GetBlock(1));
     vorticity->Distribute(Y.GetBlock(0));
     stream->Distribute(Y.GetBlock(1));
-    velocity->Distribute(Velocity);
-    rvelocity->Distribute(rVelocity);
     
     //Calculate phases
-    for (int ii = 0; ii < phase->Size(); ii++)
-        (*phase)(ii) = FusionPoint((*temperature)(ii), (*salinity)(ii));
+    for (int ii = 0; ii < phase->Size(); ii++){
+        (*relative_temperature)(ii) = RelativeTemperature((*temperature)(ii), (*salinity)(ii));
+        (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
+    }
 
     //Set the ODE solver type
     arkode = new ARKStepSolver(MPI_COMM_WORLD, ARKStepSolver::IMPLICIT);
@@ -65,11 +61,10 @@ void Artic_sea::assemble_system(){
     paraview_out->SetLevelsOfDetail(config.order);
     paraview_out->RegisterField("Temperature", temperature);
     paraview_out->RegisterField("Salinity", salinity);
+    paraview_out->RegisterField("RelativeTemperature", relative_temperature);
     paraview_out->RegisterField("Phase", phase);
     paraview_out->RegisterField("Vorticity", vorticity);
     paraview_out->RegisterField("Stream", stream);
-    paraview_out->RegisterField("Velocity", velocity);
-    paraview_out->RegisterField("rVelocity", rvelocity);
     paraview_out->SetCycle(vis_print);
     paraview_out->SetTime(t*t_ref);
     paraview_out->Save();
@@ -101,11 +96,6 @@ double r_f(const Vector &x){
     return x(0);
 }
 
-//Function for 1/r
-double r_inv_f(const Vector &x){
-    return pow(x(0), -1);
-}
-
 //Function for 0 (vector)
 void zero_f(const Vector &x, Vector &f){
     f(0) = 0.;
@@ -126,15 +116,18 @@ void rot_f(const Vector &x, DenseMatrix &f){
 }
 
 //Fusion temperature at a given salinity
-double FusionPoint(const double T, const double S){
-    double T_ = T + ZeroTemperature;
+double FusionPoint(const double S){
     double S_ = S + ZeroSalinity;
-    return (1-2*signbit(T_ref))*(T_ - (constants.FusionPoint_a*(S_) + constants.FusionPoint_b*pow(S_, 3)));
+    return constants.FusionPoint_a*(S_) + constants.FusionPoint_b*pow(S_, 3) - ZeroTemperature;
+}
+
+double RelativeTemperature(const double T, const double S){
+    return (1-2*signbit(T_ref))*(T - FusionPoint(S));
 }
 
 //Phase indicator (1 for liquid and 0 for solid)
 double Phase(const double T, const double S){
-    return 0.5*(1+tanh(5*EpsilonInv*FusionPoint(T, S)));
+    return 0.5*(1+tanh(5*EpsilonInv*RelativeTemperature(T, S)));
 }
 
 //Coefficient for the diffusion term in the temperature equation

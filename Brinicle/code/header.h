@@ -118,10 +118,10 @@ struct Config{
 class Transport_Operator : public TimeDependentOperator{
     public:
         //Initialization of the solver
-        Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
+        Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X);
 
         //Update of the solver on each iteration
-        void SetParameters(const BlockVector &X, const Vector &rVelocity);
+        void SetParameters(const BlockVector &X, const BlockVector &Y);
 
         //Time-evolving functions
         virtual void Mult(const Vector &X, Vector &dX_dt) const;
@@ -143,20 +143,22 @@ class Transport_Operator : public TimeDependentOperator{
         Array<int> ess_bdr_0, ess_bdr_1;
 
         //Auxiliar grid functions
-        ParGridFunction temperature, salinity, phase;
-        ParGridFunction rvelocity;
+        ParGridFunction temperature, salinity;
+        ParGridFunction relative_temperature, phase;
+        ParGridFunction stream;
         ParGridFunction heat_diffusivity;
         ParGridFunction salt_diffusivity;
 
         //Coefficients
         FunctionCoefficient coeff_r;
         VectorFunctionCoefficient coeff_zero;
+        MatrixFunctionCoefficient coeff_rot;
 
         ProductCoefficient coeff_rM;
         ProductCoefficient coeff_rD0; 
         ProductCoefficient coeff_rD1;
 
-        VectorGridFunctionCoefficient coeff_rV;
+        MatrixVectorProductCoefficient coeff_rV;
         ScalarVectorProductCoefficient coeff_rMV;
 
         InnerProductCoefficient coeff_dPdT;
@@ -185,13 +187,13 @@ class Transport_Operator : public TimeDependentOperator{
 class Flow_Operator{
     public:
         //Initialization of the solver
-        Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1);
+        Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, int dim, int attributes, Array<int> block_offsets_H1);
 
         //Update of the solver on each iteration
         void SetParameters(const BlockVector &X);
 
         //Solution of the current system
-        void Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity);
+        void Solve(BlockVector &Y);
 
         ~Flow_Operator();
     protected:
@@ -212,10 +214,6 @@ class Flow_Operator{
         //Auxiliar grid functions
         ParGridFunction vorticity;
         ParGridFunction stream;
-        ParGridFunction stream_gradient;
-        ParGridFunction velocity;
-        ParGridFunction rvelocity;
-
         ParGridFunction temperature;
         ParGridFunction salinity;
         ParGridFunction density;
@@ -233,18 +231,13 @@ class Flow_Operator{
       
         //Coefficients
         FunctionCoefficient coeff_r;
-        FunctionCoefficient coeff_r_inv;
         VectorFunctionCoefficient coeff_r_inv_hat;
-        MatrixFunctionCoefficient coeff_rot;
 
         ConstantCoefficient coeff_vorticity;
         FunctionCoefficient coeff_stream;
         FunctionCoefficient coeff_stream_in;
         ConstantCoefficient coeff_stream_closed_down;
         ConstantCoefficient coeff_stream_closed_up;
-
-        //Interpolation objects
-        ParDiscreteLinearOperator gradient;
 };
 
 //Main class of the program
@@ -284,10 +277,8 @@ class Artic_sea{
         ParMesh *pmesh;
 
         FiniteElementCollection *fec_H1;
-        FiniteElementCollection *fec_ND;
 
         ParFiniteElementSpace *fespace_H1;
-        ParFiniteElementSpace *fespace_ND;
 
         Array<int> block_offsets_H1;
         
@@ -295,21 +286,17 @@ class Artic_sea{
         double h_min;
         int serial_refinements;
         HYPRE_Int size_H1;
-        HYPRE_Int size_ND;
 
         //System objects
         ParGridFunction *temperature;
         ParGridFunction *salinity;
+        ParGridFunction *relative_temperature;
         ParGridFunction *phase;
         ParGridFunction *vorticity;
         ParGridFunction *stream;
-        ParGridFunction *velocity;
-        ParGridFunction *rvelocity;
 
         BlockVector X;
         BlockVector Y;
-        HypreParVector *Velocity;
-        HypreParVector *rVelocity;
 
         //Solvers
         Transport_Operator *transport_oper;
@@ -353,16 +340,16 @@ extern double InflowSalinity;           //Salinity of the inflow
 extern double NucleationSalinity;       //Salinity of the nucleation point
 extern double ZeroSalinity;          
 
-//Usefull position functions
+//Usefull position functions~/Documents/brinicle/Brinicle
 extern double r_f(const Vector &x);                     //Function for r
-extern double r_inv_f(const Vector &x);                 //Function for 1/r
 extern void zero_f(const Vector &x, Vector &f);         //Function for 0 (vector)
 extern void r_inv_hat_f(const Vector &x, Vector &f);    //Function for (1/r)*r^ (r^ unitary vector)
 extern void rot_f(const Vector &x, DenseMatrix &f);     //Function for ( 0   1 )
                                                         //             (-1   0 )
 
 //Physical properties (in T,S)
-extern double FusionPoint(const double T, const double S);                              //Fusion temperature at a given salinity
+extern double FusionPoint(const double S);                              //Fusion temperature at a given salinity
+extern double RelativeTemperature(const double T, const double S);
 extern double Phase(const double T, const double S);                    //Phase indicator (1 for liquid and 0 for solid)
 extern double HeatDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the temperature equation
 extern double SaltDiffusivity(const double T, const double S);          //Coefficient for the diffusion term in the salinity equation

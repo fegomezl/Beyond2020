@@ -1,7 +1,7 @@
 #include "header.h"
 
 //Solution of the current system
-void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
+void Flow_Operator::Solve(BlockVector &Y){
 
     //Create the complete bilinear operator:
     //
@@ -34,18 +34,6 @@ void Flow_Operator::Solve(BlockVector &Y, Vector &Velocity, Vector &rVelocity){
 
     vorticity.Distribute(Y.GetBlock(0)); 
     stream.Distribute(Y.GetBlock(1)); 
-
-    //Calculate velocity field
-    gradient.Mult(stream, stream_gradient);
-    VectorGridFunctionCoefficient coeff_stream_gradient(&stream_gradient);
-    MatrixVectorProductCoefficient coeff_rV(coeff_rot, coeff_stream_gradient);
-    ScalarVectorProductCoefficient coeff_V(coeff_r_inv, coeff_rV);
-    velocity.ProjectDiscCoefficient(coeff_V, GridFunction::ARITHMETIC);
-    rvelocity.ProjectDiscCoefficient(coeff_rV, GridFunction::ARITHMETIC);
-
-    //Export flow information
-    velocity.ParallelAverage(Velocity);
-    rvelocity.ParallelAverage(rVelocity);
 
     delete H;
 }

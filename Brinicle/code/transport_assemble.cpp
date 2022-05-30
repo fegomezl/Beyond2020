@@ -5,22 +5,23 @@ double initial_temperature_f(const Vector &x);
 double initial_salinity_f(const Vector &x);
 
 //Initialization of the solver
-Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, ParFiniteElementSpace &fespace_ND, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
+Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fespace_H1, int dim, int attributes, Array<int> block_offsets_H1, BlockVector &X):
     config(config),
     TimeDependentOperator(2*fespace_H1.GetTrueVSize(), 0.),
     fespace_H1(fespace_H1),
     block_offsets_H1(block_offsets_H1),
     ess_bdr_0(attributes), ess_bdr_1(attributes),
     temperature(&fespace_H1), salinity(&fespace_H1),
-    phase(&fespace_H1), 
+    relative_temperature(&fespace_H1), phase(&fespace_H1), 
+    stream(&fespace_H1),
     heat_diffusivity(&fespace_H1), salt_diffusivity(&fespace_H1), 
-    rvelocity(&fespace_ND), 
     coeff_r(r_f), 
     coeff_zero(dim, zero_f),
+    coeff_rot(dim, rot_f),
     coeff_rM(coeff_r, coeff_r),
     coeff_rD0(coeff_r, coeff_r),
     coeff_rD1(coeff_r, coeff_r),
-    coeff_rV(&rvelocity), coeff_rMV(coeff_r, coeff_zero), 
+    coeff_rV(coeff_rot, coeff_zero), coeff_rMV(coeff_r, coeff_zero), 
     coeff_dPdT(coeff_zero, coeff_zero), coeff_dT_2(coeff_zero, coeff_zero),
     M0(NULL), M1(NULL), 
     M0_e(NULL), M1_e(NULL), 
@@ -140,7 +141,7 @@ double initial_temperature_f(const Vector &x){
 
     if (NucleationRegion)
         return NucleationTemperature;
-    else if (x(0) < 1. && x(1) > Z - NucleationHeight){
+    else if (x(1) > Z - NucleationHeight){
         return (x(1)-Z+NucleationHeight)/NucleationHeight;
     } else
         return 0.;
@@ -151,7 +152,7 @@ double initial_salinity_f(const Vector &x){
 
     if (NucleationRegion)
         return NucleationSalinity;
-    else if (x(0) < 1. && x(1) > Z - NucleationHeight){
+    else if (x(1) > Z - NucleationHeight){
         return (x(1)-Z+NucleationHeight)/NucleationHeight;
     } else
         return 0.;
