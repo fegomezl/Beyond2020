@@ -39,13 +39,11 @@ T_ = T + ZeroTemperature
 S_ = S + ZeroSalinity
 fp_function = (1-2*np.signbit(T_ref))*(T_ - (FusionPoint_a*S_ + FusionPoint_b*np.power(S_, 3)))
 
-for i in range(len(fp_function)):
-    for j in range(len(fp_function)):
-        if fp_function[i][j]<0: fp_function[i][j] = 0
+FusionPoint= np.where(fp_function<0, 0, fp_function)
 
-max = np.amax(fp_function)
+max = np.amax(FusionPoint)
 fig, ax = plt.subplots(layout='constrained')
-pc = ax.pcolormesh(T, S, fp_function, vmin=-max, vmax=max, cmap='RdBu_r')
+pc = ax.pcolormesh(T, S, FusionPoint, vmin=-max, vmax=max, cmap='RdBu_r')
 fig.colorbar(pc, ax=ax)
 ax.set_title('Eutectic Curve')
 ax.set_xlabel('Temperature')
