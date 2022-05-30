@@ -160,7 +160,7 @@ int main(int argc, char *argv[]){
                  << "T: " << T_ref << " °C\n"
                  << "S_0: " << S0_ref << " %wt\n"
                  << "S: " << S_ref << " %wt\n";
-            cout << "Adimentional numbers:\n"
+            cout << "\nAdimentional numbers:\n"
                  << "Reynolds number: "    << pow(RInflow, 2)/(t_ref*constants.Viscosity) << "\n" 
                  << "Froude number: "      << pow(RInflow/constants.Gravity, 0.5)/t_ref << "\n" 
                  << "Reynolds/Froude^2 number: "    << constants.BuoyancyCoefficient << "\n" 

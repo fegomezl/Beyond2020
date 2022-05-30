@@ -9,8 +9,8 @@
 
 #Mesh Parameters:
 SCRIPT = settings/sea.geo    #Mesh_script
-R = 20                  #R(mm)
-Z = 50                  #Z(mm)
+R = 10                  #R(mm)
+Z = 40                  #Z(mm)
 RIn = 2                   #Inflow(mm)
 
 #Simulation parameters:

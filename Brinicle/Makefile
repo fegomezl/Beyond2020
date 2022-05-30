@@ -50,7 +50,7 @@ main.x: $(DEPENDENCIES)
 
 results/mesh.msh: settings/parameters.mk
 	@echo -e 'Generating mesh ... \c'
-	@gmsh $(SCRIPT) -setnumber R $$(( $(R)/$(RIn) )) -setnumber Z $$(( $(Z)/$(RIn) )) -setnumber r 1 -format msh2 -o results/mesh.msh -3 > /dev/null
+	@$(GMSH_INSTALL)gmsh $(SCRIPT) -setnumber R $$(( $(R)/$(RIn) )) -setnumber Z $$(( $(Z)/$(RIn) )) -setnumber r 1 -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
 clean:

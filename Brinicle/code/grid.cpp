@@ -47,7 +47,8 @@ void Artic_sea::make_grid(const char *mesh_file){
     Y.Update(block_offsets_H1); Y = 0.;
 
     if (config.master)
-        cout << "\nSerial refinements: " << serial_refinements << "\n"
+        cout << "\nMesh characteristics:\n"
+             << "Serial refinements: " << serial_refinements << "\n"
              << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
              << "Total refinements: " << config.refinements << "\n"
              << "Size (H1): " << size_H1 << "\n"
