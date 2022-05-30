@@ -7,3 +7,4 @@ local_config.mk
 *.vtu
 *.pvtu
 *.pvd
+*.png
