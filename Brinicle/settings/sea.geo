@@ -1,9 +1,5 @@
 SetFactory("OpenCASCADE");
 
-R = 5;
-Z = 20;
-r = 1;
-
 Mesh.CharacteristicLengthFactor=r;
 
 Point(1) = {0, 0, 0, 1.0};
