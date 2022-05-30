@@ -1,36 +1,5 @@
 include ../local_config.mk
-
-#Mesh parmeters
-SCRIPT = $(shell sed -n 11p settings/parameters.txt | cut -d '#' -f 1)
-R      = $(shell sed -n 12p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-Z      = $(shell sed -n 13p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-RIn    = $(shell sed -n 14p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-
-#Simulation parameters
-DT   = $(shell sed -n 17p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-T_FI = $(shell sed -n 18p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-VIS  = $(shell sed -n 19p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-
-#FE parameters
-REF     = $(shell sed -n 22p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-ORDER   = $(shell sed -n 23p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-ABST_C  = $(shell sed -n 24p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-RELT_C  = $(shell sed -n 25p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-ITER_C  = $(shell sed -n 26p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-ABST_S  = $(shell sed -n 27p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-RELT_S  = $(shell sed -n 28p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-EPSILON = $(shell sed -n 29p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-
-#Brinicle conditions
-Q  = $(shell sed -n 32p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-Nl = $(shell sed -n 33p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-Nh = $(shell sed -n 34p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-Ti = $(shell sed -n 35p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.-)
-To = $(shell sed -n 36p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.-)
-Tn = $(shell sed -n 37p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.-)
-Si = $(shell sed -n 38p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-So = $(shell sed -n 39p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
-Sn = $(shell sed -n 40p settings/parameters.txt | cut -d '#' -f 1 | tr -d -c 0-9.)
+include settings/parameters.mk
 
 #Compiling parameters
 CXX = mpic++
@@ -79,11 +48,9 @@ main.x: $(DEPENDENCIES)
 	@$(CXX) $(FLAGS) -c $< $(MFEM_LIBS) -o $@
 	@echo -e 'Done!\n'
 
-results/mesh.msh: settings/parameters.txt settings/mesh_config.sh
-	@echo -e 'Reading parameters ... \c'
-	@bash settings/mesh_config.sh
+results/mesh.msh: settings/parameters.mk
 	@echo -e 'Generating mesh ... \c'
-	@$(GMSH_INSTALL)gmsh $(SCRIPT) -format msh2 -o results/mesh.msh -3 > /dev/null
+	@gmsh $(SCRIPT) -setnumber R $$(( $(R)/$(RIn) )) -setnumber Z $$(( $(Z)/$(RIn) )) -setnumber r 1 -format msh2 -o results/mesh.msh -3 > /dev/null
 	@echo -e 'Done!\n'
 
 clean:
