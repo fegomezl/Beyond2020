@@ -15,32 +15,18 @@ void Artic_sea::make_grid(const char *mesh_file){
         serial_refinements = min(config.refinements, (int)floor(log(min_elements/elements)/(dim*log(2.))));
     else
         serial_refinements = 0;
-    
-    if (!config.restart){
-        //Refine mesh (serial)
-        for (int ii = 0; ii < serial_refinements; ii++)
-            mesh->UniformRefinement();
-    }
+
+    //Refine mesh (serial)
+    for (int ii = 0; ii < serial_refinements; ii++)
+        mesh->UniformRefinement();
     
     //Make mesh (parallel), delete the serial
     pmesh = new ParMesh(MPI_COMM_WORLD, *mesh);
     delete mesh;
     
-    if (!config.restart){
-        //Refine mesh (parallel)
-        for (int ii = 0; ii < config.refinements - serial_refinements; ii++)
-            pmesh->UniformRefinement();
-    } else {
-        //Read the input mesh
-        std::ifstream in;
-        std::ostringstream oss;
-        oss << std::setw(10) << std::setfill('0') << config.pid;
-        std::string n_mesh = "results/restart/pmesh_"+oss.str()+".msh";
-
-        in.open(n_mesh.c_str(),std::ios::in);
-        pmesh->Load(in,1,0); 
-        in.close();
-    }
+    //Refine mesh (parallel)
+    for (int ii = 0; ii < config.refinements - serial_refinements; ii++)
+        pmesh->UniformRefinement();
 
     //Calculate minimum size of elements
     double null;
@@ -51,10 +37,6 @@ void Artic_sea::make_grid(const char *mesh_file){
     fespace_H1 = new ParFiniteElementSpace(pmesh, fec_H1);
     size_H1 = fespace_H1->GlobalTrueVSize();
 
-    fec_ND = new ND_FECollection(config.order, dim);
-    fespace_ND = new ParFiniteElementSpace(pmesh, fec_ND);
-    size_ND = fespace_ND->GlobalTrueVSize();
-
     //Create the block offsets
     block_offsets_H1[0] = 0;
     block_offsets_H1[1] = fespace_H1->TrueVSize();
@@ -63,4 +45,12 @@ void Artic_sea::make_grid(const char *mesh_file){
 
     X.Update(block_offsets_H1); X = 0.;
     Y.Update(block_offsets_H1); Y = 0.;
+
+    if (config.master)
+        cout << "\nMesh characteristics:\n"
+             << "Serial refinements: " << serial_refinements << "\n"
+             << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
+             << "Total refinements: " << config.refinements << "\n"
+             << "Size (H1): " << size_H1 << "\n"
+             << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n\n";
 }
