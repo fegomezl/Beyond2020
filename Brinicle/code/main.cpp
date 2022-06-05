@@ -98,6 +98,12 @@ int main(int argc, char *argv[]){
         return 1;
     }
     if (config.master) args.PrintOptions(cout);
+    if (config.master){
+        ofstream out;
+        out.open("results/graph/settings.txt", std::ios::trunc);
+        args.PrintOptions(out);
+        out.close();
+    }
 
     {
         L_ref = RInflow;
@@ -159,8 +165,8 @@ int main(int argc, char *argv[]){
                  << "T_0: " << T0_ref << " °C\n"
                  << "T: " << T_ref << " °C\n"
                  << "S_0: " << S0_ref << " %wt\n"
-                 << "S: " << S_ref << " %wt\n";
-            cout << "\nAdimentional numbers:\n"
+                 << "S: " << S_ref << " %wt\n"
+                 << "\nAdimentional numbers:\n"
                  << "Reynolds number: "    << pow(RInflow, 2)/(t_ref*constants.Viscosity) << "\n" 
                  << "Froude number: "      << pow(RInflow/constants.Gravity, 0.5)/t_ref << "\n" 
                  << "Reynolds/Froude^2 number: "    << constants.BuoyancyCoefficient << "\n" 
@@ -169,6 +175,27 @@ int main(int argc, char *argv[]){
                  << "Peclet number(S_l): " << 1/constants.SalinityDiffusion_l << "\n" 
                  << "Peclet number(S_s): " << 1/constants.SalinityDiffusion_s << "\n" 
                  << "Stefan number: " << 1/constants.Stefan << "\n";
+        }
+        if (config.master){
+            ofstream out;
+            out.open("results/graph/settings.txt", std::ios::app);
+            out << "\nScale:\n"
+                 << "L: " << L_ref << " mm\n"
+                 << "V: " << L_ref/t_ref << " mm/s\n"
+                 << "T_0: " << T0_ref << " °C\n"
+                 << "T: " << T_ref << " °C\n"
+                 << "S_0: " << S0_ref << " %wt\n"
+                 << "S: " << S_ref << " %wt\n"
+                 << "\nAdimentional numbers:\n"
+                 << "Reynolds number: "    << pow(RInflow, 2)/(t_ref*constants.Viscosity) << "\n" 
+                 << "Froude number: "      << pow(RInflow/constants.Gravity, 0.5)/t_ref << "\n" 
+                 << "Reynolds/Froude^2 number: "    << constants.BuoyancyCoefficient << "\n" 
+                 << "Peclet number(T_l): " << 1/constants.TemperatureDiffusion_l << "\n" 
+                 << "Peclet number(T_s): " << 1/constants.TemperatureDiffusion_s << "\n" 
+                 << "Peclet number(S_l): " << 1/constants.SalinityDiffusion_l << "\n" 
+                 << "Peclet number(S_s): " << 1/constants.SalinityDiffusion_s << "\n" 
+                 << "Stefan number: " << 1/constants.Stefan << "\n";
+            out.close();
         }
 
         tic();

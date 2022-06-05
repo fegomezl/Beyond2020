@@ -14,6 +14,7 @@ all: results/mesh.msh main
 
 main: main.x
 	@echo -e 'Running program ... \n'
+	@python settings/eutectic.py
 	@$(RUN)$< --mesh results/mesh.msh \
 			  -R $(R) -Z $(Z) -R_in $(RIn) \
 			  -dt $(DT) -t_f $(T_FI) -v_s $(VIS) \

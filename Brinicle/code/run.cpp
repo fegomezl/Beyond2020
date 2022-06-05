@@ -38,6 +38,14 @@ void Artic_sea::run(const char *mesh_file){
              << "Total Printed: " << vis_print << "\n"
              << "Total execution time: " << total_time << " s" << "\n\n";
     }
+    if (config.master){
+        ofstream out;
+        out.open("results/graph/settings.txt", std::ios::app);
+        out << "\n\nIterations: " << iteration-1 << "\n"
+             << "Total Printed: " << vis_print << "\n"
+             << "Total execution time: " << total_time << " s" << "\n\n";
+        out.close();
+    }
 }
 
 //Delete used memory

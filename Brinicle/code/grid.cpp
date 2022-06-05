@@ -53,4 +53,16 @@ void Artic_sea::make_grid(const char *mesh_file){
              << "Total refinements: " << config.refinements << "\n"
              << "Size (H1): " << size_H1 << "\n"
              << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n\n";
+
+    if (config.master){
+        ofstream out;
+        out.open("results/graph/settings.txt", std::ios::app);
+        out << "\nMesh characteristics:\n"
+             << "Serial refinements: " << serial_refinements << "\n"
+             << "Parallel refinements: " << config.refinements - serial_refinements << "\n"
+             << "Total refinements: " << config.refinements << "\n"
+             << "Size (H1): " << size_H1 << "\n"
+             << "Mesh Size: " << h_min << " (" << h_min*L_ref << " mm)\n\n";
+        out.close();
+    }
 }
