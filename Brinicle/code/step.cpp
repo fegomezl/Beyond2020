@@ -53,6 +53,16 @@ void Artic_sea::time_step(){
              << dt*t_ref << setw(12)
              << t*t_ref  << setw(12)
              << progress << "\r";
+
+        std::ofstream out;
+        out.open("results/progress.txt", std::ios::app);
+        out << left << setw(12)
+            << iteration << setw(12)
+            << vis_print << setw(12)
+            << dt*t_ref << setw(12)
+            << t*t_ref  << setw(12)
+            << progress << "\n";
+        out.close();
     }
 }
 

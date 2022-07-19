@@ -75,11 +75,11 @@ void Artic_sea::assemble_system(){
         cout << left << setw(12)
              << "--------------------------------------------------------------\n"
              << left << setw(12)
-             << "Step" << setw(12)
-             << "Printed" << setw(12)
-             << "Dt(s)" << setw(12)
-             << "Time(s)" << setw(12)
-             << "Progress"
+             << "step" << setw(12)
+             << "printed" << setw(12)
+             << "dt(s)" << setw(12)
+             << "time(s)" << setw(12)
+             << "progress"
              << left << setw(12)
              << "\n--------------------------------------------------------------\n";
         cout << left << setw(12)
@@ -88,6 +88,26 @@ void Artic_sea::assemble_system(){
              << dt*t_ref << setw(12)
              << t*t_ref  << setw(12)
              << "0%" << "\r";
+
+        ofstream out;
+        out.open("results/progress.txt", std::ios::trunc);
+        out << left << setw(12)
+            << "--------------------------------------------------------------\n"
+            << left << setw(12)
+            << "step" << setw(12)
+            << "printed" << setw(12)
+            << "dt(s)" << setw(12)
+            << "time(s)" << setw(12)
+            << "progress"
+            << left << setw(12)
+            << "\n--------------------------------------------------------------\n";
+        out << left << setw(12)
+            << 0 << setw(12)
+            << vis_print << setw(12)
+            << dt*t_ref << setw(12)
+            << t*t_ref  << setw(12)
+            << "0%" << "\n";
+        out.close();
     }
 }
 
