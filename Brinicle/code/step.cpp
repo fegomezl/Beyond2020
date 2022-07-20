@@ -24,15 +24,15 @@ void Artic_sea::time_step(){
         vis_print++;
 
         //Update information
-        temperature->Distribute(X.GetBlock(0));
-        salinity->Distribute(X.GetBlock(1));
-        vorticity->Distribute(Y.GetBlock(0));
-        stream->Distribute(Y.GetBlock(1));
+        temperature.Distribute(X.GetBlock(0));
+        salinity.Distribute(X.GetBlock(1));
+        vorticity.Distribute(Y.GetBlock(0));
+        stream.Distribute(Y.GetBlock(1));
         
         //Calculate phases
-        for (int ii = 0; ii < phase->Size(); ii++){
-            (*relative_temperature)(ii) = RelativeTemperature((*temperature)(ii), (*salinity)(ii));
-            (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
+        for (int ii = 0; ii < phase.Size(); ii++){
+            relative_temperature(ii) = RelativeTemperature(temperature(ii), salinity(ii));
+            phase(ii) = Phase(temperature(ii), salinity(ii));
         }
 
         //Print fields

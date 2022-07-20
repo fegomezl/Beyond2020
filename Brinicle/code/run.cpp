@@ -10,16 +10,11 @@ Config::Config(int pid, int nproc):
 //Initialization of the program
 Artic_sea::Artic_sea(Config config):
     config(config),
-    t(0.),
-    dt(config.dt_init),
-    last(false),
+    t(0.), dt(config.dt_init), last(false),
     vis_steps(config.vis_steps_max), vis_print(0),
     pmesh(NULL), 
-    fec_H1(NULL), fespace_H1(NULL),
+    fec_H1(NULL), fespace_H1(NULL), 
     block_offsets_H1(3),
-    temperature(NULL), salinity(NULL), 
-    relative_temperature(NULL), phase(NULL), 
-    vorticity(NULL), stream(NULL), 
     transport_oper(NULL), flow_oper(NULL),
     ode_solver(NULL), arkode(NULL),
     paraview_out(NULL)
@@ -70,12 +65,6 @@ Artic_sea::~Artic_sea(){
     delete pmesh;
     delete fec_H1;
     delete fespace_H1;
-    delete temperature;
-    delete salinity;
-    delete relative_temperature;
-    delete phase;
-    delete vorticity;
-    delete stream;
     delete transport_oper;
     delete flow_oper;
     delete ode_solver;

@@ -18,14 +18,6 @@ double Density(const double T, const double S);
 //Initialize the solvers and the variables of the program
 void Artic_sea::assemble_system(){
 
-    //Define fields
-    temperature = new ParGridFunction(fespace_H1);
-    salinity = new ParGridFunction(fespace_H1);
-    relative_temperature = new ParGridFunction(fespace_H1);
-    phase = new ParGridFunction(fespace_H1);
-    vorticity = new ParGridFunction(fespace_H1);
-    stream = new ParGridFunction(fespace_H1);
-
     //Initialize operators
     transport_oper = new Transport_Operator(config, *fespace_H1, dim, pmesh->bdr_attributes.Max(), block_offsets_H1, X);
     flow_oper = new Flow_Operator(config, *fespace_H1, dim, pmesh->bdr_attributes.Max(), block_offsets_H1);
@@ -35,15 +27,15 @@ void Artic_sea::assemble_system(){
     flow_oper->Solve(Y);
 
     //Set initial state
-    temperature->Distribute(X.GetBlock(0));
-    salinity->Distribute(X.GetBlock(1));
-    vorticity->Distribute(Y.GetBlock(0));
-    stream->Distribute(Y.GetBlock(1));
+    temperature.Distribute(X.GetBlock(0));
+    salinity.Distribute(X.GetBlock(1));
+    vorticity.Distribute(Y.GetBlock(0));
+    stream.Distribute(Y.GetBlock(1));
     
     //Calculate phases
-    for (int ii = 0; ii < phase->Size(); ii++){
-        (*relative_temperature)(ii) = RelativeTemperature((*temperature)(ii), (*salinity)(ii));
-        (*phase)(ii) = Phase((*temperature)(ii), (*salinity)(ii));
+    for (int ii = 0; ii < phase.Size(); ii++){
+        relative_temperature(ii) = RelativeTemperature(temperature(ii), salinity(ii));
+        phase(ii) = Phase(temperature(ii), salinity(ii));
     }
 
     //Set the ODE solver type
@@ -59,12 +51,12 @@ void Artic_sea::assemble_system(){
     paraview_out = new ParaViewDataCollection(folder, pmesh);
     paraview_out->SetDataFormat(VTKFormat::BINARY);
     paraview_out->SetLevelsOfDetail(config.order);
-    paraview_out->RegisterField("Temperature", temperature);
-    paraview_out->RegisterField("Salinity", salinity);
-    paraview_out->RegisterField("RelativeTemperature", relative_temperature);
-    paraview_out->RegisterField("Phase", phase);
-    paraview_out->RegisterField("Vorticity", vorticity);
-    paraview_out->RegisterField("Stream", stream);
+    paraview_out->RegisterField("Temperature", &temperature);
+    paraview_out->RegisterField("Salinity", &salinity);
+    paraview_out->RegisterField("RelativeTemperature", &relative_temperature);
+    paraview_out->RegisterField("Phase", &phase);
+    paraview_out->RegisterField("Vorticity", &vorticity);
+    paraview_out->RegisterField("Stream", &stream);
     paraview_out->SetCycle(vis_print);
     paraview_out->SetTime(t*t_ref);
     paraview_out->Save();

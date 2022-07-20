@@ -37,6 +37,14 @@ void Artic_sea::make_grid(const char *mesh_file){
     fespace_H1 = new ParFiniteElementSpace(pmesh, fec_H1);
     size_H1 = fespace_H1->GlobalTrueVSize();
 
+    //Initialize grid functions
+    temperature.SetSpace(fespace_H1);
+    salinity.SetSpace(fespace_H1);
+    relative_temperature.SetSpace(fespace_H1);
+    phase.SetSpace(fespace_H1);
+    vorticity.SetSpace(fespace_H1);
+    stream.SetSpace(fespace_H1);
+
     //Create the block offsets
     block_offsets_H1[0] = 0;
     block_offsets_H1[1] = fespace_H1->TrueVSize();

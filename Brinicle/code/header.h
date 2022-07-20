@@ -285,12 +285,12 @@ class Artic_sea{
         HYPRE_Int size_H1;
 
         //System objects
-        ParGridFunction *temperature;
-        ParGridFunction *salinity;
-        ParGridFunction *relative_temperature;
-        ParGridFunction *phase;
-        ParGridFunction *vorticity;
-        ParGridFunction *stream;
+        ParGridFunction temperature;
+        ParGridFunction salinity;
+        ParGridFunction relative_temperature;
+        ParGridFunction phase;
+        ParGridFunction vorticity;
+        ParGridFunction stream;
 
         BlockVector X;
         BlockVector Y;
