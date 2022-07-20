@@ -19,7 +19,7 @@ T_FI = 1           #Final_time(s)
 VIS = 0            #Visualization_steps
 
 #FE parameters:
-REF = 3          #Refinements
+REF = 4          #Refinements
 ORDER = 1          #Order
 ABST_C= 0          #abstol(Conduction)
 RELT_C = 0.00000001 #reltol(Conduction)
