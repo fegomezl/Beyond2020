@@ -16,7 +16,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, i
     density(&fespace_H1), density_dr(&fespace_H1), 
     impermeability(&fespace_H1), 
     B(block_offsets_H1),
-    B0(NULL), B1(NULL),
+    B0(&fespace_H1), B1(&fespace_H1),
     A00(NULL), A01(NULL), A10(NULL), A11(NULL),
     coeff_r(r_f), coeff_r_inv_hat(dim, r_inv_hat_f),
     coeff_vorticity(0.), coeff_stream(boundary_stream_f),
@@ -101,7 +101,7 @@ Flow_Operator::Flow_Operator(Config config, ParFiniteElementSpace &fespace_H1, i
     a01.Finalize();
     A01 = a01.ParallelAssemble();
 
-    B0 = b0.ParallelAssemble();
+    b0.ParallelAssemble(B0);
 }
 
 //Boundary condition for stream

@@ -68,8 +68,6 @@ Transport_Operator::~Transport_Operator(){
 }
 
 Flow_Operator::~Flow_Operator(){
-    delete B0;
-    delete B1;
     delete A00;
     delete A01;
     delete A10;

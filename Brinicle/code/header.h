@@ -222,7 +222,7 @@ class Flow_Operator{
 
         //System objects
         BlockVector B;
-        HypreParVector *B0, *B1;
+        HypreParVector B0, B1;
 
         HypreParMatrix *A00;
         HypreParMatrix *A01;

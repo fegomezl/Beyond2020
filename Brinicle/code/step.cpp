@@ -183,7 +183,6 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     stream.ProjectBdrCoefficient(coeff_stream_closed_up, ess_bdr_closed_up);
 
     //Define non-constant RHS
-    if (B1) delete B1;
     ParLinearForm b1(&fespace_H1);
     b1.AddDomainIntegrator(new DomainLFIntegrator(coeff_r_buoyancy));
     b1.Assemble();
@@ -209,5 +208,5 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     A10 = a10.ParallelAssemble();
 
     //Transfer to TrueDofs
-    B1 = b1.ParallelAssemble();
+    b1.ParallelAssemble(B1);
 }

@@ -17,8 +17,8 @@ void Flow_Operator::Solve(BlockVector &Y){
     SuperLURowLocMatrix A(*H);
 
     //Create the complete RHS
-    B.GetBlock(0) = *B0;
-    B.GetBlock(1) = *B1;
+    B.GetBlock(0) = B0;
+    B.GetBlock(1) = B1;
 
     //Create the solver object
     SuperLUSolver superlu(MPI_COMM_WORLD);
