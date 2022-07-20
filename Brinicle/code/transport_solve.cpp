@@ -17,12 +17,10 @@ void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
 
     //Set up RHS
     K0->Mult(-1., X0, 1., Z0);
-    Z0.Add(1., *B0);
-    EliminateBC(*M0, *M0_e, ess_tdof_0, dX0_dt, Z0);
+    Z0.Add(1., B0);
 
     K1->Mult(-1., X1, 1., Z1);
-    Z1.Add(1., *B1);
-    EliminateBC(*M1, *M1_e, ess_tdof_1, dX1_dt, Z1);
+    Z1.Add(1., B1);
 
     //Solve the system  
     M0_solver.Mult(Z0, dX0_dt); M1_solver.Mult(Z1, dX1_dt); 
@@ -38,22 +36,18 @@ void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
 int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &RHS, int j_update, int *j_status, double scaled_dt){
     
     if (T0) delete T0;
-    if (T0_e) delete T0_e;
-    T0 = Add(1., *M0_o, scaled_dt, *K0);
-    T0_e = T0->EliminateRowsCols(ess_tdof_0);
+    T0 = Add(1., *M0, scaled_dt, *K0);
     T0_prec.SetOperator(*T0);
     T0_solver.SetOperator(*T0);
 
     if (T1) delete T1;
-    if (T1_e) delete T1_e;
-    T1 = Add(1., *M1_o, scaled_dt, *K1);
-    T1_e = T1->EliminateRowsCols(ess_tdof_1);
+    T1 = Add(1., *M1, scaled_dt, *K1);
     T1_prec.SetOperator(*T1);
     T1_solver.SetOperator(*T1);
 
     //Set dt for RHS
-    B0_dt.Set(scaled_dt, *B0);
-    B1_dt.Set(scaled_dt, *B1);
+    B0_dt.Set(scaled_dt, B0);
+    B1_dt.Set(scaled_dt, B1);
 
     *j_status = 1;
     return 0;
@@ -75,13 +69,11 @@ int Transport_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double 
     X_new = X;
 
     //Set up RHS
-    M0_o->Mult(X0, Z0);
+    M0->Mult(X0, Z0);
     Z0.Add(1., B0_dt);
-    EliminateBC(*T0, *T0_e, ess_tdof_0, X0_new, Z0);
 
-    M1_o->Mult(X1, Z1);
+    M1->Mult(X1, Z1);
     Z1.Add(1., B1_dt);
-    EliminateBC(*T1, *T1_e, ess_tdof_1, X1_new, Z1);
 
     //Solve the system  
     T0_solver.Mult(Z0, X0_new); T1_solver.Mult(Z1, X1_new); 

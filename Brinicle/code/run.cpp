@@ -53,18 +53,10 @@ void Artic_sea::run(const char *mesh_file){
 Transport_Operator::~Transport_Operator(){
     delete M0; 
     delete M1; 
-    delete M0_e; 
-    delete M1_e; 
-    delete M0_o; 
-    delete M1_o; 
     delete K0; 
     delete K1; 
     delete T0; 
     delete T1; 
-    delete T0_e; 
-    delete T1_e; 
-    delete B0;
-    delete B1;
 }
 
 Flow_Operator::~Flow_Operator(){
