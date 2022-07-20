@@ -16,10 +16,10 @@ RIn = 2                   #Inflow(mm)
 #Simulation parameters:
 DT = 0.001         #Dt(s)
 T_FI = 1           #Final_time(s)
-VIS = 5            #Visualization_steps
+VIS = 0            #Visualization_steps
 
 #FE parameters:
-REF = 4          #Refinements
+REF = 3          #Refinements
 ORDER = 1          #Order
 ABST_C= 0          #abstol(Conduction)
 RELT_C = 0.00000001 #reltol(Conduction)
