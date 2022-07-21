@@ -116,7 +116,7 @@ void zero_f(const Vector &x, Vector &f){
 
 //Function for (1/r)*r^ (r^ unitary vector)
 void r_inv_hat_f(const Vector &x, Vector &f){
-    f(0) = pow(x(0), -1);
+    f(0) = pow(x(0) + Epsilon, -1);
     f(1) = 0.;
 }
 
