@@ -87,17 +87,17 @@ void Transport_Operator::SetParameters(const BlockVector &X, const BlockVector &
 
     //Set the associated coefficients
     GridFunctionCoefficient coeff_D0(&heat_diffusivity);
-    coeff_rD0.SetBCoef(coeff_D0); 
+    ProductCoefficient coeff_rD0(coeff_r, coeff_D0); 
     
     GridFunctionCoefficient coeff_D1(&salt_diffusivity);
-    coeff_rD1.SetBCoef(coeff_D1); 
+    ProductCoefficient coeff_rD1(coeff_r, coeff_D1); 
 
     //Construct latent heat term
     GradientGridFunctionCoefficient coeff_dT(&relative_temperature);
     GradientGridFunctionCoefficient coeff_dP(&phase);
     
-    coeff_dPdT.SetACoef(coeff_dP);  coeff_dT_2.SetACoef(coeff_dT);
-    coeff_dPdT.SetBCoef(coeff_dT);  coeff_dT_2.SetBCoef(coeff_dT);
+    InnerProductCoefficient coeff_dPdT(coeff_dP, coeff_dT);
+    InnerProductCoefficient coeff_dT_2(coeff_dT, coeff_dT);
 
     SumCoefficient coeff_dT_2e(Epsilon, coeff_dT_2);
     
@@ -106,13 +106,12 @@ void Transport_Operator::SetParameters(const BlockVector &X, const BlockVector &
 
     ProductCoefficient coeff_latent(constants.Stefan, DeltaT);
     SumCoefficient coeff_M(1., coeff_latent);
-    coeff_rM.SetBCoef(coeff_M);
-    coeff_rMV.SetACoef(coeff_M);
+    ProductCoefficient coeff_rM(coeff_r, coeff_M);
 
     //Construct convective term
     GradientGridFunctionCoefficient coeff_d_stream(&stream);
-    coeff_rV.SetBCoef(coeff_d_stream);
-    coeff_rMV.SetBCoef(coeff_rV);
+    MatrixVectorProductCoefficient coeff_rV(coeff_rot, coeff_d_stream);
+    ScalarVectorProductCoefficient coeff_rMV(coeff_M, coeff_rV);
 
     //Create corresponding bilinear forms
     if (M0) delete M0;

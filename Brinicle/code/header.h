@@ -154,16 +154,6 @@ class Transport_Operator : public TimeDependentOperator{
         VectorFunctionCoefficient coeff_zero;
         MatrixFunctionCoefficient coeff_rot;
 
-        ProductCoefficient coeff_rM;
-        ProductCoefficient coeff_rD0; 
-        ProductCoefficient coeff_rD1;
-
-        MatrixVectorProductCoefficient coeff_rV;
-        ScalarVectorProductCoefficient coeff_rMV;
-
-        InnerProductCoefficient coeff_dPdT;
-        InnerProductCoefficient coeff_dT_2;
-
         //System objects
         HypreParMatrix *M0, *M1;
         HypreParMatrix *K0, *K1;
