@@ -108,10 +108,10 @@ int main(int argc, char *argv[]){
     {
         L_ref = RInflow;
         t_ref = 2*M_PI*pow(RInflow, 3)/FluxRate;
-        T0_ref = InitialTemperature;
-        T_ref = InflowTemperature-InitialTemperature;
-        S0_ref = InitialSalinity;
-        S_ref = InflowSalinity-InitialSalinity;
+        T0_ref = InflowTemperature;
+        T_ref = InitialTemperature-InflowTemperature;
+        S0_ref = InflowSalinity;
+        S_ref = InitialSalinity-InflowSalinity;
 
         config.dt_init /= t_ref;
         config.t_final /= t_ref; 

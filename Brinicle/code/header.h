@@ -169,8 +169,6 @@ class Transport_Operator : public TimeDependentOperator{
         HypreParMatrix *K0, *K1;
         HypreParMatrix *T0, *T1;
 
-        HypreParVector B0, B1;
-        HypreParVector B0_dt, B1_dt;
         mutable HypreParVector Z0, Z1;
 
         //Solver objects

@@ -26,8 +26,6 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
     M0(NULL), M1(NULL), 
     K0(NULL), K1(NULL), 
     T0(NULL), T1(NULL),
-    B0(&fespace_H1), B1(&fespace_H1), 
-    B0_dt(&fespace_H1), B1_dt(&fespace_H1),
     Z0(&fespace_H1), Z1(&fespace_H1),
     M0_solver(MPI_COMM_WORLD), M1_solver(MPI_COMM_WORLD), 
     T0_solver(MPI_COMM_WORLD), T1_solver(MPI_COMM_WORLD)
@@ -67,24 +65,24 @@ Transport_Operator::Transport_Operator(Config config, ParFiniteElementSpace &fes
 
     //Apply initial conditions
     FunctionCoefficient coeff_initial_temperature(initial_temperature_f);
-    ConstantCoefficient coeff_boundary_temperature(1.);
+    ConstantCoefficient coeff_boundary_temperature(0.);
     temperature.ProjectCoefficient(coeff_initial_temperature);
     temperature.ProjectBdrCoefficient(coeff_boundary_temperature, ess_bdr_0);
     temperature.GetTrueDofs(X.GetBlock(0));
     
     FunctionCoefficient coeff_initial_salinity(initial_salinity_f);
-    ConstantCoefficient coeff_boundary_salinity(1.);
+    ConstantCoefficient coeff_boundary_salinity(0.);
     salinity.ProjectCoefficient(coeff_initial_salinity);
     salinity.ProjectBdrCoefficient(coeff_boundary_salinity, ess_bdr_1);
     salinity.GetTrueDofs(X.GetBlock(1));
 
     //Create mass matrix                                   
-    ParBilinearForm m1(&fespace_H1);                 
-    m1.AddDomainIntegrator(new MassIntegrator(coeff_r));  
-    m1.Assemble();                                        
+    ParBilinearForm m1(&fespace_H1);
+    m1.AddDomainIntegrator(new MassIntegrator(coeff_r));
+    m1.Assemble(); 
+    m1.EliminateEssentialBC(ess_bdr_1, Operator::DIAG_ONE);
     m1.Finalize();                                        
     M1 = m1.ParallelAssemble();
-    M1->EliminateRowsCols(ess_tdof_1);
 
     //Configure M solver
     M0_prec.SetPrintLevel(0);
@@ -126,9 +124,9 @@ double initial_temperature_f(const Vector &x){
     if (NucleationRegion)
         return NucleationTemperature;
     else if (x(1) > Z - NucleationHeight){
-        return (x(1)-Z+NucleationHeight)/NucleationHeight;
+        return (Z-x(1))/NucleationHeight;
     } else
-        return 0.;
+        return 1.;
 }
 
 double initial_salinity_f(const Vector &x){
@@ -137,7 +135,7 @@ double initial_salinity_f(const Vector &x){
     if (NucleationRegion)
         return NucleationSalinity;
     else if (x(1) > Z - NucleationHeight){
-        return (x(1)-Z+NucleationHeight)/NucleationHeight;
+        return (Z-x(1))/NucleationHeight; 
     } else
-        return 0.;
+        return 1.;
 }

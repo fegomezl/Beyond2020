@@ -118,36 +118,32 @@ void Transport_Operator::SetParameters(const BlockVector &X, const BlockVector &
     if (M0) delete M0;
     ParBilinearForm m0(&fespace_H1);
     m0.AddDomainIntegrator(new MassIntegrator(coeff_rM));
-    m0.Assemble();
-    m0.Finalize();
+    m0.Assemble();                                        
+    m0.EliminateEssentialBC(ess_bdr_0, Operator::DIAG_ONE);
+    m0.Finalize();                                        
     M0 = m0.ParallelAssemble();
-    M0->EliminateRowsCols(ess_tdof_0);
 
     M0_prec.SetOperator(*M0);
     M0_solver.SetOperator(*M0);
 
     //Create transport matrix
     if (K0) delete K0;
-    HypreParMatrix K0_e; B0 = 0.;
     ParBilinearForm k0(&fespace_H1);
     k0.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD0));
     k0.AddDomainIntegrator(new ConvectionIntegrator(coeff_rMV));
     k0.Assemble();
+    k0.EliminateEssentialBC(ess_bdr_0, Operator::DIAG_ZERO);
     k0.Finalize();
     K0 = k0.ParallelAssemble();    
-    K0_e = *K0->EliminateRowsCols(ess_tdof_0);
-    EliminateBC(*K0, K0_e, ess_tdof_0, X.GetBlock(0), B0);
 
     if (K1) delete K1;
-    HypreParMatrix K1_e; B1 = 0.;
     ParBilinearForm k1(&fespace_H1);
     k1.AddDomainIntegrator(new DiffusionIntegrator(coeff_rD1));
     k1.AddDomainIntegrator(new ConvectionIntegrator(coeff_rV));
     k1.Assemble();
+    k1.EliminateEssentialBC(ess_bdr_1, Operator::DIAG_ZERO);
     k1.Finalize();
-    K1 = k1.ParallelAssemble();    
-    K1_e = *K1->EliminateRowsCols(ess_tdof_1);
-    EliminateBC(*K1, K1_e, ess_tdof_1, X.GetBlock(1), B1);
+    K1 = k1.ParallelAssemble();
 }
 
 //Update of the solver on each iteration

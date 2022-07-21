@@ -1,7 +1,7 @@
 #include "header.h"
 
-//From  M(dX_dt) + K(X) = B
-//Solve M(dX_dt) + K(X) = B for dX_dt
+//From  M(dX_dt) + K(X) = 0
+//Solve M(dX_dt) + K(X) = 0 for dX_dt
 void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     
     //Initialize the corresponding vectors
@@ -16,11 +16,7 @@ void Transport_Operator::Mult(const Vector &X, Vector &dX_dt) const{
     dX_dt = 0.;
 
     //Set up RHS
-    K0->Mult(-1., X0, 1., Z0);
-    Z0.Add(1., B0);
-
-    K1->Mult(-1., X1, 1., Z1);
-    Z1.Add(1., B1);
+    K0->Mult(-1., X0, 1., Z0);  K1->Mult(-1., X1, 1., Z1);
 
     //Solve the system  
     M0_solver.Mult(Z0, dX0_dt); M1_solver.Mult(Z1, dX1_dt); 
@@ -45,19 +41,15 @@ int Transport_Operator::SUNImplicitSetup(const Vector &X, const Vector &RHS, int
     T1_prec.SetOperator(*T1);
     T1_solver.SetOperator(*T1);
 
-    //Set dt for RHS
-    B0_dt.Set(scaled_dt, B0);
-    B1_dt.Set(scaled_dt, B1);
-
     *j_status = 1;
     return 0;
 }
 
-//From  M(dX_dt) + K(X) = B
-//Solve M(X_new - X) + dt*K(X_new) = dt*B for X_new
+//From  M(dX_dt) + K(X) = 0
+//Solve M(X_new - X) + dt*K(X_new) = 0 for X_new
 int Transport_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double tol){
     
-    //Initialize the corresponding vectors
+    //Initialize the correspondi ng vectors
     HypreParVector X0_new(&fespace_H1), X1_new(&fespace_H1);
     HypreParVector X0(&fespace_H1),     X1(&fespace_H1);
     for (int ii = block_offsets_H1[0]; ii < block_offsets_H1[1]; ii++)
@@ -65,15 +57,11 @@ int Transport_Operator::SUNImplicitSolve(const Vector &X, Vector &X_new, double 
     for (int ii = block_offsets_H1[1]; ii < block_offsets_H1[2]; ii++)
         X1(ii - block_offsets_H1[1]) = X(ii);
     Z0 = 0.;   Z1 = 0.;
-    X0_new = X0; X1_new = X1;
+    X0_new = X0; X1_new = X1; 
     X_new = X;
 
     //Set up RHS
-    M0->Mult(X0, Z0);
-    Z0.Add(1., B0_dt);
-
-    M1->Mult(X1, Z1);
-    Z1.Add(1., B1_dt);
+    M0->Mult(X0, Z0);           M1->Mult(X1, Z1);
 
     //Solve the system  
     T0_solver.Mult(Z0, X0_new); T1_solver.Mult(Z1, X1_new); 
