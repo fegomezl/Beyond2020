@@ -9,14 +9,14 @@
 
 #Mesh Parameters:
 SCRIPT = settings/sea.geo    #Mesh_script
-R = 10                  #R(mm)
-Z = 40                  #Z(mm)
+R = 7                  #R(mm)
+Z = 45                  #Z(mm)
 RIn = 2                   #Inflow(mm)
 
 #Simulation parameters:
 DT = 0.001         #Dt(s)
-T_FI = 1           #Final_time(s)
-VIS = 0            #Visualization_steps
+T_FI = 80           #Final_time(s)
+VIS = 200            #Visualization_steps
 
 #FE parameters:
 REF = 4          #Refinements
