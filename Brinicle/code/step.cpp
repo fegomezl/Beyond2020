@@ -152,6 +152,9 @@ void Flow_Operator::SetParameters(const BlockVector &X){
     temperature.SetFromTrueDofs(X.GetBlock(0));
     salinity.SetFromTrueDofs(X.GetBlock(1));
 
+    ParGridFunction aux_1(&fespace_H1);
+    ParGridFunction aux_2(&fespace_H1);
+
     //Calculate impermeability and density coefficients
     double T, S = 0.;
     for (int ii = 0; ii < density.Size(); ii++){
@@ -160,6 +163,9 @@ void Flow_Operator::SetParameters(const BlockVector &X){
 
         impermeability(ii) = -Impermeability(T, S);
         density(ii) = Density(T, S);
+
+        aux_1(ii) = pow(1-Phase(T,S), 3);
+        aux_2(ii) = pow(Phase(T,S), 2);
     }
     
     //Calculate gradient of the density field
@@ -167,7 +173,22 @@ void Flow_Operator::SetParameters(const BlockVector &X){
 
     //Create impermeability and buoyancy coefficients
     GridFunctionCoefficient coeff_impermeability(&impermeability);
-    ScalarVectorProductCoefficient coeff_impermeability_r_inv_hat(coeff_impermeability, coeff_r_inv_hat);
+
+    //-----------------------------------------------------------------
+
+    GridFunctionCoefficient coeff_aux_1(&aux_1);
+    GridFunctionCoefficient coeff_aux_2(&aux_2);
+    ProductCoefficient coeff_r_aux_2(coeff_r, coeff_aux_2);
+    SumCoefficient coeff_r_aux_2e(Epsilon, coeff_r_aux_2);
+    PowerCoefficient coeff_inv_r_aux_2e(coeff_r_aux_2e, -1.);
+    ProductCoefficient coeff_aux_mult(coeff_aux_1, coeff_inv_r_aux_2e);
+    SumCoefficient coeff_aux_e(Epsilon, coeff_aux_mult);
+    ProductCoefficient coeff_impermeability_r_inv(-1., coeff_aux_e);
+    VectorArrayCoefficient coeff_impermeability_r_inv_hat(2);
+    coeff_impermeability_r_inv_hat.Set(0, &coeff_impermeability_r_inv, false);
+
+    //ScalarVectorProductCoefficient coeff_impermeability_r_inv_hat(coeff_impermeability, coeff_r_inv_hat);
+    //-----------------------------------------------------------------
 
     GridFunctionCoefficient coeff_density_dr(&density_dr);
     ProductCoefficient coeff_buoyancy(constants.BuoyancyCoefficient, coeff_density_dr);
