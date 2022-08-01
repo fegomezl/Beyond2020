@@ -163,7 +163,7 @@ class Transport_Operator : public TimeDependentOperator{
 
         //Solver objects
         HyprePCG M0_solver, M1_solver;
-        HyprePCG T0_solver, T1_solver;
+        HypreGMRES T0_solver, T1_solver;
         HypreBoomerAMG M0_prec, M1_prec;
         HypreBoomerAMG T0_prec, T1_prec;
 };
